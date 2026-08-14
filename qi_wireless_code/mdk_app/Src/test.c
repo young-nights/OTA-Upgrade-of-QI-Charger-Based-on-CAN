@@ -620,9 +620,9 @@ static void test_integration_multi_timer(test_case_t *tc)
   tc->id   = "TC-INT-003";
   tc->name = "integration_multi_timer";
 
-  static volatile uint32_t cb10_count = 0;
-  static volatile uint32_t cb100_count = 0;
-  static volatile uint32_t cb1000_count = 0;
+  /* removed unused cb10_count */
+  /* removed unused cb100_count */
+  /* removed unused cb1000_count */
 
   /* Use lambda-style: we need separate callback functions.
    * Since C doesn't have closures, use a simple approach with
