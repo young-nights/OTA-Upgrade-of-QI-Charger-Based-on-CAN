@@ -339,7 +339,7 @@
               <MiscControls>-Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion</MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\libraries\drivers\inc;..\mdk_application\Inc;..\mdk_user\Inc;..\libraries\cmsis\core_support;..\libraries\cmsis\device_support\startup;..\libraries\cmsis\device_support</IncludePath>
+              <IncludePath>..\libraries\drivers\inc;..\mdk_app\Inc;..\mdk_user\Inc;..\libraries\cmsis\core_support;..\libraries\cmsis\device_support\startup;..\libraries\cmsis\device_support</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -522,6 +522,26 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_user\Src\main.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>mdk_app</GroupName>
+          <Files>
+            <File>
+              <FileName>ota_trigger.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\ota_trigger.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\timer_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>wdg_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
             </File>
           </Files>
         </Group>
