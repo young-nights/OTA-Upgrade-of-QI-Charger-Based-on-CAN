@@ -26,8 +26,170 @@ Project File Date:  08/14/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V6.19', folder: 'D:\Keil_v5\ARM\ARMCLANG\Bin'
-Build target 'Target 1'
-".\Objects\qi_wireless.axf" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+compiling at32f422_426_flash.c...
+compiling at32f422_426_exint.c...
+compiling at32f422_426_scfg.c...
+compiling at32f422_426_pwc.c...
+compiling at32f422_426_misc.c...
+compiling at32f422_426_gpio.c...
+compiling at32f422_426_i2c.c...
+compiling at32f422_426_spi.c...
+compiling at32f422_426_tmr.c...
+assembling startup_at32f422_426.s...
+compiling at32f422_426_ertc.c...
+compiling at32f422_426_crm.c...
+compiling at32f422_426_dma.c...
+compiling at32f422_426_crc.c...
+compiling at32f422_426_cmp.c...
+compiling at32f422_426_debug.c...
+compiling system_at32f422_426.c...
+compiling at32f422_426_adc.c...
+compiling at32f422_426_usart.c...
+compiling at32f422_426_can.c...
+compiling at32f422_426_clock.c...
+compiling at32f422_426_wdt.c...
+../mdk_user/Src/at32f422_426_int.c(143): warning: no previous prototype for function 'USART1_IRQHandler' [-Wmissing-prototypes]
+void USART1_IRQHandler(void)
+     ^
+../mdk_user/Src/at32f422_426_int.c(143): note: declare 'static' if the function is not intended to be used outside of this translation unit
+void USART1_IRQHandler(void)
+^
+static 
+../mdk_user/Src/at32f422_426_int.c(153): warning: no previous prototype for function 'CAN1_RX_IRQHandler' [-Wmissing-prototypes]
+void CAN1_RX_IRQHandler(void)
+     ^
+../mdk_user/Src/at32f422_426_int.c(153): note: declare 'static' if the function is not intended to be used outside of this translation unit
+void CAN1_RX_IRQHandler(void)
+^
+static 
+../mdk_user/Src/at32f422_426_int.c(163): warning: no previous prototype for function 'CAN1_ERR_IRQHandler' [-Wmissing-prototypes]
+void CAN1_ERR_IRQHandler(void)
+     ^
+../mdk_user/Src/at32f422_426_int.c(163): note: declare 'static' if the function is not intended to be used outside of this translation unit
+void CAN1_ERR_IRQHandler(void)
+^
+static 
+3 warnings generated.
+compiling at32f422_426_int.c...
+compiling main.c...
+compiling gpio_drv.c...
+compiling at32f422_426_wwdt.c...
+../mdk_app/Src/ota_trigger.c(97): warning: code will never be executed [-Wunreachable-code]
+  while (1)
+         ^
+1 warning generated.
+compiling ota_trigger.c...
+compiling wdg_drv.c...
+compiling timer_drv.c...
+../mdk_app/Src/test.c(67): error: call to undeclared function 'busy_wait'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  busy_wait(5);
+  ^
+../mdk_app/Src/test.c(77): error: call to undeclared function 'GPIO_Pins_Toggle'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  GPIO_Pins_Toggle(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  ^
+../mdk_app/Src/test.c(84): error: static declaration of 'busy_wait' follows non-static declaration
+static void busy_wait(uint32_t ms)
+            ^
+../mdk_app/Src/test.c(67): note: previous implicit declaration is here
+  busy_wait(5);
+  ^
+../mdk_app/Src/test.c(113): error: call to undeclared function 'GPIO_Pins_Toggle'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  GPIO_Pins_Toggle(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  ^
+../mdk_app/Src/test.c(155): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  TEST_ASSERT_NEAR(tc, 100, elapsed, 10);
+  ^
+../mdk_app/Inc\test.h(113): note: expanded from macro 'TEST_ASSERT_NEAR'
+  uint32_t _e = (uint32_t)(exp);                 \
+           ^
+../mdk_app/Src/test.c(149): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint32_t before = timer_get_tick();
+           ^
+../mdk_app/Src/test.c(166): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(100, cb_increment, 0);
+          ^
+../mdk_app/Src/test.c(183): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t ids[TIMER_DRV_MAX_TIMERS];
+          ^
+../mdk_app/Src/test.c(225): error: use of undeclared identifier 'NULL'
+  if (timer_create(100, NULL, 0) != TIMER_INVALID_ID) {
+                        ^
+../mdk_app/Src/test.c(217): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t fail_count = 0;
+          ^
+../mdk_app/Src/test.c(240): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(100, cb_increment, 0);
+          ^
+../mdk_app/Src/test.c(273): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(50, cb_increment, 0); /* one-shot, 50ms */
+          ^
+../mdk_app/Src/test.c(296): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(50, cb_increment, 0);
+          ^
+../mdk_app/Src/test.c(330): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  TEST_ASSERT_NEAR(tc, 10, cb_count, 2);
+  ^
+../mdk_app/Inc\test.h(113): note: expanded from macro 'TEST_ASSERT_NEAR'
+  uint32_t _e = (uint32_t)(exp);                 \
+           ^
+../mdk_app/Src/test.c(320): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(100, cb_increment, 1); /* periodic, 100ms */
+          ^
+../mdk_app/Src/test.c(342): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(100, cb_gpio_toggle, 1); /* 100ms periodic */
+          ^
+../mdk_app/Src/test.c(370): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(50, cb_increment, 0); /* one-shot, 50ms */
+          ^
+../mdk_app/Src/test.c(402): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t ids[TIMER_DRV_MAX_TIMERS];
+          ^
+../mdk_app/Src/test.c(458): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  TEST_ASSERT_NEAR(tc, 10, cb_count, 2);
+  ^
+../mdk_app/Inc\test.h(113): note: expanded from macro 'TEST_ASSERT_NEAR'
+  uint32_t _e = (uint32_t)(exp);                 \
+           ^
+../mdk_app/Src/test.c(448): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(1, cb_increment, 1); /* 1ms periodic */
+          ^
+../mdk_app/Src/test.c(473): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(50, cb_check_context, 0); /* one-shot */
+          ^
+../mdk_app/Src/test.c(499): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  uint8_t id = timer_create(50, cb_blocking, 0); /* one-shot, 50ms */
+          ^
+../mdk_app/Src/test.c(657): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  TEST_ASSERT_NEAR(tc, 111, cb_count, 20);
+  ^
+../mdk_app/Inc\test.h(113): note: expanded from macro 'TEST_ASSERT_NEAR'
+  uint32_t _e = (uint32_t)(exp);                 \
+           ^
+../mdk_app/Src/test.c(617): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  static volatile uint32_t cb10_count = 0;
+                           ^
+../mdk_app/Src/test.c(619): warning: unused variable 'cb1000_count' [-Wunused-variable]
+  static volatile uint32_t cb1000_count = 0;
+                           ^
+../mdk_app/Src/test.c(618): warning: unused variable 'cb100_count' [-Wunused-variable]
+  static volatile uint32_t cb100_count = 0;
+                           ^
+../mdk_app/Src/test.c(617): warning: unused variable 'cb10_count' [-Wunused-variable]
+  static volatile uint32_t cb10_count = 0;
+                           ^
+../mdk_app/Src/test.c(684): error: call to undeclared function 'GPIO_Pins_Reset'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  GPIO_Pins_Reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  ^
+../mdk_app/Src/test.c(772): error: call to undeclared function 'GPIO_Pins_Reset'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  GPIO_Pins_Reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  ^
+22 warnings and 7 errors generated.
+compiling test.c...
+compiling nvm_drv.c...
+compiling uart_drv.c...
+compiling can_driver.c...
+".\Objects\qi_wireless.axf" - 7 Error(s), 26 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -40,7 +202,8 @@ Package Vendor: ArteryTek
   D:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include
 
 <h2>Collection of Component Files used:</h2>
-Build Time Elapsed:  00:00:00
+Target not created.
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

@@ -339,7 +339,7 @@
               <MiscControls>-Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion</MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\libraries\drivers\inc;..\mdk_app\Inc;..\mdk_user\Inc;..\libraries\cmsis\core_support;..\libraries\cmsis\device_support\startup;..\libraries\cmsis\device_support</IncludePath>
+              <IncludePath>..\libraries\drivers\inc;..\mdk_app\Inc;..\mdk_user\Inc;..\libraries\cmsis\core_support;..\libraries\cmsis\device_support\startup;..\libraries\cmsis\device_support;..\mdk_can\Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -542,6 +542,36 @@
               <FileName>wdg_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\test.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\gpio_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>nvm_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\nvm_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\uart_drv.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>mdk_can</GroupName>
+          <Files>
+            <File>
+              <FileName>can_driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_can\Src\can_driver.c</FilePath>
             </File>
           </Files>
         </Group>
