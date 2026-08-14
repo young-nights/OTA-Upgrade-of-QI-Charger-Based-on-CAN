@@ -15,7 +15,13 @@
 #include "test.h"
 #include "timer_drv.h"
 #include "wdg_drv.h"
-#include "at32f422_426_conf.h"  /* pulls in all HAL peripheral headers including WDT */
+#include "gpio_drv.h"
+#include "at32f422_426_conf.h"  /* pulls in all SPL peripheral headers including WDT */
+#include <stddef.h>             /* NULL */
+
+/* forward declarations ----------------------------------------------------*/
+static void busy_wait(uint32_t ms);
+static void delay_ms(uint32_t ms);
 
 /* private variables -------------------------------------------------------*/
 
@@ -74,7 +80,7 @@ static void cb_blocking(void)
  */
 static void cb_gpio_toggle(void)
 {
-  GPIO_Pins_Toggle(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  gpio_bits_toggle(TEST_GPIO_PORT, TEST_GPIO_PIN);
 }
 
 /**
@@ -110,7 +116,7 @@ static void delay_ms(uint32_t ms)
  */
 static void test_gpio_toggle(void)
 {
-  GPIO_Pins_Toggle(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  gpio_bits_toggle(TEST_GPIO_PORT, TEST_GPIO_PIN);
 }
 
 /* =========================================================================
@@ -681,7 +687,7 @@ void test_gpio_init(void)
   gpio_init(TEST_GPIO_PORT, &gpio_init_struct);
 
   /* Start low */
-  GPIO_Pins_Reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  gpio_bits_reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
 }
 
 /**
@@ -769,7 +775,7 @@ void test_print_summary(void)
   }
 
   /* Make sure LED is off before pattern */
-  GPIO_Pins_Reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  gpio_bits_reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
 
   for (uint32_t i = 0; i < toggle_count; i++) {
     test_gpio_toggle();
@@ -777,7 +783,7 @@ void test_print_summary(void)
   }
 
   /* Leave LED off */
-  GPIO_Pins_Reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
+  gpio_bits_reset(TEST_GPIO_PORT, TEST_GPIO_PIN);
 
   /* Spin forever so debugger can inspect results */
   while (1) {
