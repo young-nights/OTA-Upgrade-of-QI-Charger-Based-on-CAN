@@ -26,6 +26,8 @@
 /* includes ------------------------------------------------------------------*/
 #include "at32f422_426_int.h"
 #include "timer_drv.h"
+#include "can_driver.h"
+#include "uart_drv.h"
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -134,13 +136,23 @@ void SysTick_Handler(void)
 }
 
 /**
+  * @brief  USART1 interrupt handler
+  * @param  none
+  * @retval none
+  */
+void USART1_IRQHandler(void)
+{
+  uart_drv_rx_irq_handler();
+}
+
+/**
   *  @brief  can1 interrupt function rx
   *  @param  none
   *  @retval none
   */
 void CAN1_RX_IRQHandler(void)
 {
-
+  can_driver_rx_irq_handler();
 }
 
 /**
@@ -150,7 +162,7 @@ void CAN1_RX_IRQHandler(void)
   */
 void CAN1_ERR_IRQHandler(void)
 {
-
+  can_driver_err_irq_handler();
 }
 
 /**
