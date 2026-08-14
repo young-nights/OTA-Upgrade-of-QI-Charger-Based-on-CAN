@@ -351,83 +351,169 @@ int main(void) {
 
 | 命令码 | 方向 | 说明 |
 |--------|------|------|
-| 0x00 | Qi→MCU / MCU→Qi | 回复指令（ACK/NAK） |
+| 0x00 | Qi→MCU | 回复指令（ACK/NAK） |
 | 0x01 | Qi→MCU | 无线充上报数据（状态 + 功率 + 版本） |
 | 0x02 | MCU→Qi | 设置功率 |
-| 0xCC | MCU→Qi | IAP 流程（进入 IAP / 发送数据 / 校验 / 复位） |
+| 0xCC | MCU→Qi | IAP 流程（进入 IAP / 发送数据） |
 
 ### 4.4 回复指令 (0x00)
 
-用于对收到的命令进行应答。
+Qi 芯片对 MCU 命令的应答。
 
-| 帧数据 | 说明 |
-|--------|------|
-| 0x00 | 接收成功 (ACK) |
+**帧格式：**
+
+| 偏移 | 长度 | 字段 | 值/说明 |
+|------|------|------|--------|
+| 0-1 | 2 | 帧起始头 | `0x55 0xAA` |
+| 2 | 1 | 帧长度 | `0x03` (固定) |
+| 3 | 1 | 帧命令 | `0x00` |
+| 4 | 1 | 应答状态 | `0x00` = 接收成功 |
+| 5 | 1 | 帧流水号 | 与请求帧一致 |
+| 6 | 1 | 帧校验 | 低 8 位累加和 |
+
+**Qi 芯片应答示例**: `55 AA 03 00 00 SEQ CS`
 
 ### 4.5 无线充上报数据 (0x01)
 
-Qi 芯片周期性或事件触发向 CAN MCU 上报充电状态。
+Qi 芯片周期性向 CAN MCU 上报当前充电状态和芯片信息。帧长度固定 `0x08`。
 
-**帧数据结构 (6 字节)：**
+**帧格式：**
 
-| Byte | 位域 | 说明 |
-|------|------|------|
-| 0 | b0 | PING 标识 |
-| 0 | b1 | 充电状态 |
-| 0 | b2 | 满充状态 |
-| 0 | b3 | 过压保护 |
-| 0 | b4 | 欠压保护 |
-| 0 | b5 | 过流保护 |
-| 0 | b6 | 过温保护 |
-| 0 | b7 | FOD 保护 |
-| 1 | — | 充电次数 / 保留 |
-| 2~3 | — | 实时功率 (2 字节, 高字节在前) |
-| 4~5 | — | 版本号 (2 字节, 高字节在前) |
+| 偏移 | 长度 | 字段 | 值/说明 |
+|------|------|------|--------|
+| 0-1 | 2 | 帧起始头 | `0x55 0xAA` |
+| 2 | 1 | 帧长度 | `0x08` (固定) |
+| 3 | 1 | 帧命令 | `0x01` |
+| 4 | 1 | 状态字节1 | 见下方位定义 |
+| 5 | 1 | 状态字节2 | 见下方位定义 |
+| 6-7 | 2 | 实时功率 | 高字节在前，单位待确认 |
+| 8-9 | 2 | 版本号 | Qi 芯片固件版本，高字节在前 |
+| 10 | 1 | 帧流水号 | 1~255 |
+| 11 | 1 | 帧校验 | 低 8 位累加和 |
+
+**状态字节1 位定义：**
+
+| Bit | 名称 | 说明 |
+|-----|------|------|
+| b0 | PING 标识 | 1 = 检测到设备放置 |
+| b1 | 充电状态 | 1 = 正在充电 |
+| b2 | 满充状态 | 1 = 电池已充满 |
+| b3 | 过压保护 | 1 = 触发过压保护 |
+| b4 | 欠压保护 | 1 = 触发欠压保护 |
+| b5 | 过流保护 | 1 = 触发过流保护 |
+| b6 | 过温保护 | 1 = 触发过温保护 |
+| b7 | FOD 保护 | 1 = 触发异物检测保护 |
+
+**状态字节2 位定义：**
+
+| Bit | 名称 | 说明 |
+|-----|------|------|
+| b0 | 充电次数 | 低 8 位 |
+| b1-b7 | 保留 | 保留 |
 
 **CAN MCU 处理逻辑：**
-- 解析 Byte 0 各保护标志位，生成内部故障事件
+- 解析状态字节1 各保护标志位，生成内部故障事件
 - 解析实时功率用于 DID 0x2104 (输出功率) 上报
 - 解析版本号用于设备信息管理
 - 周期性上报数据用于生命周期广播 (0x18FF260D)
 
 ### 4.6 设置功率 (0x02)
 
-CAN MCU 向 Qi 芯片设置目标充电功率。
+CAN MCU 向 Qi 芯片设置目标充电功率。帧长度固定 `0x03`。
 
-| 帧数据 | 功率 |
-|--------|------|
-| 0x01 | 5W |
-| 0x02 | 10W |
-| 0x03 | 15W |
+**帧格式：**
+
+| 偏移 | 长度 | 字段 | 值/说明 |
+|------|------|------|--------|
+| 0-1 | 2 | 帧起始头 | `0x55 0xAA` |
+| 2 | 1 | 帧长度 | `0x03` (固定) |
+| 3 | 1 | 帧命令 | `0x02` |
+| 4 | 1 | 功率值 | `0x01`=5W, `0x02`=10W, `0x03`=15W |
+| 5 | 1 | 帧流水号 | 1~255 |
+| 6 | 1 | 帧校验 | 低 8 位累加和 |
 
 Qi 芯片收到后应回复 0x00 (ACK) 或 NAK。
 
 ### 4.7 IAP 协议 (0xCC)
 
-CAN MCU 通过串口对 Qi 芯片进行固件升级（IAP）。
+CAN MCU 通过串口对 Qi 芯片进行固件升级（IAP）。IAP 地址空间为 16-bit (0x0000 ~ 0xFFFF)，每帧最大数据量 22 字节。
+
+#### 4.7.1 子命令汇总
 
 | 子命令 | 方向 | 说明 |
 |--------|------|------|
-| 0x01 | MCU→Qi | 准备升级（帧数据含 APP 大小高八位、低八位） |
+| 0x01 | MCU→Qi | 准备升级（含固件大小） |
 | 0x01 应答 | Qi→MCU | 应答确认 |
-| 0x02 | MCU→Qi | 发送 APP 数据（2 字节地址 + 22 字节数据） |
+| 0x02 | MCU→Qi | 发送固件数据（含地址 + 数据） |
 | 0x02 应答 | Qi→MCU | 应答确认 |
-| 0x03 | MCU→Qi | 校验固件 |
-| 0x04 | MCU→Qi | 复位 |
 
-**IAP 升级流程：**
+#### 4.7.2 Step 1: 准备升级 (0xCC, 子命令 0x01)
+
+MCU 通知 Qi 芯片进入 IAP 模式，帧长度 `0x04`。
+
+**帧格式：**
+
+| 偏移 | 长度 | 字段 | 值/说明 |
+|------|------|------|--------|
+| 0-1 | 2 | 帧起始头 | `0x55 0xAA` |
+| 2 | 1 | 帧长度 | `0x04` |
+| 3 | 1 | 帧命令 | `0xCC` |
+| 4 | 1 | IAP 子命令 | `0x01` (准备升级) |
+| 5 | 1 | APP 大小高字节 | 固件大小 Bit[15:8] |
+| 6 | 1 | APP 大小低字节 | 固件大小 Bit[7:0] |
+| 7 | 1 | 帧校验 | 低 8 位累加和 |
+
+**示例帧**: `55 AA 04 CC 01 32 B9 BB`
+
+**Qi 芯片应答**: `55 AA 04 CC 01 00 00 CS`
+
+| 偏移 | 字段 | 说明 |
+|------|------|------|
+| 4 | IAP 子命令 | `0x01` (回应准备升级) |
+| 5 | 状态 | `0x00` = 成功, 其他 = 失败 |
+| 6 | 保留 | `0x00` |
+
+#### 4.7.3 Step 2: 发送固件数据 (0xCC, 子命令 0x02)
+
+MCU 向 Qi 芯片发送 APP 固件数据，每帧最多 22 字节。
+
+**帧格式：**
+
+| 偏移 | 长度 | 字段 | 值/说明 |
+|------|------|------|--------|
+| 0-1 | 2 | 帧起始头 | `0x55 0xAA` |
+| 2 | 1 | 帧长度 | 可变 (1+2+数据长度+1) |
+| 3 | 1 | 帧命令 | `0xCC` |
+| 4 | 1 | IAP 子命令 | `0x02` (发送数据) |
+| 5 | 1 | 当前地址高字节 | Flash 写入地址 Bit[15:8] |
+| 6 | 1 | 当前地址低字节 | Flash 写入地址 Bit[7:0] |
+| 7~N | 最多22 | APP 数据 | 固件数据 |
+| N+1 | 1 | 帧校验 | 低 8 位累加和 |
+
+**示例帧 (第1包, 22字节数据)**: `55 AA 1A CC 02 00 00 [22字节数据] CS`
+
+帧长度 `0x1A` = 26 = 1(IAP子命令) + 2(地址) + 22(数据) + 1(帧流水号)
+
+**Qi 芯片应答**: `55 AA 04 CC 02 00 00 CS`
+
+| 偏移 | 字段 | 说明 |
+|------|------|------|
+| 4 | IAP 子命令 | `0x02` (回应数据接收) |
+| 5 | 状态 | `0x00` = 成功 |
+| 6 | 保留 | `0x00` |
+
+#### 4.7.4 IAP 升级流程
 
 ```
-准备升级 (0xCC/0x01) → 收到应答 →
-发送数据 (0xCC/0x02) × N 次 → 每次收到应答 →
-校验固件 (0xCC/0x03) → 复位 (0xCC/0x04)
+准备升级 (0xCC/0x01) → 收到应答 OK →
+发送数据 (0xCC/0x02) × N 次 → 每次收到应答 OK →
+全部数据发送完成
 ```
 
 **CAN MCU IAP 管理要求：**
 - 升级前确认 Qi 芯片当前不在充电状态
 - 每包数据等待应答后再发送下一包
-- 校验失败时终止升级并上报故障
-- 复位后等待 Qi 芯片重新上线
+- 传输失败时终止升级并上报故障
 
 ---
 
@@ -491,6 +577,57 @@ CCUReset → 试启动 → 确认/回滚
 | 擦除阶段 | 回滚旧镜像 |
 | 传输阶段 | 丢弃未完成数据，旧镜像启动 |
 | 试启动阶段 | 检查 trialCount，决定重试或回滚 |
+
+### 6.4 Qi 芯片 OTA (CAN-OTA 间接升级)
+
+本项目核心 OTA 链路: **Host (PC/CCU) → CAN → MCU (AT32F426) → UART → Qi 芯片**。
+
+MCU 作为 CAN 与 UART 之间的桥接中继,负责:
+1. 通过 CAN (UDS 0x34/0x36/0x37) 接收 Host 下发的 Qi 固件数据
+2. 通过 UART IAP 协议 (0xCC) 将固件转发给 Qi 芯片
+
+**Qi 芯片 OTA 升级流程:**
+
+```
+Host (PC/CCU)                 MCU (AT32F426)                Qi 芯片
+    |                              |                          |
+    |--- CAN: RequestDownload ---->|                          |
+    |<-- CAN: PositiveResp -------|                          |
+    |                              |                          |
+    |--- CAN: TransferData[0] --->|                          |
+    |                              |-- UART: IAP进入 -------->|
+    |                              |   (0xCC 0x01 + size)     |
+    |                              |<-- UART: 应答 OK --------|
+    |                              |                          |
+    |--- CAN: TransferData[1] --->|                          |
+    |                              |-- UART: 发送数据包1 ----->|
+    |                              |   (0xCC 0x02 + addr+data)|
+    |                              |<-- UART: 应答 OK --------|
+    |                              |                          |
+    |        ... (重复传输) ...     |                          |
+    |                              |                          |
+    |--- CAN: TransferExit ------->|                          |
+    |<-- CAN: PositiveResp -------|                          |
+    |                              |-- UART: IAP完成 -------->|
+    |                              |                          |
+```
+
+**CAN MCU 桥接管理要求:**
+- MCU 需缓存 CAN 收到的固件数据,按 22 字节/帧拆分后通过 UART 转发
+- 升级前确认 Qi 芯片当前不在充电状态
+- 每包 UART 数据等待应答后再发送下一包
+- UART 传输失败时通过 CAN NRC 向 Host 报错,终止升级
+- Qi 芯片 IAP 完成后,MCU 等待 Qi 芯片重新上线并验证版本号
+- 具体 UART IAP 帧格式见 4.7 节
+
+**与 CAN MCU 自身 OTA 的区别:**
+
+| 对比项 | CAN MCU 自身 OTA (6.1) | Qi 芯片 OTA (6.4) |
+|--------|------------------------|--------------------|
+| 升级目标 | AT32F426 MCU 固件 | Qi 无线充芯片固件 |
+| 传输通道 | CAN UDS 直接写入 MCU Flash | CAN → MCU 缓存 → UART 转发 |
+| 安全机制 | 双槽 A/B + 试启动 + ECDSA 签名 | 由 Qi 芯片自身保障 |
+| MCU 角色 | 升级目标 | 桥接中继 |
 
 ---
 
@@ -641,47 +778,49 @@ CCUReset → 试启动 → 确认/回滚
 
 ---
 
-## 十一、相关文件路径
+## 十二、相关文件路径
 
-> 以下路径供 OpenClaw 检索使用，文件均基于 WSL2 环境。
+> 以下路径供 OpenClaw 检索使用，文件均基于 WSL2 环境。项目根目录: `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/`
 
-### 11.1 本项目文档
+### 12.1 本项目文档
 
 | 文件 | WSL 路径 |
 |------|----------|
-| 项目需求文档 | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/项目需求文档.md` |
-| Qi 需求文档 | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/QI_Embedded_Software_Requirements_Document.md` |
-| 进度安排 | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/进度安排.md` |
-| AT32F426KBU7-4 引脚定义 | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/AT32F426KBU7-4_引脚定义.md` |
+| 项目需求文档 | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/项目需求文档.md` |
+| 数据通信协议-IAP | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/数据通信协议-IAP.md` |
+| 进度安排 | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/进度安排.md` |
+| AT32F426KBU7-4 引脚定义 | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/AT32F426KBU7-4_引脚定义.md` |
+| 无线充软件 OTA 步骤 | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/OTA资料/无线充软件OTA步骤.docx` |
 
-### 11.2 AT32 芯片资料
+### 12.2 AT32 芯片资料
 
 | 文件 | WSL 路径 |
 |------|----------|
 | AT32F422/426 寄存器手册 (Markdown) | `/home/whites/datasheet_floder/at32f422_426_register_datasheet/AT32F422_426_V2.00.md` |
 | AT32F422/426 寄存器手册图片 | `/home/whites/datasheet_floder/at32f422_426_register_datasheet/images/` |
 | AT32F422/426 规格书 (Markdown) | `/home/whites/datasheet_floder/at32f422_426_datasheet/` |
-| AT32F422/426 数据手册 PDF (中文) | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/DS_AT32F422_426_V2.01_CH.pdf` |
-| AT32F422/426 参考手册 PDF (中文) | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/RM_AT32F422_426_V2.00_ZH.pdf` |
+| AT32F422/426 数据手册 PDF (中文) | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/CAN软件资料/MCU资料/AT32F422_F426/DS_AT32F422_426_V2.00_ZH.pdf` |
 
-### 11.3 协议与规范文档
+### 12.3 协议与规范文档
 
 | 文件 | WSL 路径 |
 |------|----------|
-| 通用 CAN 协议规范 (中文翻译) | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/common_can_protocol_spec_cn_翻译0517.docx` |
-| Qi 充电器 SRS (中文翻译) | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/qi_charger_srs_cn_翻译0517.docx` |
-| 数据通信协议表 (IAP) | `/mnt/i/Outsource_Design_Workspace/Keil5 Workspace Floder/2026-07-28-基于at32的车载Qi无线充电模块的CAN通信栈设计/docs/数据通信协议表-IAP.xlsx` |
+| 通用 CAN 协议规范 (中文翻译) | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/CAN软件资料/SRS/common_can_protocol_spec_cn_翻译0517.docx` |
+| Qi 充电器 SRS (中文翻译) | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/CAN软件资料/SRS/qi_charger_srs_cn_翻译0517.docx` |
+| 数据通信协议表 (IAP) | `/home/nights/embedded_item/OTA-Upgrade-of-QI-Charger-Based-on-CAN/docs/CAN软件资料/数据通信协议表/数据通信协议表-IAP.xlsx` |
 
-### 11.4 格式化技能参考
+### 12.4 格式化技能参考
 
 | 文件 | WSL 路径 |
 |------|----------|
 | Datasheet 格式化 SKILL.md | `/home/whites/.openclaw/workspace/skills/datasheet-formatting/SKILL.md` |
 
-## 十二、变更记录
+## 十三、变更记录
 
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|----------|------|
 | V1.0 | 2026-07-26 | 初稿，基于 docs/ 下全部文件整合 | Mr.Hu |
 | V1.1 | 2026-08-10 | 新增第十一章「相关文件路径」，供 OpenClaw 检索使用 | Mr.Hu |
 | V1.2 | 2026-08-10 | 新增2.5节「CAN MCU 引脚资源分配」，整合 AT32F426KBU7-4 引脚定义；新增文件路径至11.1 | Mr.Hu |
+| V1.3 | 2026-08-14 | 基于《数据通信协议-IAP.md》修正第四章串口协议：补充帧格式表、状态位位定义；删除不存在的 IAP 子命令0x03/0x04，按协议文档重写4.7节 | Mr.Hu |
+| V1.4 | 2026-08-14 | 新增6.4节「Qi 芯片 OTA (CAN-OTA 间接升级)」,明确 Host→CAN→MCU→UART→Qi 完整升级链路；更新全部文件路径至新项目目录；修复章节编号重复 | Mr.Hu |

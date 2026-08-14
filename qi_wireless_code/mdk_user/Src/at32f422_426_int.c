@@ -25,6 +25,7 @@
 
 /* includes ------------------------------------------------------------------*/
 #include "at32f422_426_int.h"
+#include "timer_drv.h"
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -129,6 +130,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+  timer_tick_inc();
 }
 
 /**

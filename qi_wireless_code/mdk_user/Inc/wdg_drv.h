@@ -1,7 +1,7 @@
 /**
   **************************************************************************
-  * @file     main.c
-  * @brief    main program
+  * @file     wdg_drv.h
+  * @brief    IWDG (Independent Watchdog) driver header
   **************************************************************************
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
@@ -23,49 +23,39 @@
   **************************************************************************
   */
 
+/* define to prevent recursive inclusion -------------------------------------*/
+#ifndef __WDG_DRV_H
+#define __WDG_DRV_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* includes ------------------------------------------------------------------*/
-#include "at32f422_426_clock.h"
-#include "timer_drv.h"
-#include "wdg_drv.h"
+#include "at32f422_426.h"
 
-/** @addtogroup AT32F426_periph_examples
-  * @{
-  */
-
-/** @addtogroup 426_CAN_communication_mode CAN_communication_mode
-  * @{
-  */
-
-
+/* exported functions -------------------------------------------------------*/
 
 /**
-  * @brief  main function.
-  * @param  none
-  * @retval none
-  */
-int main(void)
-{
-  system_clock_config();
-  nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
+ * @brief  initialize IWDG with ~1000ms timeout
+ * @note   IWDG uses LSI clock (~40kHz). Once enabled, it cannot be disabled.
+ *         LSI = 40kHz, DIV_128 -> 312.5 Hz -> 3.2ms/tick
+ *         reload = 312 -> timeout ~ 998ms (~1000ms)
+ * @param  none
+ * @retval none
+ */
+void wdg_drv_init(void);
 
-  timer_drv_init();      /* initialize software timer (SysTick 1ms) */
-  wdg_drv_init();        /* initialize independent watchdog (~1000ms) */
+/**
+ * @brief  refresh (feed) the IWDG to prevent reset
+ * @note   must be called periodically within the watchdog timeout window
+ * @param  none
+ * @retval none
+ */
+void wdg_drv_refresh(void);
 
-  /* example: create a 100ms periodic timer (e.g. for life-cycle broadcast) */
-  /* uint8_t tmr_broadcast = timer_create(100, broadcast_callback, 1); */
-  /* timer_start(tmr_broadcast); */
-
-  while(1)
-  {
-    timer_poll();          /* software timer polling */
-    wdg_drv_refresh();     /* feed the watchdog */
-  }
+#ifdef __cplusplus
 }
+#endif
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
+#endif /* __WDG_DRV_H */
