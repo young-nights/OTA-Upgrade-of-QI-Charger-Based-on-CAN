@@ -27,7 +27,6 @@
 #include "at32f422_426_int.h"
 #include "timer_drv.h"
 #include "can_driver.h"
-#include "uart_drv.h"
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -142,7 +141,11 @@ void SysTick_Handler(void)
   */
 void USART1_IRQHandler(void)
 {
-  uart_drv_rx_irq_handler();
+  /* UART not used in bootloader, clear interrupt flag */
+  if (usart_flag_get(USART1, USART_RDBF_FLAG) != RESET)
+  {
+    usart_data_receive(USART1);
+  }
 }
 
 /**
