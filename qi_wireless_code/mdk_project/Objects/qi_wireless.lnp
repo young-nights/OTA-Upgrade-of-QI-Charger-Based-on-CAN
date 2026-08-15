@@ -27,6 +27,10 @@
 ".\objects\ota_trigger.o"
 ".\objects\timer_drv.o"
 ".\objects\wdg_drv.o"
+".\objects\gpio_drv.o"
+".\objects\nvm_drv.o"
+".\objects\uart_drv.o"
+".\objects\can_driver.o"
 --strict --scatter ".\Objects\qi_wireless.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

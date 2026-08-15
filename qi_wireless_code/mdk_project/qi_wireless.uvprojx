@@ -544,11 +544,6 @@
               <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
             </File>
             <File>
-              <FileName>test.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\test.c</FilePath>
-            </File>
-            <File>
               <FileName>gpio_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\gpio_drv.c</FilePath>
