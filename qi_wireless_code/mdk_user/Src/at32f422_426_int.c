@@ -27,7 +27,6 @@
 #include "at32f422_426_int.h"
 #include "timer_drv.h"
 #include "can_driver.h"
-#include "uart_drv.h"
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -133,16 +132,6 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   timer_tick_inc();
-}
-
-/**
-  * @brief  USART1 interrupt handler
-  * @param  none
-  * @retval none
-  */
-void USART1_IRQHandler(void)
-{
-  uart_drv_rx_irq_handler();
 }
 
 /**
