@@ -714,7 +714,7 @@ void can_rxbuf_warning_set(can_type* can_x, uint8_t warning_value)
   * @param  can_x: select the can peripheral.
   *         this parameter can be one of the following values:
   *         CAN1.
-  * @param  warning_value: programmable error warning limit = (warning_value + 1)*8. possible limit values: 8, 16, �� 128. 
+  * @param  warning_value: programmable error warning limit = (warning_value + 1)*8. possible limit values: 8, 16, §Ò§ß 128. 
   *         this parameter can be 0~15.
   * @retval none
   */
