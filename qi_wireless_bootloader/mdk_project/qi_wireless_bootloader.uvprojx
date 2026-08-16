@@ -529,11 +529,6 @@
           <GroupName>mdk_app</GroupName>
           <Files>
             <File>
-              <FileName>ota_trigger.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\ota_trigger.c</FilePath>
-            </File>
-            <File>
               <FileName>timer_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\timer_drv.c</FilePath>
@@ -544,19 +539,24 @@
               <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
             </File>
             <File>
-              <FileName>gpio_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\gpio_drv.c</FilePath>
-            </File>
-            <File>
               <FileName>nvm_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\nvm_drv.c</FilePath>
             </File>
             <File>
-              <FileName>uart_drv.c</FileName>
+              <FileName>boot_jump.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\uart_drv.c</FilePath>
+              <FilePath>..\mdk_app\Src\boot_jump.c</FilePath>
+            </File>
+            <File>
+              <FileName>boot_metadata.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\boot_metadata.c</FilePath>
+            </File>
+            <File>
+              <FileName>boot_verify.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\boot_verify.c</FilePath>
             </File>
           </Files>
         </Group>
