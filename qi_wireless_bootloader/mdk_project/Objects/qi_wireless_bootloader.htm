@@ -3,9 +3,9 @@
 <title>Static Call Graph - [.\Objects\qi_wireless_bootloader.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\qi_wireless_bootloader.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Mon Aug 17 15:03:27 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Mon Aug 17 15:33:23 2026
 <BR><P>
-<H3>Maximum Stack Usage =        544 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        552 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 safe_mode_can_rx_handler &rArr; safe_mode_send_nrc &rArr; safe_mode_send_response &rArr; can_driver_send &rArr; can_txbuf_write
 <P>
@@ -191,8 +191,8 @@ Global Symbols
 <P><STRONG><a name="[c8]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[39]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 184 + Unknown Stack Size
-<LI>Call Chain = __rt_entry_main &rArr; main &rArr; enter_safe_mode &rArr; can_driver_init &rArr; nvic_irq_enable &rArr; NVIC_EncodePriority
+<BR><BR>[Stack]<UL><LI>Max Depth = 180 + Unknown Stack Size
+<LI>Call Chain = __rt_entry_main &rArr; main &rArr; try_boot_slot &rArr; boot_metadata_save &rArr; meta_write_to_flash &rArr; meta_flash_write_word &rArr; flash_word_program &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
 <BR>[Calls]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;exit
 <LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -512,7 +512,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 <LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
+<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
 <LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -592,7 +592,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[7b]"></a>can_driver_poll</STRONG> (Thumb, 214 bytes, Stack size 32 bytes, can_driver.o(.text.can_driver_poll))
+<P><STRONG><a name="[79]"></a>can_driver_poll</STRONG> (Thumb, 214 bytes, Stack size 32 bytes, can_driver.o(.text.can_driver_poll))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = can_driver_poll
 </UL>
 <BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
@@ -718,37 +718,37 @@ Global Symbols
 <P><STRONG><a name="[97]"></a>crm_ahb_div_set</STRONG> (Thumb, 38 bytes, Stack size 4 bytes, at32f422_426_crm.o(.text.crm_ahb_div_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = crm_ahb_div_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[9a]"></a>crm_apb1_div_set</STRONG> (Thumb, 38 bytes, Stack size 4 bytes, at32f422_426_crm.o(.text.crm_apb1_div_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = crm_apb1_div_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[99]"></a>crm_apb2_div_set</STRONG> (Thumb, 38 bytes, Stack size 4 bytes, at32f422_426_crm.o(.text.crm_apb2_div_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = crm_apb2_div_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[98]"></a>crm_apb3_div_set</STRONG> (Thumb, 38 bytes, Stack size 4 bytes, at32f422_426_crm.o(.text.crm_apb3_div_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = crm_apb3_div_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[9b]"></a>crm_auto_step_mode_enable</STRONG> (Thumb, 56 bytes, Stack size 4 bytes, at32f422_426_crm.o(.text.crm_auto_step_mode_enable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = crm_auto_step_mode_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[95]"></a>crm_clock_source_enable</STRONG> (Thumb, 166 bytes, Stack size 8 bytes, at32f422_426_crm.o(.text.crm_clock_source_enable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = crm_clock_source_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[75]"></a>crm_flag_clear</STRONG> (Thumb, 272 bytes, Stack size 8 bytes, at32f422_426_crm.o(.text.crm_flag_clear))
@@ -762,7 +762,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_hext_stable_wait
 <LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[72]"></a>crm_hext_stable_wait</STRONG> (Thumb, 100 bytes, Stack size 24 bytes, at32f422_426_crm.o(.text.crm_hext_stable_wait))
@@ -770,14 +770,14 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[5c]"></a>crm_periph_clock_enable</STRONG> (Thumb, 82 bytes, Stack size 8 bytes, at32f422_426_crm.o(.text.crm_periph_clock_enable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = crm_periph_clock_enable
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[71]"></a>crm_periph_reset</STRONG> (Thumb, 82 bytes, Stack size 8 bytes, at32f422_426_crm.o(.text.crm_periph_reset))
@@ -789,22 +789,22 @@ Global Symbols
 <P><STRONG><a name="[96]"></a>crm_pll_config</STRONG> (Thumb, 484 bytes, Stack size 12 bytes, at32f422_426_crm.o(.text.crm_pll_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = crm_pll_config
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[94]"></a>crm_reset</STRONG> (Thumb, 166 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_reset))
-<BR><BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[9c]"></a>crm_sysclk_switch</STRONG> (Thumb, 70 bytes, Stack size 4 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = crm_sysclk_switch
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[9d]"></a>crm_sysclk_switch_status_get</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch_status_get))
 <BR><BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[74]"></a>detect_boot_reason</STRONG> (Thumb, 52 bytes, Stack size 16 bytes, boot_trial.o(.text.detect_boot_reason))
@@ -816,16 +816,14 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[76]"></a>enter_safe_mode</STRONG> (Thumb, 86 bytes, Stack size 16 bytes, boot_safe_mode.o(.text.enter_safe_mode))
-<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = enter_safe_mode &rArr; can_driver_init &rArr; nvic_irq_enable &rArr; NVIC_EncodePriority
+<P><STRONG><a name="[76]"></a>enter_safe_mode</STRONG> (Thumb, 46 bytes, Stack size 8 bytes, boot_safe_mode.o(.text.enter_safe_mode))
+<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = enter_safe_mode &rArr; can_driver_init &rArr; nvic_irq_enable &rArr; NVIC_EncodePriority
 </UL>
-<BR>[Calls]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
+<BR>[Calls]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_register_rx_callback
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
-<LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_poll
-<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_refresh
-<LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_start
-<LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_create
+<LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_poll
+<LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_refresh
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -834,25 +832,25 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 </UL>
 
-<P><STRONG><a name="[7e]"></a>flash_operation_status_get</STRONG> (Thumb, 104 bytes, Stack size 4 bytes, at32f422_426_flash.o(.text.flash_operation_status_get))
+<P><STRONG><a name="[7c]"></a>flash_operation_status_get</STRONG> (Thumb, 104 bytes, Stack size 4 bytes, at32f422_426_flash.o(.text.flash_operation_status_get))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = flash_operation_status_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_wait_for
+<BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_wait_for
 </UL>
 
-<P><STRONG><a name="[7d]"></a>flash_operation_wait_for</STRONG> (Thumb, 92 bytes, Stack size 24 bytes, at32f422_426_flash.o(.text.flash_operation_wait_for))
+<P><STRONG><a name="[7b]"></a>flash_operation_wait_for</STRONG> (Thumb, 92 bytes, Stack size 24 bytes, at32f422_426_flash.o(.text.flash_operation_wait_for))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
-<BR>[Calls]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_status_get
+<BR>[Calls]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_status_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<BR>[Called By]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
+<LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
 </UL>
 
-<P><STRONG><a name="[7f]"></a>flash_sector_erase</STRONG> (Thumb, 80 bytes, Stack size 24 bytes, at32f422_426_flash.o(.text.flash_sector_erase))
+<P><STRONG><a name="[7d]"></a>flash_sector_erase</STRONG> (Thumb, 80 bytes, Stack size 24 bytes, at32f422_426_flash.o(.text.flash_sector_erase))
 <BR><BR>[Stack]<UL><LI>Max Depth = 52<LI>Call Chain = flash_sector_erase &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
-<BR>[Calls]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_wait_for
+<BR>[Calls]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_wait_for
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 <LI><a href="#[89]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_flash_erase_page
@@ -862,10 +860,10 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 </UL>
 
-<P><STRONG><a name="[80]"></a>flash_word_program</STRONG> (Thumb, 68 bytes, Stack size 24 bytes, at32f422_426_flash.o(.text.flash_word_program))
+<P><STRONG><a name="[7e]"></a>flash_word_program</STRONG> (Thumb, 68 bytes, Stack size 24 bytes, at32f422_426_flash.o(.text.flash_word_program))
 <BR><BR>[Stack]<UL><LI>Max Depth = 52<LI>Call Chain = flash_word_program &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
-<BR>[Calls]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_wait_for
+<BR>[Calls]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_operation_wait_for
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 <LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_flash_write_word
@@ -890,23 +888,23 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[3a]"></a>main</STRONG> (Thumb, 292 bytes, Stack size 24 bytes, main.o(.text.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 184 + Unknown Stack Size
-<LI>Call Chain = main &rArr; enter_safe_mode &rArr; can_driver_init &rArr; nvic_irq_enable &rArr; NVIC_EncodePriority
+<BR><BR>[Stack]<UL><LI>Max Depth = 180 + Unknown Stack Size
+<LI>Call Chain = main &rArr; try_boot_slot &rArr; boot_metadata_save &rArr; meta_write_to_flash &rArr; meta_flash_write_word &rArr; flash_word_program &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
-<BR>[Calls]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
-<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_refresh
+<BR>[Calls]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
+<LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_refresh
 <LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_start
-<LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_create
-<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;select_boot_slot
+<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_start
+<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_create
+<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;select_boot_slot
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
+<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
 <LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
-<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
-<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
+<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
+<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 <BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
@@ -922,7 +920,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[82]"></a>nvic_priority_group_config</STRONG> (Thumb, 20 bytes, Stack size 16 bytes, at32f422_426_misc.o(.text.nvic_priority_group_config))
+<P><STRONG><a name="[80]"></a>nvic_priority_group_config</STRONG> (Thumb, 20 bytes, Stack size 16 bytes, at32f422_426_misc.o(.text.nvic_priority_group_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = nvic_priority_group_config &rArr; __NVIC_SetPriorityGrouping
 </UL>
 <BR>[Calls]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SetPriorityGrouping
@@ -930,7 +928,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[85]"></a>process_trial_state</STRONG> (Thumb, 202 bytes, Stack size 24 bytes, boot_trial.o(.text.process_trial_state))
+<P><STRONG><a name="[83]"></a>process_trial_state</STRONG> (Thumb, 202 bytes, Stack size 24 bytes, boot_trial.o(.text.process_trial_state))
 <BR><BR>[Stack]<UL><LI>Max Depth = 148<LI>Call Chain = process_trial_state &rArr; boot_metadata_save &rArr; meta_write_to_flash &rArr; meta_flash_write_word &rArr; flash_word_program &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
 <BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
@@ -938,13 +936,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[86]"></a>select_boot_slot</STRONG> (Thumb, 56 bytes, Stack size 12 bytes, boot_trial.o(.text.select_boot_slot))
+<P><STRONG><a name="[84]"></a>select_boot_slot</STRONG> (Thumb, 56 bytes, Stack size 12 bytes, boot_trial.o(.text.select_boot_slot))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = select_boot_slot
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[81]"></a>system_clock_config</STRONG> (Thumb, 170 bytes, Stack size 24 bytes, at32f422_426_clock.o(.text.system_clock_config))
+<P><STRONG><a name="[7f]"></a>system_clock_config</STRONG> (Thumb, 170 bytes, Stack size 24 bytes, at32f422_426_clock.o(.text.system_clock_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = system_clock_config &rArr; system_core_clock_update &rArr; __aeabi_uldivmod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_auto_step_mode_enable
@@ -971,17 +969,16 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch_status_get
 <LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uldivmod
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[78]"></a>timer_create</STRONG> (Thumb, 190 bytes, Stack size 16 bytes, timer_drv.o(.text.timer_create))
+<P><STRONG><a name="[85]"></a>timer_create</STRONG> (Thumb, 176 bytes, Stack size 16 bytes, timer_drv.o(.text.timer_create))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = timer_create
 </UL>
-<BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
-<LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[83]"></a>timer_drv_init</STRONG> (Thumb, 148 bytes, Stack size 16 bytes, timer_drv.o(.text.timer_drv_init))
+<P><STRONG><a name="[81]"></a>timer_drv_init</STRONG> (Thumb, 136 bytes, Stack size 16 bytes, timer_drv.o(.text.timer_drv_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = timer_drv_init &rArr; SysTick_Config &rArr; __NVIC_SetPriority
 </UL>
 <BR>[Calls]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysTick_Config
@@ -989,17 +986,16 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[7a]"></a>timer_poll</STRONG> (Thumb, 182 bytes, Stack size 16 bytes, timer_drv.o(.text.timer_poll))
+<P><STRONG><a name="[78]"></a>timer_poll</STRONG> (Thumb, 182 bytes, Stack size 16 bytes, timer_drv.o(.text.timer_poll))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = timer_poll
 </UL>
 <BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[79]"></a>timer_start</STRONG> (Thumb, 76 bytes, Stack size 4 bytes, timer_drv.o(.text.timer_start))
+<P><STRONG><a name="[86]"></a>timer_start</STRONG> (Thumb, 76 bytes, Stack size 4 bytes, timer_drv.o(.text.timer_start))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = timer_start
 </UL>
-<BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
-<LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[4c]"></a>timer_tick_inc</STRONG> (Thumb, 144 bytes, Stack size 4 bytes, timer_drv.o(.text.timer_tick_inc))
@@ -1035,7 +1031,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[22]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USART1_IRQHandler
 </UL>
 
-<P><STRONG><a name="[84]"></a>wdg_drv_init</STRONG> (Thumb, 38 bytes, Stack size 8 bytes, wdg_drv.o(.text.wdg_drv_init))
+<P><STRONG><a name="[82]"></a>wdg_drv_init</STRONG> (Thumb, 38 bytes, Stack size 8 bytes, wdg_drv.o(.text.wdg_drv_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = wdg_drv_init &rArr; wdt_register_write_enable
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdt_register_write_enable
@@ -1047,7 +1043,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[7c]"></a>wdg_drv_refresh</STRONG> (Thumb, 8 bytes, Stack size 8 bytes, wdg_drv.o(.text.wdg_drv_refresh))
+<P><STRONG><a name="[7a]"></a>wdg_drv_refresh</STRONG> (Thumb, 8 bytes, Stack size 8 bytes, wdg_drv.o(.text.wdg_drv_refresh))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = wdg_drv_refresh
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdt_counter_reload
@@ -1057,30 +1053,30 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[a7]"></a>wdt_counter_reload</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, at32f422_426_wdt.o(.text.wdt_counter_reload))
-<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_refresh
-<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
+<BR><BR>[Called By]<UL><LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_refresh
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
 </UL>
 
 <P><STRONG><a name="[a4]"></a>wdt_divider_set</STRONG> (Thumb, 30 bytes, Stack size 4 bytes, at32f422_426_wdt.o(.text.wdt_divider_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = wdt_divider_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
+<BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
 </UL>
 
 <P><STRONG><a name="[a6]"></a>wdt_enable</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, at32f422_426_wdt.o(.text.wdt_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
+<BR><BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
 </UL>
 
 <P><STRONG><a name="[a3]"></a>wdt_register_write_enable</STRONG> (Thumb, 48 bytes, Stack size 4 bytes, at32f422_426_wdt.o(.text.wdt_register_write_enable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = wdt_register_write_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
+<BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
 </UL>
 
 <P><STRONG><a name="[a5]"></a>wdt_reload_value_set</STRONG> (Thumb, 24 bytes, Stack size 4 bytes, at32f422_426_wdt.o(.text.wdt_reload_value_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = wdt_reload_value_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
+<BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wdg_drv_init
 </UL>
 
 <P><STRONG><a name="[34]"></a>_fp_init</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, fpinit.o(x$fpl$fpinit))
@@ -1119,7 +1115,7 @@ Local Symbols
 <P><STRONG><a name="[8f]"></a>__NVIC_SetPriorityGrouping</STRONG> (Thumb, 60 bytes, Stack size 12 bytes, at32f422_426_misc.o(.text.__NVIC_SetPriorityGrouping))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = __NVIC_SetPriorityGrouping
 </UL>
-<BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
+<BR>[Called By]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
 </UL>
 
 <P><STRONG><a name="[4a]"></a>SysTick_Config</STRONG> (Thumb, 82 bytes, Stack size 16 bytes, timer_drv.o(.text.SysTick_Config))
@@ -1127,7 +1123,7 @@ Local Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SetPriority
 </UL>
-<BR>[Called By]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
+<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
 </UL>
 
 <P><STRONG><a name="[4b]"></a>__NVIC_SetPriority</STRONG> (Thumb, 66 bytes, Stack size 8 bytes, timer_drv.o(.text.__NVIC_SetPriority))
@@ -1165,7 +1161,7 @@ Local Symbols
 <P><STRONG><a name="[89]"></a>meta_flash_erase_page</STRONG> (Thumb, 50 bytes, Stack size 24 bytes, boot_metadata.o(.text.meta_flash_erase_page))
 <BR><BR>[Stack]<UL><LI>Max Depth = 76<LI>Call Chain = meta_flash_erase_page &rArr; flash_sector_erase &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
-<BR>[Calls]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<BR>[Calls]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
 </UL>
 <BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
@@ -1173,16 +1169,16 @@ Local Symbols
 <P><STRONG><a name="[8a]"></a>meta_flash_write_word</STRONG> (Thumb, 54 bytes, Stack size 24 bytes, boot_metadata.o(.text.meta_flash_write_word))
 <BR><BR>[Stack]<UL><LI>Max Depth = 76<LI>Call Chain = meta_flash_write_word &rArr; flash_word_program &rArr; flash_operation_wait_for &rArr; flash_operation_status_get
 </UL>
-<BR>[Calls]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
+<BR>[Calls]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
 </UL>
 <BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
 
-<P><STRONG><a name="[2d]"></a>safe_mode_can_rx_handler</STRONG> (Thumb, 1124 bytes, Stack size 344 bytes, boot_safe_mode.o(.text.safe_mode_can_rx_handler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 544<LI>Call Chain = safe_mode_can_rx_handler &rArr; safe_mode_send_nrc &rArr; safe_mode_send_response &rArr; can_driver_send &rArr; can_txbuf_write
+<P><STRONG><a name="[2d]"></a>safe_mode_can_rx_handler</STRONG> (Thumb, 1126 bytes, Stack size 352 bytes, boot_safe_mode.o(.text.safe_mode_can_rx_handler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 552<LI>Call Chain = safe_mode_can_rx_handler &rArr; safe_mode_send_nrc &rArr; safe_mode_send_response &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
-<BR>[Calls]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<BR>[Calls]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
+<LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
 <LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
 <LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset4

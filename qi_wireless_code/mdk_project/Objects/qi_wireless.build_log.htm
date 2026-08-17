@@ -17,7 +17,7 @@ Library Manager: ArmAr.exe V6.19
 Hex Converter:   FromElf.exe V6.19
 CPU DLL:         SARMCM3.DLL V5.38.0.0
 Dialog DLL:      DCM.DLL V1.17.5.0
-Target DLL:      UL2CM3.DLL V1.164.8.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.1.0.0
 Dialog DLL:      TCM.DLL V1.56.4.0
  
 <h2>Project:</h2>
@@ -26,139 +26,42 @@ Project File Date:  08/17/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V6.19', folder: 'D:\Keil_v5\ARM\ARMCLANG\Bin'
-Build target 'Target 1'
-compiling at32f422_426_crc.c...
+Rebuild target 'Target 1'
 compiling system_at32f422_426.c...
-compiling at32f422_426_i2c.c...
-compiling at32f422_426_can.c...
-compiling at32f422_426_gpio.c...
-compiling at32f422_426_flash.c...
-compiling at32f422_426_dma.c...
-compiling at32f422_426_cmp.c...
 compiling at32f422_426_adc.c...
+compiling at32f422_426_scfg.c...
+compiling at32f422_426_can.c...
+compiling at32f422_426_debug.c...
+compiling at32f422_426_gpio.c...
+compiling at32f422_426_cmp.c...
+assembling startup_at32f422_426.s...
+compiling at32f422_426_i2c.c...
+compiling at32f422_426_crc.c...
+compiling at32f422_426_crm.c...
+compiling at32f422_426_flash.c...
 compiling at32f422_426_misc.c...
+compiling at32f422_426_exint.c...
+compiling at32f422_426_dma.c...
 compiling at32f422_426_pwc.c...
 compiling at32f422_426_spi.c...
-compiling at32f422_426_exint.c...
 compiling at32f422_426_ertc.c...
-compiling at32f422_426_scfg.c...
-compiling at32f422_426_debug.c...
-compiling at32f422_426_usart.c...
-compiling at32f422_426_crm.c...
 compiling at32f422_426_tmr.c...
-compiling at32f422_426_wwdt.c...
+compiling at32f422_426_usart.c...
 compiling at32f422_426_wdt.c...
 compiling at32f422_426_clock.c...
+compiling at32f422_426_wwdt.c...
 compiling at32f422_426_int.c...
-compiling main.c...
-../mdk_app/Src/ota_trigger.c(234): warning: code will never be executed [-Wunreachable-code]
-  while (1)
-         ^
-1 warning generated.
-compiling ota_trigger.c...
-compiling can_protocol.c...
-../mdk_app/Src/qi_uart.c(52): error: expected ';' after expression
-  usart_init_type usart_init_struct;
-                 ^
-                 ;
-../mdk_app/Src/qi_uart.c(52): error: use of undeclared identifier 'usart_init_type'; did you mean 'usart_init'?
-  usart_init_type usart_init_struct;
-  ^~~~~~~~~~~~~~~
-  usart_init
-../libraries/drivers/inc\at32f422_426_usart.h(397): note: 'usart_init' declared here
-void usart_init(usart_type* usart_x, uint32_t baud_rate, usart_data_bit_num_type data_bit, usart_stop_bit_num_type stop_bit);
-     ^
-../mdk_app/Src/qi_uart.c(52): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_type usart_init_struct;
-                  ^~~~~~~~~~~~~~~~~
-                  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(79): error: call to undeclared function 'usart_default_para_init'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
-  usart_default_para_init(&usart_init_struct);
-  ^
-../mdk_app/Src/qi_uart.c(79): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_default_para_init(&usart_init_struct);
-                           ^~~~~~~~~~~~~~~~~
-                           gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(80): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_struct.baudrate_param           = QI_UART_BAUDRATE;
-  ^~~~~~~~~~~~~~~~~
-  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(80): error: no member named 'baudrate_param' in 'gpio_init_type'
-  usart_init_struct.baudrate_param           = QI_UART_BAUDRATE;
-  ~~~~~~~~~~~~~~~~~ ^
-../mdk_app/Src/qi_uart.c(81): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_struct.data_bits                = USART_DATA_8BITS;
-  ^~~~~~~~~~~~~~~~~
-  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(81): error: no member named 'data_bits' in 'gpio_init_type'
-  usart_init_struct.data_bits                = USART_DATA_8BITS;
-  ~~~~~~~~~~~~~~~~~ ^
-../mdk_app/Src/qi_uart.c(82): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_struct.stop_bits                = USART_STOP_1_BIT;
-  ^~~~~~~~~~~~~~~~~
-  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(82): error: no member named 'stop_bits' in 'gpio_init_type'
-  usart_init_struct.stop_bits                = USART_STOP_1_BIT;
-  ~~~~~~~~~~~~~~~~~ ^
-../mdk_app/Src/qi_uart.c(83): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_struct.parity                   = USART_PARITY_NONE;
-  ^~~~~~~~~~~~~~~~~
-  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(83): error: no member named 'parity' in 'gpio_init_type'
-  usart_init_struct.parity                   = USART_PARITY_NONE;
-  ~~~~~~~~~~~~~~~~~ ^
-../mdk_app/Src/qi_uart.c(84): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_struct.flow_control             = USART_FLOW_CONTROL_NONE;
-  ^~~~~~~~~~~~~~~~~
-  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(84): error: no member named 'flow_control' in 'gpio_init_type'
-  usart_init_struct.flow_control             = USART_FLOW_CONTROL_NONE;
-  ~~~~~~~~~~~~~~~~~ ^
-../mdk_app/Src/qi_uart.c(84): error: use of undeclared identifier 'USART_FLOW_CONTROL_NONE'
-  usart_init_struct.flow_control             = USART_FLOW_CONTROL_NONE;
-                                               ^
-../mdk_app/Src/qi_uart.c(85): error: use of undeclared identifier 'usart_init_struct'; did you mean 'gpio_init_struct'?
-  usart_init_struct.mode                     = USART_MODE_TX_RX;
-  ^~~~~~~~~~~~~~~~~
-  gpio_init_struct
-../mdk_app/Src/qi_uart.c(51): note: 'gpio_init_struct' declared here
-  gpio_init_type gpio_init_struct;
-                 ^
-../mdk_app/Src/qi_uart.c(85): error: no member named 'mode' in 'gpio_init_type'
-  usart_init_struct.mode                     = USART_MODE_TX_RX;
-  ~~~~~~~~~~~~~~~~~ ^
-../mdk_app/Src/qi_uart.c(85): error: use of undeclared identifier 'USART_MODE_TX_RX'
-  usart_init_struct.mode                     = USART_MODE_TX_RX;
-                                               ^
-fatal error: too many errors emitted, stopping now [-ferror-limit=]
-20 errors generated.
 compiling qi_uart.c...
+compiling main.c...
+compiling can_protocol.c...
+compiling ota_trigger.c...
 compiling timer_drv.c...
-compiling wdg_drv.c...
 compiling nvm_drv.c...
+compiling wdg_drv.c...
 compiling can_driver.c...
-".\Objects\qi_wireless.axf" - 19 Error(s), 1 Warning(s).
+linking...
+Program Size: Code=13254 RO-data=322 RW-data=8 ZI-data=2240  
+".\Objects\qi_wireless.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -171,7 +74,6 @@ Package Vendor: ArteryTek
   D:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include
 
 <h2>Collection of Component Files used:</h2>
-Target not created.
 Build Time Elapsed:  00:00:02
 </pre>
 </body>

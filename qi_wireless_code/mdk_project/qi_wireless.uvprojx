@@ -133,11 +133,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>-1</DriverSelection>
+            <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -251,7 +251,7 @@
               <IROM>
                 <Type>1</Type>
                 <StartAddress>0x8004100</StartAddress>
-                <Size>0xBF00</Size>
+                <Size>0xbf00</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -275,8 +275,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8000000</StartAddress>
-                <Size>0x20000</Size>
+                <StartAddress>0x8004100</StartAddress>
+                <Size>0xbf00</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
