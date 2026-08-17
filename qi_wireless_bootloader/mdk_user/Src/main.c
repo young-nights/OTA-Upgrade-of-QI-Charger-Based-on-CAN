@@ -71,6 +71,18 @@ int main(void)
   /* step 5: process trial boot state machine */
   process_trial_state(&g_meta);
 
+  /* step 5.5: check if OTA download was requested by APP */
+  if (g_meta.ota_state == OTA_STATE_DOWNLOADING)
+  {
+    /* clear the OTA state so we don't loop */
+    g_meta.ota_state = OTA_STATE_IDLE;
+    boot_metadata_save(&g_meta);
+
+    /* enter safe mode to receive firmware via CAN */
+    enter_safe_mode();
+    /* does not return */
+  }
+
   /* step 6: select boot slot */
   if (select_boot_slot(&g_meta, &boot_slot) != 0)
   {
