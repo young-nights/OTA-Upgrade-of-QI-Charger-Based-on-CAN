@@ -52,9 +52,22 @@
 #define UDS_NEGATIVE_RESPONSE       0x7FU
 #define UDS_SERVICE_NOT_SUPPORTED   0x11U
 #define UDS_POSITIVE_RESPONSE_OFFSET 0x40U
+#define UDS_GENERAL_PROGRAMMING_FAIL 0x72U
+#define UDS_REQUEST_OUT_OF_RANGE     0x31U
+#define UDS_TRANSFER_DATA_ABORTED    0x71U
+#define UDS_UPLOAD_DOWNLOAD_NOT_ACCEPTED 0x70U
 
 /** @brief  trial boot timer period (1 second) */
 #define TRIAL_TIMER_PERIOD_MS       1000U
+
+/** @brief  flash sector size for AT32F426 */
+#define FLASH_SECTOR_SIZE           0x800U       /*!< 2KB per sector */
+
+/** @brief  maximum image size (APP_A - header) */
+#define MAX_IMAGE_SIZE              (APP_A_SIZE - IMAGE_HEADER_SIZE)
+
+/** @brief  UDS TransferData max data payload per frame (8 - SID - blockSeq) */
+#define UDS_TRANSFER_MAX_PAYLOAD    6U
 
 /* private variables ---------------------------------------------------------*/
 
@@ -69,6 +82,12 @@ static volatile uint8_t g_trial_timer_flag = 0;
 
 /** @brief  safe mode flag */
 static uint8_t g_safe_mode = 0;
+
+/** @brief  OTA download state */
+static uint32_t g_dl_write_addr    = 0;  /*!< current flash write address */
+static uint32_t g_dl_bytes_written = 0;  /*!< total bytes written */
+static uint8_t  g_dl_active        = 0;  /*!< download in progress flag */
+static uint8_t  g_dl_block_seq     = 0;  /*!< expected block sequence counter */
 
 /* private functions ---------------------------------------------------------*/
 
@@ -246,27 +265,182 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       break;
 
     case UDS_REQUEST_DOWNLOAD:
-      /* RequestDownload: acknowledge (actual flash write handled by transfer) */
+    {
+      uint32_t sector_addr;
+      uint8_t erase_err = 0;
+
+      /* erase APP_A flash area (all sectors) */
+      flash_unlock();
+      for (sector_addr = APP_A_BASE_ADDR;
+           sector_addr < (APP_A_BASE_ADDR + APP_A_SIZE);
+           sector_addr += FLASH_SECTOR_SIZE)
+      {
+        if (flash_sector_erase(sector_addr) != FLASH_OPERATE_DONE)
+        {
+          erase_err = 1;
+          break;
+        }
+      }
+      flash_lock();
+
+      if (erase_err)
+      {
+        safe_mode_send_nrc(service_id, UDS_GENERAL_PROGRAMMING_FAIL);
+        break;
+      }
+
+      /* initialize download state */
+      g_dl_write_addr    = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
+      g_dl_bytes_written = 0;
+      g_dl_block_seq     = 0;
+      g_dl_active        = 1;
+
+      /* positive response: SID + lengthFormatIdentifier + maxBlockLength */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      resp[1] = 0x20;  /* lengthFormatIdentifier */
+      resp[1] = 0x20;  /* lengthFormatIdentifier: 2 bytes for max block length */
       resp[2] = 0x00;
-      resp[3] = 0x00;
-      resp[4] = 0x10;
+      resp[3] = (uint8_t)((MAX_IMAGE_SIZE >> 8) & 0xFFU);
+      resp[4] = (uint8_t)(MAX_IMAGE_SIZE & 0xFFU);
       safe_mode_send_response(resp, 5);
       break;
+    }
 
     case UDS_TRANSFER_DATA:
-      /* TransferData: acknowledge data block */
+    {
+      uint8_t block_seq;
+      uint8_t data_len;
+      uint8_t i;
+      flash_status_type flash_status;
+
+      /* check if download is active */
+      if (!g_dl_active)
+      {
+        safe_mode_send_nrc(service_id, UDS_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      /* validate minimum frame length: SID + blockSeq + at least 1 data byte */
+      if (len < 3U)
+      {
+        safe_mode_send_nrc(service_id, UDS_REQUEST_OUT_OF_RANGE);
+        break;
+      }
+
+      block_seq = data[1];
+
+      /* verify block sequence counter */
+      g_dl_block_seq++;
+      if (block_seq != g_dl_block_seq)
+      {
+        /* sequence error: abort download */
+        g_dl_active = 0;
+        safe_mode_send_nrc(service_id, UDS_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      /* calculate actual data length (frame length minus SID and blockSeq) */
+      data_len = len - 2U;
+
+      /* check bounds */
+      if ((g_dl_bytes_written + (uint32_t)data_len) > MAX_IMAGE_SIZE)
+      {
+        g_dl_active = 0;
+        safe_mode_send_nrc(service_id, UDS_REQUEST_OUT_OF_RANGE);
+        break;
+      }
+
+      /* write data to flash */
+      flash_unlock();
+      for (i = 0; i < data_len; i += 4U)
+      {
+        uint32_t word_data = 0xFFFFFFFFU;
+        uint8_t  remaining = data_len - i;
+        uint8_t  copy_len  = (remaining > 4U) ? 4U : remaining;
+        uint8_t  k;
+
+        /* pack up to 4 bytes into a word (little-endian) */
+        for (k = 0; k < copy_len; k++)
+        {
+          word_data &= ~((uint32_t)0xFFU << (k * 8U));
+          word_data |= ((uint32_t)data[2U + i + k] << (k * 8U));
+        }
+
+        flash_status = flash_word_program(g_dl_write_addr + (uint32_t)i, word_data);
+        if (flash_status != FLASH_OPERATE_DONE)
+        {
+          flash_lock();
+          g_dl_active = 0;
+          safe_mode_send_nrc(service_id, UDS_GENERAL_PROGRAMMING_FAIL);
+          break;
+        }
+      }
+      flash_lock();
+
+      if (!g_dl_active)
+      {
+        break;  /* flash write failed above */
+      }
+
+      /* advance write pointer and byte counter */
+      g_dl_write_addr    += (uint32_t)data_len;
+      g_dl_bytes_written += (uint32_t)data_len;
+
+      /* positive response */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      resp[1] = data[1];  /* blockSequenceCounter */
+      resp[1] = block_seq;
       safe_mode_send_response(resp, 2);
       break;
+    }
 
     case UDS_REQUEST_TRANSFER_EXIT:
-      /* RequestTransferExit: acknowledge */
+    {
+      uint32_t computed_crc;
+      uint32_t image_data_addr;
+      uint32_t sector_addr;
+      image_header_t header;
+      const uint32_t *hdr_words;
+      uint32_t hdr_word_count;
+      uint32_t w;
+
+      if (!g_dl_active)
+      {
+        safe_mode_send_nrc(service_id, UDS_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      /* mark download as complete */
+      g_dl_active = 0;
+
+      /* compute CRC32 of the downloaded image data */
+      image_data_addr = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
+      computed_crc = boot_crc32((const void *)image_data_addr, g_dl_bytes_written);
+
+      /* prepare image header */
+      memset((void *)&header, 0xFF, sizeof(image_header_t));
+      header.magic        = IMAGE_MAGIC;
+      header.image_length = g_dl_bytes_written;
+      header.crc32        = computed_crc;
+
+      /* write image header to flash at APP_A_BASE_ADDR */
+      flash_unlock();
+      hdr_words     = (const uint32_t *)&header;
+      hdr_word_count = sizeof(image_header_t) / sizeof(uint32_t);
+      for (w = 0; w < hdr_word_count; w++)
+      {
+        flash_word_program(APP_A_BASE_ADDR + (w * 4U), hdr_words[w]);
+      }
+      flash_lock();
+
+      /* update metadata: mark slot A as valid with correct CRC */
+      g_meta.slot_a_valid = 1;
+      g_meta.slot_a_crc32 = computed_crc;
+      boot_metadata_save(&g_meta);
+
+      /* positive response */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       safe_mode_send_response(resp, 1);
       break;
+    }
 
     case UDS_ECU_RESET:
       /* ECUReset: acknowledge then reset via watchdog */
@@ -405,6 +579,18 @@ int main(void)
 
   /* step 5: process trial boot state machine */
   process_trial_state(&g_meta);
+
+  /* step 5.5: check if OTA download was requested by APP */
+  if (g_meta.ota_state == OTA_STATE_DOWNLOADING)
+  {
+    /* clear the OTA state so we don't loop */
+    g_meta.ota_state = OTA_STATE_IDLE;
+    boot_metadata_save(&g_meta);
+
+    /* enter safe mode to receive firmware via CAN */
+    enter_safe_mode();
+    /* does not return */
+  }
 
   /* step 6: select boot slot */
   if (select_boot_slot(&g_meta, &boot_slot) != 0)

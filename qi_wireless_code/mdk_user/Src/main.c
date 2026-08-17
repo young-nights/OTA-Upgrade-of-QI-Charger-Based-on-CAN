@@ -29,7 +29,10 @@
 #include "timer_drv.h"
 #include "wdg_drv.h"
 #include "can_driver.h"
+#include "can_protocol.h"
+#include "ota_trigger.h"
 #include "nvm_drv.h"
+#include "qi_uart.h"
 #include <string.h>
 
 /* private define ------------------------------------------------------------*/
@@ -37,43 +40,11 @@
 /** @brief  APP base address (set by bootloader before jump) */
 #define APP_BASE_ADDR           0x08004000U
 
-/** @brief  OTA metadata addresses (shared with bootloader) */
-#define META_PRIMARY_ADDR       0x0801C000U
-#define META_MAGIC              0x4F54414DU   /* "MATO" */
+
 
 /** @brief  OTA metadata trial states */
 #define TRIAL_STATE_ACTIVE      2U
 #define TRIAL_STATE_CONFIRMED   3U
-
-/* private types -------------------------------------------------------------*/
-
-/**
- * @brief  minimal OTA metadata structure (must match bootloader definition)
- * @note   only the fields needed by APP are included
- */
-typedef struct
-{
-  uint32_t magic;              /* 0x4F54414D "MATO" */
-  uint32_t version;            /* metadata format version = 1 */
-  uint8_t  active_slot;        /* 0=A, 1=B */
-  uint8_t  pending_slot;       /* 0=A, 1=B, 0xFE=none */
-  uint8_t  slot_a_valid;
-  uint8_t  slot_b_valid;
-  uint32_t slot_a_crc32;
-  uint32_t slot_b_crc32;
-  uint8_t  trial_state;        /* 0=IDLE, 1=PENDING, 2=ACTIVE, 3=CONFIRMED */
-  uint8_t  trial_slot;
-  uint8_t  trial_retry_count;
-  uint8_t  trial_max_retries;
-  uint16_t trial_timeout_sec;
-  uint16_t reserved1;
-  uint32_t rollback_count;
-  uint8_t  last_boot_reason;
-  uint8_t  ota_state;
-  uint8_t  reserved2[2];
-  uint8_t  padding[488];       /* fill to 512 bytes */
-  uint32_t crc32;
-} ota_metadata_t;
 
 /* private variables ---------------------------------------------------------*/
 
@@ -106,48 +77,21 @@ static void broadcast_timer_callback(void)
 static void ota_confirm_if_needed(void)
 {
   ota_metadata_t meta;
-  uint32_t *src;
-  uint32_t *dst;
-  uint32_t i;
-  uint32_t word_count = sizeof(ota_metadata_t) / 4;
 
-  /* read metadata from primary location */
-  src = (uint32_t *)META_PRIMARY_ADDR;
-  dst = (uint32_t *)&meta;
-  for (i = 0; i < word_count; i++)
+  /* read metadata from flash */
+  if (ota_metadata_read(&meta) != 0)
   {
-    dst[i] = src[i];
+    return;  /* invalid metadata, nothing to confirm */
   }
 
   /* check if we are in active trial */
-  if (meta.magic == META_MAGIC && meta.trial_state == TRIAL_STATE_ACTIVE)
+  if (meta.trial_state == TRIAL_STATE_ACTIVE)
   {
     /* confirm the image */
     meta.trial_state = TRIAL_STATE_CONFIRMED;
 
-    /* save back to flash (both primary and backup) */
-    flash_unlock();
-
-    /* erase primary metadata page */
-    flash_sector_erase(META_PRIMARY_ADDR);
-
-    /* write confirmed metadata to primary */
-    src = (uint32_t *)&meta;
-    for (i = 0; i < word_count; i++)
-    {
-      flash_word_program(META_PRIMARY_ADDR + (i * 4), src[i]);
-    }
-
-    /* erase backup metadata page */
-    flash_sector_erase(META_PRIMARY_ADDR + 0x2000U);
-
-    /* write confirmed metadata to backup */
-    for (i = 0; i < word_count; i++)
-    {
-      flash_word_program(META_PRIMARY_ADDR + 0x2000U + (i * 4), src[i]);
-    }
-
-    flash_lock();
+    /* save to primary flash */
+    ota_metadata_save(&meta);
   }
 }
 
@@ -189,9 +133,13 @@ int main(void)
   wdg_drv_init();
   nvm_drv_init();
   can_driver_init();
+  qi_uart_init();
 
   /* confirm trial boot image if needed (must be after flash init) */
   ota_confirm_if_needed();
+
+  /* initialize CAN protocol module (registers UDS handler) */
+  can_protocol_init();
 
   /* create 100ms periodic broadcast timer */
   g_broadcast_timer_id = timer_create(100, broadcast_timer_callback, 1);
@@ -206,6 +154,9 @@ int main(void)
     /* poll software timers */
     timer_poll();
 
+    /* poll CAN for received frames (triggers protocol handler callbacks) */
+    can_driver_poll();
+
     /* feed watchdog */
     wdg_drv_refresh();
 
@@ -216,7 +167,6 @@ int main(void)
       send_broadcast();
     }
 
-    /* TODO: poll CAN for UDS requests */
     /* TODO: poll UART for Qi chip data */
     /* TODO: run charging state machine */
   }

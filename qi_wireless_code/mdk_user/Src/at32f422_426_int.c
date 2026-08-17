@@ -27,6 +27,7 @@
 #include "at32f422_426_int.h"
 #include "timer_drv.h"
 #include "can_driver.h"
+#include "qi_uart.h"
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -152,6 +153,16 @@ void CAN1_RX_IRQHandler(void)
 void CAN1_ERR_IRQHandler(void)
 {
   can_driver_err_irq_handler();
+}
+
+/**
+ * @brief  USART2 interrupt function (Qi UART RX)
+ * @param  none
+ * @retval none
+ */
+void USART2_IRQHandler(void)
+{
+  qi_uart_rx_irq_handler();
 }
 
 /**
