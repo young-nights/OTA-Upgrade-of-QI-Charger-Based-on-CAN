@@ -523,16 +523,26 @@
               <FileType>1</FileType>
               <FilePath>..\mdk_user\Src\main.c</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>mdk_app</GroupName>
-          <Files>
+            <File>
+              <FileName>qi_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\qi_uart.c</FilePath>
+            </File>
             <File>
               <FileName>ota_trigger.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\ota_trigger.c</FilePath>
             </File>
+            <File>
+              <FileName>can_protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\can_protocol.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>mdk_app</GroupName>
+          <Files>
             <File>
               <FileName>timer_drv.c</FileName>
               <FileType>1</FileType>
@@ -544,19 +554,9 @@
               <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
             </File>
             <File>
-              <FileName>gpio_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\gpio_drv.c</FilePath>
-            </File>
-            <File>
               <FileName>nvm_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\nvm_drv.c</FilePath>
-            </File>
-            <File>
-              <FileName>uart_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\uart_drv.c</FilePath>
             </File>
           </Files>
         </Group>
