@@ -54,7 +54,7 @@ typedef struct
   uint8_t  signature[64];      /*!< ECDSA P-256 R||S signature (placeholder) */
   char     version[16];        /*!< "MAJOR.MINOR.PATCH\0" */
   uint32_t build_timestamp;    /*!< Unix timestamp of build */
-  uint8_t  reserved[156];      /*!< padding to 256 bytes */
+  uint8_t  reserved[160];      /*!< padding to 256 bytes */
 } image_header_t;
 
 /* exported functions -------------------------------------------------------*/

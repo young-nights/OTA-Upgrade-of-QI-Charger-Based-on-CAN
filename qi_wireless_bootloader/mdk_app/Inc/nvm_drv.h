@@ -40,6 +40,9 @@ extern "C" {
  * @brief  NVM configuration area layout
  * @note   AT32F426 with 128KB Flash uses 2KB sectors
  *         config area: 0x0801_E000 ~ 0x0801_FFFF (last 8KB = 4 sectors)
+ *         WARNING: This area overlaps with META_BACKUP_ADDR (0x0801E000).
+ *         boot_metadata_save() only writes to META_PRIMARY_ADDR to avoid conflict.
+ *         Do NOT use backup metadata area without redesigning the memory layout.
  */
 #define NVM_CONFIG_BASE_ADDR            0x0801E000U  /*!< config area start address */
 #define NVM_CONFIG_END_ADDR             0x0801FFFFU  /*!< config area end address */

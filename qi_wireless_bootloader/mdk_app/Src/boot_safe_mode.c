@@ -4,6 +4,10 @@
   * @brief    Safe mode implementation: UDS OTA download via CAN
   **************************************************************************
   *
+  * @note    Current implementation supports single-frame UDS only (8 bytes per CAN frame).
+  *          For 48KB firmware, ~8192 frames are needed. ISO-TP multi-frame support
+  *          can be added in a future version for improved throughput.
+  *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
   *
   * The software Board Support Package (BSP) that is made available to
@@ -162,6 +166,8 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       g_dl_block_seq     = 0;
       g_dl_active        = 1;
 
+      /* maxNumberOfBlockLength = maximum firmware size (not per-frame size).
+       * actual per-frame payload is limited to 6 bytes (8-byte CAN - SID - blockSeq). */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       resp[1] = 0x20;
       resp[2] = 0x00;
@@ -320,20 +326,11 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
  */
 void enter_safe_mode(void)
 {
-  uint8_t tmr_id;
-
   g_safe_mode = 1;
 
   /* initialize CAN for safe mode communication */
   can_driver_init();
   can_driver_register_rx_callback(safe_mode_can_rx_handler);
-
-  /* create a periodic timer for safe mode housekeeping (optional) */
-  tmr_id = timer_create(500, (void (*)(void))0, 1);
-  if (tmr_id != TIMER_INVALID_ID)
-  {
-    timer_start(tmr_id);
-  }
 
   /* safe mode event loop */
   while (1)

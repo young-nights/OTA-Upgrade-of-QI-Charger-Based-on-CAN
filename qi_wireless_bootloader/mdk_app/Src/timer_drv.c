@@ -48,7 +48,6 @@ typedef struct
 /* private variables ---------------------------------------------------------*/
 static volatile uint32_t sys_tick_ms = 0;               /*!< system tick counter in ms */
 static timer_ctrl_t      timer_pool[TIMER_DRV_MAX_TIMERS]; /*!< static timer pool */
-static uint8_t           timer_count = 0;                /*!< number of created timers */
 
 /* exported functions --------------------------------------------------------*/
 
@@ -73,8 +72,6 @@ void timer_drv_init(void)
     timer_pool[i].period      = 0;
     timer_pool[i].callback    = (void (*)(void))0;
   }
-
-  timer_count = 0;
 
   /* configure SysTick to generate 1ms interrupt using CMSIS standard API */
   SysTick_Config(system_core_clock / 1000);
@@ -108,7 +105,6 @@ uint8_t timer_create(uint32_t period_ms, void (*cb)(void), uint8_t auto_reload)
       timer_pool[id].period      = period_ms;
       timer_pool[id].callback    = cb;
 
-      timer_count++;
       return id;
     }
   }

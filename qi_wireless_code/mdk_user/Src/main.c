@@ -157,6 +157,9 @@ int main(void)
     /* poll CAN for received frames (triggers protocol handler callbacks) */
     can_driver_poll();
 
+    /* poll Qi UART for chip data */
+    qi_uart_poll();
+
     /* feed watchdog */
     wdg_drv_refresh();
 

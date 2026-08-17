@@ -114,6 +114,11 @@ static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       {
         proto_send_response(resp, 1);
       }
+      /* small delay to ensure CAN response is transmitted before reset */
+      {
+        volatile uint32_t d;
+        for (d = 0; d < 36000; d++) { __NOP(); }  /* ~2ms at 180MHz */
+      }
       /* trigger OTA mode: sets metadata flag and resets */
       ota_trigger_request();
       /* does not return */
@@ -128,6 +133,11 @@ static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       resp[3] = 0x00;
       resp[4] = 0x10;
       proto_send_response(resp, 5);
+      /* small delay to ensure CAN response is transmitted before reset */
+      {
+        volatile uint32_t d;
+        for (d = 0; d < 36000; d++) { __NOP(); }  /* ~2ms at 180MHz */
+      }
       /* trigger OTA mode: sets metadata flag and resets */
       ota_trigger_request();
       /* does not return */
