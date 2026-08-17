@@ -202,7 +202,7 @@ uint32_t boot_crc32(const void *data, uint32_t length)
 /**
  * @brief  initialize metadata module, load and validate metadata
  * @note   tries primary first, then backup. if both invalid, uses defaults
- *         and writes defaults to both areas.
+ *         and writes defaults to primary area.
  * @param  meta: pointer to metadata structure to fill
  * @retval 0 on success (valid metadata loaded), -1 on failure (defaults used)
  */
@@ -238,7 +238,9 @@ int8_t boot_metadata_init(ota_metadata_t *meta)
 }
 
 /**
- * @brief  save metadata to both primary and backup Flash areas
+ * @brief  save metadata to primary Flash area
+ * @note   only writes to META_PRIMARY_ADDR to avoid overwriting NVM config
+ *         at META_BACKUP_ADDR (0x0801E000). Consistent with APP ota_metadata_save().
  * @param  meta: pointer to metadata structure to save
  * @retval 0 on success, -1 on Flash write error
  */
@@ -247,13 +249,7 @@ int8_t boot_metadata_save(ota_metadata_t *meta)
   /* compute CRC32 before saving */
   meta->crc32 = boot_crc32((const void *)meta, META_CRC32_OFFSET);
 
-  /* write to backup first (safer: if primary write fails, backup is still good) */
-  if (meta_write_to_flash(META_BACKUP_ADDR, meta) != 0)
-  {
-    return -1;
-  }
-
-  /* write to primary */
+  /* write to primary only (skip backup to preserve NVM config area) */
   if (meta_write_to_flash(META_PRIMARY_ADDR, meta) != 0)
   {
     return -1;
