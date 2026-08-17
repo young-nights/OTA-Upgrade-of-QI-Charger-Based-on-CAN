@@ -229,9 +229,4 @@ void ota_trigger_request(void)
 
   /* perform system reset - bootloader will enter safe mode for download */
   NVIC_SystemReset();
-
-  /* should never reach here */
-  while (1)
-  {
-  }
 }

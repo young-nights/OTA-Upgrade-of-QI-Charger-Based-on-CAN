@@ -49,7 +49,6 @@ static volatile qi_uart_rx_callback_t rx_callback = (qi_uart_rx_callback_t)0;
 void qi_uart_init(void)
 {
   gpio_init_type gpio_init_struct;
-  usart_init_type usart_init_struct;
 
   /* enable peripheral clocks */
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
@@ -76,14 +75,12 @@ void qi_uart_init(void)
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE3, GPIO_MUX_7);
 
   /* configure USART2: 9600 baud, 8N1 */
-  usart_default_para_init(&usart_init_struct);
-  usart_init_struct.baudrate_param           = QI_UART_BAUDRATE;
-  usart_init_struct.data_bits                = USART_DATA_8BITS;
-  usart_init_struct.stop_bits                = USART_STOP_1_BIT;
-  usart_init_struct.parity                   = USART_PARITY_NONE;
-  usart_init_struct.flow_control             = USART_FLOW_CONTROL_NONE;
-  usart_init_struct.mode                     = USART_MODE_TX_RX;
-  usart_init(USART2, &usart_init_struct);
+  usart_init(USART2, QI_UART_BAUDRATE, USART_DATA_8BITS, USART_STOP_1_BIT);
+  usart_parity_selection_config(USART2, USART_PARITY_NONE);
+
+  /* enable transmitter and receiver */
+  usart_transmitter_enable(USART2, TRUE);
+  usart_receiver_enable(USART2, TRUE);
 
   /* enable RX interrupt (RXNE) */
   usart_interrupt_enable(USART2, USART_RDBF_INT, TRUE);
