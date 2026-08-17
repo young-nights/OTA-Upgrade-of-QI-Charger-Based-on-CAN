@@ -30,6 +30,8 @@
 ".\objects\boot_jump.o"
 ".\objects\boot_metadata.o"
 ".\objects\boot_verify.o"
+".\objects\boot_safe_mode.o"
+".\objects\boot_trial.o"
 ".\objects\can_driver.o"
 --strict --scatter ".\Objects\qi_wireless_bootloader.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
