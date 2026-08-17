@@ -232,7 +232,6 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         flash_status = flash_word_program(g_dl_write_addr + (uint32_t)i, word_data);
         if (flash_status != FLASH_OPERATE_DONE)
         {
-          flash_lock();
           g_dl_active = 0;
           safe_mode_send_nrc(service_id, 0x72U);  /* generalProgrammingFailure */
           break;
@@ -312,6 +311,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       {
         /* wait for watchdog reset */
       }
+      break;  /* unreachable, suppresses fall-through warning */
 
     default:
       /* unsupported service */
