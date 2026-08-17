@@ -207,9 +207,9 @@ void qi_uart_rx_irq_handler(void)
     }
 
     /* clear overrun flag if set */
-    if (usart_flag_get(USART2, USART_RORE_FLAG) != RESET)
+    if (usart_flag_get(USART2, USART_ROERR_FLAG) != RESET)
     {
-      usart_flag_clear(USART2, USART_RORE_FLAG);
+      usart_flag_clear(USART2, USART_ROERR_FLAG);
     }
   }
 }
