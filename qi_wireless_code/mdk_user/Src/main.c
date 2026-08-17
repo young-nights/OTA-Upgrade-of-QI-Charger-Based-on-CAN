@@ -37,8 +37,14 @@
 
 /* private define ------------------------------------------------------------*/
 
-/** @brief  APP base address (set by bootloader before jump) */
+/** @brief  APP base address (start of slot A region in flash) */
 #define APP_BASE_ADDR           0x08004000U
+
+/** @brief  Image header size written by bootloader before firmware data.
+ *          The actual APP code starts at APP_BASE_ADDR + IMAGE_HEADER_SIZE,
+ *          which is also where the bootloader sets the jump target.
+ *          VTOR must point to the real vector table at that offset. */
+#define IMAGE_HEADER_SIZE       256U
 
 
 
@@ -121,8 +127,9 @@ static void send_broadcast(void)
  */
 int main(void)
 {
-  /* set vector table to APP base address */
-  SCB->VTOR = APP_BASE_ADDR;
+  /* set vector table to real code start (skip image header written by bootloader).
+   * NOTE: Keil IROM start must also be set to 0x08004100 in the project options. */
+  SCB->VTOR = APP_BASE_ADDR + IMAGE_HEADER_SIZE;
 
   /* configure system clock to 180MHz */
   system_clock_config();

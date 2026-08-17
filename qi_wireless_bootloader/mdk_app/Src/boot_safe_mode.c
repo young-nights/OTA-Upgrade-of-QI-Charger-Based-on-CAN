@@ -214,7 +214,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         break;
       }
 
-      /* write data to flash */
+      /* write data to flash (4-byte aligned, unused bytes in last word remain 0xFF) */
       flash_unlock();
       for (i = 0; i < data_len; i += 4U)
       {
@@ -288,9 +288,14 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       flash_lock();
 
       /* update metadata to mark slot A as valid */
-      g_meta.slot_a_valid = 1;
-      g_meta.slot_a_crc32 = computed_crc;
-      g_meta.ota_state    = OTA_STATE_IDLE;
+      g_meta.slot_a_valid  = 1;
+      g_meta.slot_a_crc32  = computed_crc;
+      g_meta.ota_state     = OTA_STATE_IDLE;
+
+      /* set trial boot so bootloader will roll back if APP fails to confirm */
+      g_meta.trial_state   = TRIAL_STATE_PENDING;
+      g_meta.trial_slot    = SLOT_A;
+
       boot_metadata_save(&g_meta);
 
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
