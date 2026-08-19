@@ -52,6 +52,23 @@ void trial_timer_callback(void)
 {
   g_trial_elapsed_sec++;
   g_trial_timer_flag = 1;
+
+  /* Check if trial has timed out */
+  if (g_meta.trial_state == TRIAL_STATE_ACTIVE &&
+      g_trial_elapsed_sec >= (uint32_t)g_meta.trial_timeout_sec)
+  {
+    /* Timeout: increment retry count and rollback to previous slot */
+    g_meta.trial_retry_count++;
+    g_meta.trial_state = TRIAL_STATE_IDLE;
+    g_meta.active_slot = (g_meta.trial_slot == SLOT_A) ? SLOT_B : SLOT_A;
+    boot_metadata_save(&g_meta);
+
+    /* Force watchdog reset to apply rollback */
+    while (1)
+    {
+      /* wait for watchdog reset */
+    }
+  }
 }
 
 /* exported functions --------------------------------------------------------*/
@@ -89,6 +106,11 @@ int8_t select_boot_slot(const ota_metadata_t *meta, uint8_t *slot)
     *slot = meta->trial_slot;
     return 0;
   }
+
+  /* NOTE: TRIAL_STATE_PENDING is the only state that routes to a specific trial slot.
+   * All other states (IDLE, ACTIVE, CONFIRMED) fall through to the active slot below.
+   * This means ACTIVE and CONFIRMED states are handled by the default active_slot path,
+   * which is correct: the trial slot IS the active slot once the trial is activated. */
 
   /* use the active slot */
   *slot = meta->active_slot;

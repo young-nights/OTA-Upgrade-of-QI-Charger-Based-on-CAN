@@ -245,7 +245,7 @@ int main(void) {
 | 复位/启动 | 2 | Pin4 (NRST), Pin31 (BOOT0) | 复位 + 启动选择 |
 | CAN 通信 | 2 | Pin21 (PA11/CAN_RX), Pin22 (PA12/CAN_TX) | 内置 CAN 控制器 |
 | SPI (CAN FD 收发器) | 4 | Pin10 (PA4/CS), Pin11 (PA5/SCK), Pin12 (PA6/MISO), Pin13 (PA7/MOSI) | SIT1145AQT SPI 接口 |
-| Debug 串口（预留） | 2 | Pin29 (PB6/TX), Pin30 (PB7/RX) | 当前未使用 |
+| UART1 (CAN MCU↔Qi 芯片) | 2 | Pin29 (PB6/TX), Pin30 (PB7/RX) | 115200bps 串口 |
 | UART2 (Qi 芯片通信) | 2 | Pin8 (PA2/TX), Pin9 (PA3/RX) | 9600 8N1 串口 |
 | 传感器/控制 | 3 | Pin6 (PA0/HALL), Pin15 (PB1/12V_EN), Pin16 (PB2/5V_EN) | 霍尔检测 + 电源使能 |
 | 调试接口 (SWD) | 2 | Pin23 (PA13/SWDIO), Pin24 (PA14/SWCLK) | SWD 烧录 |
@@ -260,7 +260,7 @@ int main(void) {
 | PA0 (Pin6) | HALL 霍尔检测 | ADC1_IN0, WKUP1 | 兼做唤醒源 |
 | PA11/PA12 (Pin21/22) | CAN_RX/TX | — | CAN 控制器固定引脚 |
 | PA4~PA7 (Pin10~13) | SPI1_CS/SCK/MISO/MOSI | I2S1, TMR3/TMR4 | CAN FD 收发器专用 |
-| PB6/PB7 (Pin29/30) | USART1_TX/RX | I2C1_SCL/SDA | Debug 调试串口（预留） |
+| PB6/PB7 (Pin29/30) | USART1_TX/RX | I2C1_SCL/SDA | 与 Qi 芯片通信 |
 | PA2/PA3 (Pin8/9) | USART2_TX/RX | — | Qi 芯片串口 |
 
 ---
@@ -916,4 +916,3 @@ CCU (Host)                MCU (AT32F426)              Qi 芯片
 | V1.5 | 2026-08-14 | AT32 取消自身 OTA，明确为 CAN-UART 通讯桥梁角色；删除双槽 Flash 布局（1.4简化为单应用区）、OTA 管理模块（6.1~6.3删除）、OTA 相关 DID（0x2112~0x2116删除）；软件架构中 OTA/启动管理替换为 CAN-UART 桥接管理 | Mr.Hu |
 | V1.6 | 2026-08-15 | **MCU 恢复自身 OTA 能力**：基于 SRS 规范重新规划双槽 A/B 布局（1.4）；新增 6.1 MCU 自身 OTA 升级章节；6.2 改为 Qi 芯片实时中继模式；恢复 OTA 相关 DID（0x2112~0x2116）及新增 0x2117/0x2118；软件架构新增 Bootloader 层和 OTA 确认模块；UDS 0x34/0x36/0x37 安全等级改为 Level 1 并覆盖 MCU OTA；新增文件路径引用 | Mr.Hu |
 | V1.7 | 2026-08-17 | **基于实际代码状态更新**：3.4 UDS 服务集标注实际实现状态（✅/⚠️/⬜）；6.1 MCU OTA 升级流程与 workflow-detail.md 对齐（删除未实现的 0x2E/0x31 步骤，补充实际代码流程时序图）；修复串口波特率（115200→9600，与代码一致）；新增待定事项 OI-06/011/012/013（Trial 触发链路/链接地址/active_slot 写回/ISO-TP）；参考文档新增 REF-09~16 交叉引用 | Mr.Hu |
-| V1.8 | 2026-08-19 | 修正 PB6/PB7 引脚定义：2.5节引脚资源汇总表中 UART1 改为 Debug 串口（预留，当前未使用）；关键引脚复用说明表中 PB6/PB7 用途改为 Debug 调试串口（预留） | Mr.Hu |

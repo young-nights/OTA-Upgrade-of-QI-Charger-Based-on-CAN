@@ -89,7 +89,7 @@ typedef struct
   uint8_t  last_boot_reason;    /*!< boot reason code */
   uint8_t  ota_state;           /*!< 0x00=idle, 0x01=downloading */
   uint8_t  reserved2[2];        /*!< reserved */
-  uint8_t  padding[488];        /*!< padding to 512 bytes */
+  uint8_t  padding[472];        /*!< padding to 512 bytes */
   uint32_t crc32;               /*!< CRC32 of all above fields */
 } ota_metadata_t;
 

@@ -253,7 +253,10 @@ void can_driver_poll(void)
 
   while (rx_fifo_count > 0)
   {
-    /* copy frame from FIFO (atomic read of volatile struct) */
+    /* disable IRQ to protect the entire FIFO read+advance sequence from ISR race */
+    __disable_irq();
+
+    /* copy frame from FIFO */
     frame.id  = rx_fifo[rx_fifo_tail].id;
     frame.len = rx_fifo[rx_fifo_tail].len;
     {
@@ -264,12 +267,10 @@ void can_driver_poll(void)
       }
     }
 
-    /* advance tail pointer */
+    /* advance tail pointer and decrement count */
     rx_fifo_tail = (rx_fifo_tail + 1) % CAN_DRIVER_RX_FIFO_SIZE;
-
-    /* decrement count (main context only reader, safe without lock) */
-    __disable_irq();
     rx_fifo_count--;
+
     __enable_irq();
 
     /* invoke callback */

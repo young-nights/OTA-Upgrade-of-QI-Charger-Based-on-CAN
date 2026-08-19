@@ -147,6 +147,8 @@ void can_driver_init(void)
 
 /**
  * @brief  transmit a CAN extended frame
+ * @note   NOT thread-safe - call only from main loop context.
+ *         Do not call from ISR or multiple threads without external locking.
  * @param  id:   29-bit extended identifier
  * @param  data: pointer to transmit data buffer
  * @param  len:  data length (0~8)

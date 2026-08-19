@@ -35,6 +35,8 @@
 #include "can_driver.h"
 #include "timer_drv.h"
 #include "wdg_drv.h"
+#include "uECC.h"
+#include "sha256.h"
 #include <string.h>
 
 /* private define ------------------------------------------------------------*/
@@ -53,7 +55,15 @@
 
 /** @brief  UDS negative response code */
 #define UDS_NEGATIVE_RESPONSE       0x7FU
-#define UDS_SERVICE_NOT_SUPPORTED   0x11U
+#define UDS_NRC_SERVICE_NOT_SUPPORTED   0x11U
+#define UDS_NRC_SUBFUNCTION_NOT_SUPPORTED 0x12U
+#define UDS_NRC_INCORRECT_MSG_LENGTH  0x13U
+#define UDS_NRC_RESPONSE_TOO_LONG     0x14U
+#define UDS_NRC_TRANSFER_DATA_ABORTED 0x71U
+#define UDS_NRC_GENERAL_PROGRAMMING_FAILURE 0x72U
+#define UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS 0x35U
+#define UDS_NRC_REQUIRED_TIME_DELAY_NOT_EXPIRED 0x37U
+#define UDS_NRC_SECURITY_ACCESS_DENIED 0x33U
 #define UDS_POSITIVE_RESPONSE_OFFSET 0x40U
 
 /* private variables ---------------------------------------------------------*/
@@ -70,7 +80,90 @@ static uint8_t  g_dl_active        = 0;
 /** @brief  maximum image size (APP_A size minus header) */
 #define MAX_IMAGE_SIZE    (APP_A_SIZE - IMAGE_HEADER_SIZE)
 
+/** @brief  security access state */
+static uint8_t  g_security_unlocked = 0;
+static uint8_t  g_seed_generated = 0;
+static uint8_t  g_seed[4];
+static uint8_t  g_seed_sub = 0;
+static uint8_t  g_security_fail_count = 0;
+static uint32_t g_security_lockout_until_ms = 0;
+
+/** @brief  security access lockout: 60 seconds */
+#define SECURITY_LOCKOUT_MS  60000U
+
+/** @brief  maximum consecutive security access failures before lockout */
+#define SECURITY_MAX_FAILURES 3U
+
 /* private functions ---------------------------------------------------------*/
+
+/**
+ * @brief  generate a pseudo-random 32-bit seed using SysTick and LFSR
+ * @retval 32-bit pseudo-random value
+ */
+static uint32_t generate_random_seed(void)
+{
+  static uint32_t lfsr = 0x12345678U;
+  uint32_t tick = timer_get_tick();
+  uint32_t bit;
+
+  /* XOR tick into LFSR state for entropy */
+  lfsr ^= tick;
+
+  /* 32-bit maximal-length LFSR (taps at bits 31, 21, 1, 0) */
+  bit = ((lfsr >> 0) ^ (lfsr >> 1) ^ (lfsr >> 21) ^ (lfsr >> 31)) & 1U;
+  lfsr = (lfsr >> 1) | (bit << 31);
+
+  /* additional mixing with current tick */
+  lfsr ^= (tick << 7) ^ (tick >> 13);
+
+  return lfsr;
+}
+
+/**
+ * @brief  verify security access key derived from seed
+ * @note   Computes expected key from seed using a deterministic derivation,
+ *         then compares with the host-provided key.
+ *         For full ECDSA-based security, this should verify an ECDSA signature
+ *         over the seed using the pre-provisioned public key. This requires
+ *         ISO-TP multi-frame support (signature is 64 bytes, single frame is 8).
+ * @param  key: pointer to 4-byte key from host
+ * @retval 1 if key is valid, 0 if invalid
+ */
+static uint8_t verify_security_key(const uint8_t *key)
+{
+  uint32_t expected;
+  uint32_t received;
+  uint32_t s;
+
+  /* Derive expected key from stored seed using a mixing function.
+   * In production, replace with ECDSA verify: hash(seed) + signature.
+   * The 64-byte ECDSA signature requires ISO-TP multi-frame support. */
+  s = ((uint32_t)g_seed[0] << 24) |
+      ((uint32_t)g_seed[1] << 16) |
+      ((uint32_t)g_seed[2] << 8)  |
+      (uint32_t)g_seed[3];
+
+  /* mixing function: multiply, XOR-shift, multiply again */
+  expected = s * 0x45D9F3BU;
+  expected ^= expected >> 16;
+  expected *= 0x45D9F3BU;
+
+  received = ((uint32_t)key[0] << 24) |
+             ((uint32_t)key[1] << 16) |
+             ((uint32_t)key[2] << 8)  |
+             (uint32_t)key[3];
+
+  return (expected == received) ? 1U : 0U;
+}
+
+/**
+ * @brief  update security lockout timer (call from safe mode main loop)
+ * @retval none
+ */
+static void safe_mode_update_security_timer(void)
+{
+  /* lockout expires when system tick reaches the deadline */
+}
 
 /**
  * @brief  send a CAN response frame
@@ -129,16 +222,122 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       break;
 
     case UDS_SECURITY_ACCESS:
-      /* SecurityAccess: accept any seed/key for bootloader (simplified) */
-      resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      resp[1] = data[1];
-      safe_mode_send_response(resp, 2);
+    {
+      uint8_t sub_func;
+
+      if (len < 2U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      sub_func = data[1];
+
+      if (sub_func == 0x01U)
+      {
+        /* Sub-function 0x01: Request Seed */
+        uint32_t now_ms;
+
+        /* check security lockout */
+        now_ms = timer_get_tick();
+        if (g_security_fail_count >= SECURITY_MAX_FAILURES)
+        {
+          if ((int32_t)(now_ms - g_security_lockout_until_ms) < 0)
+          {
+            /* still in lockout period */
+            safe_mode_send_nrc(service_id, UDS_NRC_REQUIRED_TIME_DELAY_NOT_EXPIRED);
+            break;
+          }
+          /* lockout expired, reset failure counter */
+          g_security_fail_count = 0;
+        }
+
+        /* generate random 4-byte seed */
+        {
+          uint32_t seed_val = generate_random_seed();
+          g_seed[0] = (uint8_t)((seed_val >> 24) & 0xFFU);
+          g_seed[1] = (uint8_t)((seed_val >> 16) & 0xFFU);
+          g_seed[2] = (uint8_t)((seed_val >> 8) & 0xFFU);
+          g_seed[3] = (uint8_t)(seed_val & 0xFFU);
+        }
+        g_seed_generated = 1;
+        g_seed_sub = sub_func;
+
+        /* positive response: SID + sub + seed */
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = sub_func;
+        resp[2] = g_seed[0];
+        resp[3] = g_seed[1];
+        resp[4] = g_seed[2];
+        resp[5] = g_seed[3];
+        safe_mode_send_response(resp, 6);
+      }
+      else if (sub_func == 0x02U)
+      {
+        /* Sub-function 0x02: Send Key */
+        if (!g_seed_generated || g_seed_sub != 0x01U)
+        {
+          /* no seed was requested first */
+          safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+          break;
+        }
+
+        if (len < 6U)
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+          g_seed_generated = 0;
+          break;
+        }
+
+        /* verify the key (bytes 2..5 of request) */
+        if (verify_security_key(&data[2]))
+        {
+          /* key valid: unlock security */
+          g_security_unlocked = 1;
+          g_security_fail_count = 0;
+          g_seed_generated = 0;
+
+          resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+          resp[1] = sub_func;
+          safe_mode_send_response(resp, 2);
+        }
+        else
+        {
+          /* key invalid: increment failure counter */
+          g_security_fail_count++;
+          g_seed_generated = 0;
+
+          if (g_security_fail_count >= SECURITY_MAX_FAILURES)
+          {
+            /* enter lockout period */
+            g_security_lockout_until_ms = timer_get_tick() + SECURITY_LOCKOUT_MS;
+            safe_mode_send_nrc(service_id, UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS);
+          }
+          else
+          {
+            safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
+          }
+        }
+      }
+      else
+      {
+        /* unsupported sub-function */
+        safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+      }
       break;
+    }
 
     case UDS_REQUEST_DOWNLOAD:
     {
       uint32_t sector_addr;
       uint8_t erase_err = 0;
+
+      /* security gate: require SecurityAccess (0x27) to be unlocked */
+      if (!g_security_unlocked)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
+        break;
+      }
 
       /* erase APP_A flash area */
       flash_unlock();
@@ -186,13 +385,20 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
       if (!g_dl_active)
       {
-        safe_mode_send_nrc(service_id, 0x71U);  /* transferDataAborted */
+        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      /* security gate */
+      if (!g_security_unlocked)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
         break;
       }
 
       if (len < 3U)
       {
-        safe_mode_send_nrc(service_id, 0x13U);  /* incorrectMessageLengthOrInvalidFormat */
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
         break;
       }
 
@@ -210,7 +416,15 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       if ((g_dl_bytes_written + (uint32_t)data_len) > MAX_IMAGE_SIZE)
       {
         g_dl_active = 0;
-        safe_mode_send_nrc(service_id, 0x14U);  /* responseTooLong */
+        safe_mode_send_nrc(service_id, UDS_NRC_RESPONSE_TOO_LONG);
+        break;
+      }
+
+      /* check 4-byte alignment of write address */
+      if ((g_dl_write_addr & 0x03U) != 0U)
+      {
+        g_dl_active = 0;
+        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
         break;
       }
 
@@ -233,7 +447,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         if (flash_status != FLASH_OPERATE_DONE)
         {
           g_dl_active = 0;
-          safe_mode_send_nrc(service_id, 0x72U);  /* generalProgrammingFailure */
+          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
           break;
         }
       }
@@ -261,7 +475,14 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
       if (!g_dl_active)
       {
-        safe_mode_send_nrc(service_id, 0x71U);
+        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      /* security gate */
+      if (!g_security_unlocked)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
         break;
       }
 
@@ -286,10 +507,24 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       }
       flash_lock();
 
+      /* readback verification: ensure header was written correctly */
+      for (w = 0; w < hdr_word_count; w++)
+      {
+        uint32_t readback = *(volatile uint32_t *)(APP_A_BASE_ADDR + (w * 4U));
+        if (readback != hdr_words[w])
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+          return;
+        }
+      }
+
       /* update metadata to mark slot A as valid */
       g_meta.slot_a_valid  = 1;
       g_meta.slot_a_crc32  = computed_crc;
       g_meta.ota_state     = OTA_STATE_IDLE;
+
+      /* switch active slot to the newly downloaded slot A */
+      g_meta.active_slot   = SLOT_A;
 
       /* set trial boot so bootloader will roll back if APP fails to confirm */
       g_meta.trial_state   = TRIAL_STATE_PENDING;
@@ -315,7 +550,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
     default:
       /* unsupported service */
-      safe_mode_send_nrc(service_id, UDS_SERVICE_NOT_SUPPORTED);
+      safe_mode_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
       break;
   }
 }
@@ -343,5 +578,6 @@ void enter_safe_mode(void)
     timer_poll();
     can_driver_poll();
     wdg_drv_refresh();
+    safe_mode_update_security_timer();
   }
 }

@@ -26,6 +26,8 @@
 /* includes ------------------------------------------------------------------*/
 #include "boot_verify.h"
 #include "boot_metadata.h"
+#include "uECC.h"
+#include "sha256.h"
 
 /* exported functions --------------------------------------------------------*/
 
@@ -80,8 +82,29 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
     return -1;
   }
 
-  /* TODO: ECDSA P-256 signature verification (placeholder) */
-  /* signature verification will be added in a future version */
+  /* check 4: ECDSA P-256 signature verification */
+  {
+    const uint8_t *public_key;
+    uint8_t image_hash[32];
+    int verify_result;
+
+    /* read the pre-provisioned public key from Bootloader read-only flash area */
+    public_key = (const uint8_t *)BOOT_ECDSA_PUBLIC_KEY_ADDR;
+
+    /* compute SHA-256 hash of the image data (excluding header) */
+    sha256_hash(image_data, header->image_length, image_hash);
+
+    /* verify ECDSA P-256 signature
+     * public_key : 65-byte uncompressed SEC1 point (04 || x || y)
+     * image_hash : 32-byte SHA-256 digest
+     * signature  : 64-byte IEEE P1363 (R || S, each 32 bytes) */
+    verify_result = uECC_verify(public_key, image_hash, header->signature);
+
+    if (verify_result != 1)
+    {
+      return -1;
+    }
+  }
 
   return 0;
 }

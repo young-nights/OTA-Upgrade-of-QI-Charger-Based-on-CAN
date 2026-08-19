@@ -41,7 +41,7 @@
 | Flash | 128 KB（0x08000000 ~ 0x0801FFFF） |
 | SRAM | 20 KB（0x20000000 ~ 0x20004FFF） |
 | 外设库 | 标准外设库 SPL（`at32f422_426_*`），**非 HAL** |
-| 通信外设 | CAN1（PA11=RX / PA12=TX，扩展帧，250 kbps）、USART2（Qi 芯片通信，9600 8N1）、USART1（PB6=TX / PB7=RX，Debug 调试串口，预留未使用） |
+| 通信外设 | CAN1（PA11=RX / PA12=TX，扩展帧，250 kbps）、USART2（Qi 芯片通信，9600 8N1） |
 | 看门狗 | IWDG 独立看门狗（LSI ~40 kHz，~1 s 超时） |
 
 ### 1.3 软件架构
@@ -1146,7 +1146,6 @@ NRC   [0x7F, 0x37, 0x71]
 | `CAN1_RX_IRQHandler` | (1, 0) | `can_driver_rx_irq_handler()` | 读硬件 RX 缓冲 → 软件 FIFO |
 | `CAN1_ERR_IRQHandler` | (2, 0) | `can_driver_err_irq_handler()` | 总线错误/离线恢复 |
 | `USART2_IRQHandler` | (3, 0) | `qi_uart_rx_irq_handler()` | Qi UART 接收字节入 FIFO |
-| `USART1_IRQn` | — | 当前未使用 | Debug 调试串口（PB6=TX / PB7=RX），预留 |
 | `NMI_Handler` / `SVC_Handler` / `DebugMon_Handler` / `PendSV_Handler` | - | 空实现 | - |
 | `HardFault_Handler` / `MemManage_Handler` / `BusFault_Handler` / `UsageFault_Handler` | - | `while(1)` | 异常死循环（可配合调试器/看门狗恢复） |
 
@@ -1335,10 +1334,11 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
 
 以下为基于当前仓库源码的事实性观察，供后续开发/评审参考：
 
-1. **Trial Boot 触发链路已修复**：Safe Mode `0x37`（RequestTransferExit）处理中
-   已写入 `trial_state = TRIAL_STATE_PENDING`、`trial_slot = SLOT_A` 以及
-   `active_slot = SLOT_A`，确保下载完成后 Bootloader 下次启动时进入
-   PENDING→ACTIVE 试运行流程。
+1. **Trial Boot 触发链路未完全接通**：源码中没有任何路径主动将
+   `trial_state` 置为 `TRIAL_STATE_PENDING`。状态机的 PENDING→ACTIVE→CONFIRMED/
+   ROLLBACK 框架、APP 侧确认（`ota_confirm_if_needed`）均已实现，但“下载完成后
+   置 PENDING 再复位”的触发步骤在 Safe Mode 的 `0x37` 处理中未写入
+   （`0x37` 直接置 `slot_a_valid=1` 并保持 `ota_state=IDLE`）。
 
 2. **Trial 超时计数未消费**：`trial_timer_callback()` 每秒递增
    `g_trial_elapsed_sec` 并置 `g_trial_timer_flag`，但当前可见代码中没有逻辑
@@ -1365,18 +1365,14 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
    固定发送 4 字节载荷**（8 字节 CAN 帧中 `[SID, seq, d0, d1, d2, d3]`），
    或将代码改为按 4 字节对齐地址推进。
 
-6. **0x37 active_slot 写回已修复**：`0x37` 处理中已显式设置
-   `g_meta.active_slot = SLOT_A`，与 `trial_state = TRIAL_STATE_PENDING`
-   配合，确保下载新固件后 Bootloader 必定从 A 槽启动试运行。
+6. **0x37 未写回 active_slot**：下载完成后仅置 `slot_a_valid=1`，未把
+   `active_slot` 切换为 SLOT_A（也未写 pending/trial 字段）。若下载前
+   `active_slot` 为 B，则复位后会继续启动 B 槽旧固件。当前单槽下载场景
+   无影响，双槽切换场景需补充。
 
-7. **ECDSA P-256 签名验证已集成**：`boot_verify_image()` 已完成
-   micro-ecc（secp256r1）验签集成。验证流程：SHA-256(image_data) →
-   `uECC_verify(public_key, hash, signature)`。公钥为 65 字节非压缩 SEC1 点，
-   存储于 Bootloader 只读区 `0x08003C00`（`BOOT_ECDSA_PUBLIC_KEY_ADDR`），
-   量产时通过 SWD 烧录。签名格式为 IEEE P1363（R‖S，各 32 字节），
-   存储于 `image_header_t.signature[64]`。验签失败返回 -1，镜像不予启动。
-   SHA-256 使用软件实现（~1.5 KB Flash），micro-ecc P-256 验签约 ~5 KB Flash。
-   **注意**：当前公钥为占位值，量产前必须替换为真实密钥对的公钥。
+7. **ECDSA 签名验证为占位**：`image_header_t.signature[64]` 与
+   `boot_verify_image()` 中的签名校验均未实现（TODO），当前仅
+   magic + length + CRC32 防护。
 
 8. **Qi 协议解析层未实现**：`qi_uart.c` 已完成 USART2 收发与 FIFO，但
    Qi 芯片命令/响应协议、充电状态机、FOD 等均为 TODO；当前广播字节 1-7 全 0。

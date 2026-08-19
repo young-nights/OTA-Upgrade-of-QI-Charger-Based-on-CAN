@@ -39,8 +39,8 @@
 | 26 | I/O | PB3 | PB3 | CAN FD 收发器时悬空，设为输出低电平 |
 | 27 | I/O | PB4 | NC | 未使用，设为输出低电平 |
 | 28 | I/O | PB5 | NC | 未使用，设为输出低电平 |
-| 29 | I/O | PB6 | DEBUG_TX | Debug 调试串口 TX（预留，当前未使用） |
-| 30 | I/O | PB7 | DEBUG_RX | Debug 调试串口 RX（预留，当前未使用） |
+| 29 | I/O | PB6 | USART1_TX | CAN MCU 与无线充芯片串口 TX |
+| 30 | I/O | PB7 | USART1_RX | CAN MCU 与无线充芯片串口 RX |
 | 31 | I | BOOT0 / PF11 | BOOT0 | BOOT 启动选择引脚 |
 | 32 | I/O | PB8 | NC | 未使用，设为输出低电平 |
 | — | — | EPAD (VSS/VSSA) | GND | 数字地 / 模拟地 |
@@ -92,21 +92,12 @@
 | 8 | PA2 | USART2_TX | 与无线充芯片串口通信 TX |
 | 9 | PA3 | USART2_RX | 与无线充芯片串口通信 RX |
 
-<<<<<<< Updated upstream
-#### USART1 —  MCU 的调试串口
+#### USART1 — CAN MCU 与无线充芯片通信
 
 | 引脚 | 名称 | 设计定义 | 说明 |
 |:----:|------|----------|------|
-| 29 | PB6 | USART1_TX | MCU Debug TX |
-| 30 | PB7 | USART1_RX | MCU Debug RX |
-=======
-#### USART1 — Debug 调试串口（预留）
-
-| 引脚 | 名称 | 设计定义 | 说明 |
-|:----:|------|----------|------|
-| 29 | PB6 | DEBUG_TX | Debug 调试串口 TX（预留，当前未使用） |
-| 30 | PB7 | DEBUG_RX | Debug 调试串口 RX（预留，当前未使用） |
->>>>>>> Stashed changes
+| 29 | PB6 | USART1_TX | CAN MCU  TX |
+| 30 | PB7 | USART1_RX | CAN MCU  RX |
 
 ### 传感器与控制
 
@@ -187,4 +178,3 @@
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|----------|------|
 | V1.0 | 2026-08-10 | 初稿，基于 MCU引脚定义说明20260729.xlsx 生成 | Mr.Hu |
-| V1.1 | 2026-08-19 | 修正 PB6/PB7 引脚定义：USART1 改为 Debug 调试串口（预留），设计定义改为 DEBUG_TX/DEBUG_RX | Mr.Hu |

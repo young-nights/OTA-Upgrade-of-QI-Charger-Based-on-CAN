@@ -162,20 +162,22 @@ uint8_t qi_uart_rx_available(void)
 
 /**
  * @brief  read a byte from the RX buffer
+ * @note   entire read operation is performed with interrupts disabled
+ *         to prevent race condition between main context read and ISR write.
  * @param  byte: pointer to store the read byte
  * @retval 0 on success, -1 if buffer is empty
  */
 int8_t qi_uart_rx_read(uint8_t *byte)
 {
+  __disable_irq();
   if (rx_count == 0)
   {
+    __enable_irq();
     return -1;
   }
 
   *byte = rx_buf[rx_tail];
   rx_tail = (rx_tail + 1) % QI_UART_RX_BUF_SIZE;
-
-  __disable_irq();
   rx_count--;
   __enable_irq();
 

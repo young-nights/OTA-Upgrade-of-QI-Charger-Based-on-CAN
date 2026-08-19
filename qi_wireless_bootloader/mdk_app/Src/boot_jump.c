@@ -26,6 +26,7 @@
 /* includes ------------------------------------------------------------------*/
 #include "boot_jump.h"
 #include "core_cm4.h"
+#include "at32f422_426_conf.h"
 
 /* private types -------------------------------------------------------------*/
 
@@ -59,6 +60,10 @@ void boot_jump_to_app(uint32_t app_addr)
 
   /* step 1: disable all interrupts */
   __disable_irq();
+
+  /* step 1.5: reset CAN1 peripheral to prevent spurious activity after jump */
+  can_reset(CAN1);
+  crm_periph_clock_enable(CRM_CAN1_PERIPH_CLOCK, FALSE);
 
   /* step 2: disable SysTick */
   SysTick->CTRL = 0;
