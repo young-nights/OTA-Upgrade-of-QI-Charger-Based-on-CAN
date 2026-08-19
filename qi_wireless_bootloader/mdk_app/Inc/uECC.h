@@ -28,46 +28,6 @@
 
 #include <stdint.h>
 
-/* Platform selection --------------------------------------------------------*/
-
-/* Define uECC_OPTIMIZATION_LEVEL to control speed vs size tradeoff.
- * 0 = smallest, 3 = fastest. Default is 2. */
-#ifndef uECC_OPTIMIZATION_LEVEL
-    #define uECC_OPTIMIZATION_LEVEL 2
-#endif
-
-/* Set uECC_PLATFORM to control word size optimizations.
- * 1 = 8-bit, 2 = 16-bit, 4 = 32-bit (default for Cortex-M4). */
-#ifndef uECC_PLATFORM
-    #define uECC_PLATFORM 4
-#endif
-
-/* Curve selection -----------------------------------------------------------*/
-
-typedef enum {
-    uECC_secp256r1 = 1
-} uECC_curve;
-
-#define uECC_CURVE uECC_secp256r1
-
-/* Constants for secp256r1 ---------------------------------------------------*/
-
-#define uECC_BYTES         32  /* 256 bits = 32 bytes */
-#define uECC_WORDS         8   /* 32-bit words */
-#define uECC_MAX_WORDS     8
-
-/* Hash function callback type ------------------------------------------------
- * Must compute a SHA-256 hash of the input message.
- * Parameters:
- *   message     - pointer to the message data
- *   message_len - length of the message in bytes
- *   hash_dest   - output buffer (must be >= 32 bytes) */
-typedef void (*uECC_hash_func)(const uint8_t *message,
-                               uint32_t message_len,
-                               uint8_t *hash_dest);
-
-/* Exported functions --------------------------------------------------------*/
-
 /**
  * @brief  Verify an ECDSA signature over secp256r1 (P-256).
  * @param  public_key: 65-byte uncompressed SEC1 public key point (04 || x || y)

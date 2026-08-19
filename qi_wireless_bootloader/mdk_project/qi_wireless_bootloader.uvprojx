@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>5</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -332,7 +332,7 @@
             <v6LangP>2</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
-            <v6Lto>0</v6Lto>
+            <v6Lto>1</v6Lto>
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
@@ -404,19 +404,9 @@
           <GroupName>mdk_lib</GroupName>
           <Files>
             <File>
-              <FileName>at32f422_426_adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_adc.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_can.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_can.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_cmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_cmp.c</FilePath>
             </File>
             <File>
               <FileName>at32f422_426_crc.c</FileName>
@@ -429,26 +419,6 @@
               <FilePath>..\libraries\drivers\src\at32f422_426_crm.c</FilePath>
             </File>
             <File>
-              <FileName>at32f422_426_debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_dma.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_dma.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_ertc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_ertc.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_exint.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_exint.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_flash.c</FilePath>
@@ -457,11 +427,6 @@
               <FileName>at32f422_426_gpio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_gpio.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_i2c.c</FilePath>
             </File>
             <File>
               <FileName>at32f422_426_misc.c</FileName>
@@ -474,34 +439,14 @@
               <FilePath>..\libraries\drivers\src\at32f422_426_pwc.c</FilePath>
             </File>
             <File>
-              <FileName>at32f422_426_scfg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_scfg.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_spi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_spi.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_tmr.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_tmr.c</FilePath>
             </File>
             <File>
-              <FileName>at32f422_426_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_usart.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_wdt.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_wdt.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_wwdt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_wwdt.c</FilePath>
             </File>
           </Files>
         </Group>
