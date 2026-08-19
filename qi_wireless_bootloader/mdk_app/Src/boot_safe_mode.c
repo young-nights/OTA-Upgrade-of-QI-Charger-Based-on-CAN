@@ -635,7 +635,6 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       {
         /* wait for watchdog reset */
       }
-      break;  /* unreachable, suppresses fall-through warning */
 
     default:
       /* unsupported service */

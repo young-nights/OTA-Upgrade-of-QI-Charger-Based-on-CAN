@@ -152,7 +152,6 @@ void sha256_update(sha256_ctx_t *ctx, const void *data, uint32_t len)
 void sha256_final(sha256_ctx_t *ctx, uint8_t *hash)
 {
   uint32_t i;
-  uint32_t pad_len;
   uint64_t bit_count;
 
   /* save total bit count before we start padding */
