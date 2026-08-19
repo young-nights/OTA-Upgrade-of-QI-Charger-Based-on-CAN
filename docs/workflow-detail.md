@@ -398,6 +398,7 @@ Safe Mode 下的 CAN ID：
 #define UDS_SECURITY_ACCESS         0x27U
 #define UDS_REQUEST_DOWNLOAD        0x34U
 #define UDS_TRANSFER_DATA           0x36U
+#define UDS_TRANSFER_SIGNATURE      0x38U
 #define UDS_REQUEST_TRANSFER_EXIT   0x37U
 #define UDS_ECU_RESET               0x11U
 #define UDS_NEGATIVE_RESPONSE       0x7FU
@@ -469,6 +470,22 @@ Safe Mode 下的 CAN ID：
   7. 成功 → 更新 `g_dl_write_addr += data_len`、`g_dl_bytes_written += data_len`；
   8. 正响应：`[0x76, blockSeq]`（2 字节）。
 
+#### 0x38 — TransferSignature（传输签名）
+
+- 请求：`[0x38, blockSeq, sigData0..sigData5]`（最多 6 字节载荷）
+- 用途：在 0x36 TransferData 之后、0x37 TransferExit 之前，传输 64 字节 ECDSA P-256 签名
+- 处理流程：
+  1. 安全门检查：`g_security_unlocked == 0` → NRC `0x33`；
+  2. `len < 3` → NRC `0x13`；
+  3. 首帧（`blockSeq == 0x01` 且 `g_sig_bytes_received == 0`）→ 重置签名状态机；
+  4. `g_sig_active == 0` → NRC `0x71`；
+  5. 序号校验：`g_sig_block_seq++` 后与 `blockSeq` 比较，不匹配 → NRC `0x71`；
+  6. 溢出检查：累计超过 64 字节 → NRC `0x14`；
+  7. 累积签名数据到 `g_sig_buf[64]`；
+  8. 正响应：`[0x78, blockSeq]`（2 字节）。
+- 签名格式：ECDSA P-256 IEEE P1363（R‖S，各 32 字节，共 64 字节）
+- 分帧规则：64 字节 = 10 帧 × 6 字节 + 1 帧 × 4 字节 = 11 帧
+
 #### 0x37 — RequestTransferExit（请求传输结束）
 
 - 请求：`[0x37]`
@@ -488,6 +505,15 @@ Safe Mode 下的 CAN ID：
      header.magic        = IMAGE_MAGIC;
      header.image_length = g_dl_bytes_written;
      header.crc32        = computed_crc;
+     /* fill signature from 0x38 TransferSignature data */
+     if (g_sig_bytes_received == 64U)
+       memcpy(header.signature, g_sig_buf, 64U);
+     else
+       memset(header.signature, 0xFF, 64U);  /* no sig → will fail verification */
+     /* reset signature transfer state */
+     g_sig_bytes_received = 0;
+     g_sig_active = 0;
+     g_sig_block_seq = 0;
      flash_unlock();
      hdr_words = (const uint32_t *)&header;
      for (w = 0; w < hdr_word_count; w++)
@@ -784,6 +810,7 @@ static void send_broadcast(void)
 | `0x10` 诊断会话控制 | `[0x10, sub]` | 回显会话类型；无第二字节时默认 `0x01` | `[0x50, sub]` 或 `[0x50, 0x01]` |
 | `0x11` ECU 复位 | `[0x11, sub]` | 先回正响应，**延时 ~2ms（36000 NOP @180MHz）确保响应发出**，然后 `ota_trigger_request()`（不复位不返回） | `[0x51, sub]` 或 `[0x51]` |
 | `0x34` 请求下载 | `[0x34, ...]` | 回正响应，**延时 ~2ms**，然后 `ota_trigger_request()` | `[0x74, 0x20, 0x00, 0x00, 0x10]`（5 字节） |
+| `0x38` 传输签名 | `[0x38, ...]` | APP 不处理签名传输，返回 NRC | `[0x7F, 0x38, 0x11]` |
 | `0x3E` TesterPresent | `[0x3E, sub]` | 回显保活 | `[0x7E, sub]` 或 `[0x7E]` |
 | 其他 | - | 不支持 | `[0x7F, SID, 0x11]` |
 
@@ -965,18 +992,22 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
      │ ⑪ 0x36 ... (seq=2..N)      │                        │
      ├────────────────────────────────────────────────────▶│ ...
      │◀────────────────────────────────────────────────────┤
-     │ ⑫ 0x37 RequestTransferExit │                        │ ⑬ 计算 CRC32、写 Header
-     ├────────────────────────────────────────────────────▶│  更新 metadata
-     │◀────────────────────────────────────────────────────┤ ⑭ 0x77
-     │ ⑮ 0x11 ECUReset            │                        │
-     ├────────────────────────────────────────────────────▶│ ⑯ 0x51，等待 IWDG
+     │ ⑫ 0x38 TransferSignature   │                        │ ⑬ 累积 64 字节签名
+     │    (seq=1..11, 11 帧)       │                        │   到 g_sig_buf
+     ├────────────────────────────────────────────────────▶│
+     │◀────────────────────────────────────────────────────┤ 0x78,seq
+     │ ⑭ 0x37 RequestTransferExit │                        │ ⑮ 计算 CRC32、写 Header
+     ├────────────────────────────────────────────────────▶│  (含签名)、更新 metadata
+     │◀────────────────────────────────────────────────────┤ ⑯ 0x77
+     │ ⑰ 0x11 ECUReset            │                        │
+     ├────────────────────────────────────────────────────▶│ ⑱ 0x51，等待 IWDG
      │                            │                        │
-     │                            │──── 看门狗复位(~1s) ───▶│ ⑰ 重新引导：校验 APP_A
+     │                            │──── 看门狗复位(~1s) ───▶│ ⑲ 重新引导：校验 APP_A
      │                            │                        │  → 通过 → 跳转
      │                            │◀──── 跳转至 APP_A+256 ─┤
-     │                            │ ⑱ 上电广播 0x18FF260D  │
+     │                            │ ⑳ 上电广播 0x18FF260D  │
      │◀───────────────────────────┤                        │
-     │                            │ ⑲ 若 Trial ACTIVE      │
+     │                            │ ㉑ 若 Trial ACTIVE      │
      │                            │   → CONFIRMED 并保存   │
 ```
 
@@ -997,14 +1028,16 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
    回复 `[0x74, 0x20, 0xC0, 0x00]`；
 8. `0x36` 数据帧从 **blockSeq=1** 起顺序发送（建议每帧 4~6 字节载荷，
    见 3.4/3.6 的序号与对齐约束）；每帧正响应 `[0x76, seq]`；
-9. 传输约 `0xBF00` 字节后，主机发 `0x37`；
-10. Bootloader 计算 CRC32、写 256 字节 Image Header、更新 metadata
+9. 传输约 `0xBF00` 字节后，主机发 `0x38` TransferSignature，分 11 帧传输
+   64 字节 ECDSA P-256 签名（blockSeq=1~11）；每帧正响应 `[0x78, seq]`；
+10. 主机发 `0x37` → Bootloader 计算 CRC32、将签名写入 Image Header、
+    写 256 字节 Image Header、更新 metadata
     （`slot_a_valid=1`、`slot_a_crc32`、`ota_state=IDLE`），回复 `[0x77]`。
 
 **阶段 4 — 复位与启动新镜像**：
 11. 主机发 `0x11` → Bootloader 回 `[0x51]` 后空转等待 IWDG（~1 s）复位；
 12. 复位后 Bootloader 重新引导：`select_boot_slot` → `try_boot_slot(active_slot)`
-    → `boot_verify_image` 通过 → 跳转 `0x08004100`；
+    → `boot_verify_image`（含 ECDSA 验签）通过 → 跳转 `0x08004100`；
 13. APP 启动，发 BOOTUP 广播，进入 100 ms 周期广播；若为试运行则确认。
 
 ### 5.3 错误处理与回滚策略
@@ -1102,6 +1135,14 @@ NRC   [0x7F, 0x34, 0x72]            ← 擦除失败
 请求  [0x36, blockSeq, data0..data5]   ← 载荷 ≤ 6 字节, blockSeq 从 1 顺序递增
 正响应 [0x76, blockSeq]
 NRC   [0x7F, 0x36, 0x71|0x13|0x14|0x72]
+```
+
+**0x38 TransferSignature（Bootloader）**
+
+```
+请求  [0x38, blockSeq, sigData0..sigData5]   ← 64 字节签名分 11 帧, blockSeq 从 1 递增
+正响应 [0x78, blockSeq]
+NRC   [0x7F, 0x38, 0x13|0x14|0x33|0x71]
 ```
 
 **0x37 RequestTransferExit（Bootloader）**

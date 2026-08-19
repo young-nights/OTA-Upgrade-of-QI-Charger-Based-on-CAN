@@ -45,6 +45,7 @@ extern "C" {
 #define UDS_SID_ECU_RESET           0x11U        /*!< ECUReset */
 #define UDS_SID_REQUEST_DOWNLOAD    0x34U        /*!< RequestDownload */
 #define UDS_SID_TESTER_KEEPALIVE    0x3EU        /*!< TesterPresent (keepalive) */
+#define UDS_SID_TRANSFER_SIGNATURE  0x38U        /*!< TransferSignature (boot safe mode only) */
 
 /** @brief  UDS response codes */
 #define UDS_NEGATIVE_RESPONSE       0x7FU        /*!< negative response indicator */

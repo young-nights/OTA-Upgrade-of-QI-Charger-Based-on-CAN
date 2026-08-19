@@ -130,6 +130,11 @@ static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       proto_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
       break;
 
+    case UDS_SID_TRANSFER_SIGNATURE:
+      /* APP does not handle signature transfer - this is done in boot safe mode */
+      proto_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
+      break;
+
     case UDS_SID_TESTER_KEEPALIVE:
       /* TesterPresent (keepalive): positive response */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;

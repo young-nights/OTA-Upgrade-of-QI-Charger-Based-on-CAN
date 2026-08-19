@@ -198,7 +198,91 @@ Host (PC)                    MCU (AT32F426)               Qi 芯片
 
 ---
 
-## 6. 关键参数总结
+## 6. UDS 0x38 TransferSignature 签名传输协议
+
+### 6.1 概述
+
+MCU OTA 流程中，0x37 TransferExit 写入 Image Header 时 `signature[64]` 字段需要填入
+ECDSA P-256 签名。新增 0x38 TransferSignature 命令，让主机能够在 0x36 TransferData
+之后、0x37 TransferExit 之前传输 64 字节签名数据。
+
+### 6.2 命令参数
+
+| 参数 | 值 |
+|------|-----|
+| 命令码 | `0x38` |
+| 方向 | Host → MCU（Bootloader Safe Mode）|
+| 安全要求 | 需先通过 0x27 SecurityAccess |
+| 签名大小 | 64 字节（ECDSA P-256 R‖S，各 32 字节）|
+
+### 6.3 帧格式
+
+每帧 8 字节 CAN 数据：
+
+| 偏移 | 长度 | 字段 | 说明 |
+|------|------|------|------|
+| 0 | 1 | SID | `0x38` |
+| 1 | 1 | blockSeq | 帧序号，从 `0x01` 开始递增 |
+| 2~7 | 最多 6 | signatureData | 签名数据（最后一帧可不足 6 字节）|
+
+### 6.4 传输流程
+
+64 字节签名分 11 帧传输：
+
+| 帧序号 (blockSeq) | 载荷长度 | 累计字节 |
+|-------------------|---------|----------|
+| 0x01 | 6 | 6 |
+| 0x02 | 6 | 12 |
+| ... | ... | ... |
+| 0x0A | 6 | 60 |
+| 0x0B | 4 | 64 |
+
+### 6.5 响应格式
+
+**正响应**（2 字节）：
+
+| 偏移 | 长度 | 字段 | 值 |
+|------|------|------|-----|
+| 0 | 1 | SID+0x40 | `0x78` |
+| 1 | 1 | blockSeq | 回显帧序号 |
+
+**负响应**（3 字节）：
+
+| 偏移 | 长度 | 字段 | 值 |
+|------|------|------|-----|
+| 0 | 1 | NRC 标识 | `0x7F` |
+| 1 | 1 | SID | `0x38` |
+| 2 | 1 | NRC 码 | 见下表 |
+
+| NRC | 含义 | 触发条件 |
+|-----|------|----------|
+| `0x11` | serviceNotSupported | APP 端收到此命令 |
+| `0x13` | incorrectMessageLength | 帧长度 < 3 字节 |
+| `0x14` | responseTooLong | 累计数据超过 64 字节 |
+| `0x33` | securityAccessDenied | 未通过安全访问 |
+| `0x71` | transferDataAborted | 序号错误或未激活 |
+
+### 6.6 OTA 升级流程中的位置
+
+```
+0x34 RequestDownload    -- 擦除 Flash，初始化下载
+0x36 TransferData       -- 传输固件数据（多帧）
+0x38 TransferSignature  -- 传输 ECDSA 签名（11 帧）   ← 新增
+0x37 RequestTransferExit -- 写入 Image Header（含签名）
+0x11 ECUReset           -- 复位，进入 Trial Boot
+```
+
+### 6.7 实现要点
+
+- 签名缓冲区独立于固件下载缓冲区，互不影响
+- blockSeq 从 0x01 开始，必须严格顺序递增
+- 首帧（blockSeq=0x01）自动重置签名状态机
+- 若未发送 0x38 或传输不完整，0x37 将使用全 0xFF 填充 signature 字段
+- APP 端不处理 0x38，返回 NRC 0x11（serviceNotSupported）
+
+---
+
+## 7. 关键参数总结
 
 | 参数 | 值 |
 |------|-----|
@@ -211,9 +295,10 @@ Host (PC)                    MCU (AT32F426)               Qi 芯片
 
 ---
 
-## 7. 变更记录
+## 8. 变更记录
 
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
 | v1.0 | 2026-08-12 | 初始版本, 从 Excel 协议表整理 |
 | v1.1 | 2026-08-19 | 5.3节 IAP 帧长度标注待核实：LEN 字段定义与示例值 0x1A 存在矛盾（可能应为 0x1B） |
+| v1.2 | 2026-08-19 | 新增第 6 章 UDS 0x38 TransferSignature 签名传输协议 |

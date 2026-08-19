@@ -51,6 +51,7 @@
 #define UDS_REQUEST_DOWNLOAD        0x34U
 #define UDS_TRANSFER_DATA           0x36U
 #define UDS_REQUEST_TRANSFER_EXIT   0x37U
+#define UDS_TRANSFER_SIGNATURE      0x38U
 #define UDS_ECU_RESET               0x11U
 
 /** @brief  UDS negative response code */
@@ -79,6 +80,12 @@ static uint8_t  g_dl_active        = 0;
 
 /** @brief  maximum image size (APP_A size minus header) */
 #define MAX_IMAGE_SIZE    (APP_A_SIZE - IMAGE_HEADER_SIZE)
+
+/** @brief  signature transfer buffer (accumulated from 0x38 frames) */
+static uint8_t  g_sig_buf[64];
+static uint8_t  g_sig_bytes_received = 0;
+static uint8_t  g_sig_block_seq = 0;
+static uint8_t  g_sig_active = 0;
 
 /** @brief  security access state */
 static uint8_t  g_security_unlocked = 0;
@@ -464,6 +471,72 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       break;
     }
 
+    case UDS_TRANSFER_SIGNATURE:
+    {
+      uint8_t block_seq;
+      uint8_t sig_data_len;
+      uint8_t i;
+
+      /* security gate */
+      if (!g_security_unlocked)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
+        break;
+      }
+
+      if (len < 3U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      block_seq = data[1];
+
+      /* first frame: reset signature buffer */
+      if (block_seq == 0x01U && g_sig_bytes_received == 0U)
+      {
+        g_sig_active = 1;
+        g_sig_block_seq = 0;
+        g_sig_bytes_received = 0;
+        memset(g_sig_buf, 0xFF, 64);
+      }
+
+      if (!g_sig_active)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      g_sig_block_seq++;
+      if (block_seq != g_sig_block_seq)
+      {
+        g_sig_active = 0;
+        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        break;
+      }
+
+      sig_data_len = len - 2U; /* subtract SID and blockSeq */
+
+      if ((g_sig_bytes_received + sig_data_len) > 64U)
+      {
+        g_sig_active = 0;
+        safe_mode_send_nrc(service_id, UDS_NRC_RESPONSE_TOO_LONG);
+        break;
+      }
+
+      /* accumulate signature data */
+      for (i = 0; i < sig_data_len; i++)
+      {
+        g_sig_buf[g_sig_bytes_received + i] = data[2U + i];
+      }
+      g_sig_bytes_received += sig_data_len;
+
+      resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+      resp[1] = block_seq;
+      safe_mode_send_response(resp, 2);
+      break;
+    }
+
     case UDS_REQUEST_TRANSFER_EXIT:
     {
       uint32_t computed_crc;
@@ -497,6 +570,22 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       header.magic        = IMAGE_MAGIC;
       header.image_length = g_dl_bytes_written;
       header.crc32        = computed_crc;
+
+      /* fill signature from 0x38 TransferSignature data */
+      if (g_sig_bytes_received == 64U)
+      {
+        memcpy(header.signature, g_sig_buf, 64U);
+      }
+      else
+      {
+        /* no signature received or incomplete -- use 0xFF (will fail verification) */
+        memset(header.signature, 0xFF, 64U);
+      }
+
+      /* reset signature transfer state */
+      g_sig_bytes_received = 0;
+      g_sig_active = 0;
+      g_sig_block_seq = 0;
 
       flash_unlock();
       hdr_words      = (const uint32_t *)&header;
