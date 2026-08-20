@@ -33,16 +33,16 @@
 
 ### 1.2 硬件平台
 
-| 项目 | 说明 |
-|------|------|
-| 主控芯片 | AT32F426KBU7-4（雅特力） |
-| 内核 | Cortex-M4F（FPU，硬件除法） |
-| 主频 | 180 MHz（HEXT + PLL，APB1 分频 = 1，即 APB1 = 180 MHz） |
-| Flash | 128 KB（0x08000000 ~ 0x0801FFFF） |
-| SRAM | 20 KB（0x20000000 ~ 0x20004FFF） |
-| 外设库 | 标准外设库 SPL（`at32f422_426_*`），**非 HAL** |
+| 项目     | 说明                                                                                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 主控芯片 | AT32F426KBU7-4（雅特力）                                                                                                            |
+| 内核     | Cortex-M4F（FPU，硬件除法）                                                                                                         |
+| 主频     | 180 MHz（HEXT + PLL，APB1 分频 = 1，即 APB1 = 180 MHz）                                                                             |
+| Flash    | 128 KB（0x08000000 ~ 0x0801FFFF）                                                                                                   |
+| SRAM     | 20 KB（0x20000000 ~ 0x20004FFF）                                                                                                    |
+| 外设库   | 标准外设库 SPL（`at32f422_426_*`），**非 HAL**                                                                              |
 | 通信外设 | CAN1（PA11=RX / PA12=TX，扩展帧，250 kbps）、USART2（Qi 芯片通信，9600 8N1）、USART1（PB6=TX / PB7=RX，Debug 调试串口，预留未使用） |
-| 看门狗 | IWDG 独立看门狗（LSI ~40 kHz，~1 s 超时） |
+| 看门狗   | IWDG 独立看门狗（LSI ~40 kHz，~1 s 超时）                                                                                           |
 
 ### 1.3 软件架构
 
@@ -69,10 +69,10 @@
 
 两个固件工程：
 
-| 工程 | 目录 | 大小 | 职责 |
-|------|------|------|------|
-| Bootloader | `qi_wireless_bootloader/` | 16 KB | 上电引导、槽位选择、镜像校验、跳转 APP、Safe Mode（UDS OTA 下载） |
-| APP | `qi_wireless_code/` | 48 KB | 充电业务、CAN UDS 响应、OTA 触发（写 metadata + 复位）、Qi UART 通信、Trial 确认 |
+| 工程       | 目录                        | 大小  | 职责                                                                             |
+| ---------- | --------------------------- | ----- | -------------------------------------------------------------------------------- |
+| Bootloader | `qi_wireless_bootloader/` | 16 KB | 上电引导、槽位选择、镜像校验、跳转 APP、Safe Mode（UDS OTA 下载）                |
+| APP        | `qi_wireless_code/`       | 48 KB | 充电业务、CAN UDS 响应、OTA 触发（写 metadata + 复位）、Qi UART 通信、Trial 确认 |
 
 ---
 
@@ -82,13 +82,13 @@
 
 常量定义于 `qi_wireless_bootloader/mdk_app/Inc/boot_metadata.h`（APP 侧在 `qi_wireless_code/mdk_app/Inc/ota_trigger.h` 中保持一致，前缀 `OTA_`）：
 
-| 区域 | 起始地址 | 大小 | 用途 |
-|------|---------|------|------|
-| Bootloader | `0x08000000` | `0x4000` (16 KB) | 启动引导 + Safe Mode + UDS 下载 |
-| APP_A | `0x08004000` | `0xC000` (48 KB) | 应用槽位 A（OTA 下载目标） |
-| APP_B | `0x08010000` | `0xC000` (48 KB) | 应用槽位 B（回退槽位） |
-| Metadata 主区 | `0x0801C000` | `0x2000` (8 KB) | OTA Metadata（512 B 结构体 + 冗余） |
-| Metadata 备份区 | `0x0801E000` | `0x2000` (8 KB) | 元数据备份 / **NVM 配置区（共享，写保护约定）** |
+| 区域            | 起始地址       | 大小               | 用途                                                 |
+| --------------- | -------------- | ------------------ | ---------------------------------------------------- |
+| Bootloader      | `0x08000000` | `0x4000` (16 KB) | 启动引导 + Safe Mode + UDS 下载                      |
+| APP_A           | `0x08004000` | `0xC000` (48 KB) | 应用槽位 A（OTA 下载目标）                           |
+| APP_B           | `0x08010000` | `0xC000` (48 KB) | 应用槽位 B（回退槽位）                               |
+| Metadata 主区   | `0x0801C000` | `0x2000` (8 KB)  | OTA Metadata（512 B 结构体 + 冗余）                  |
+| Metadata 备份区 | `0x0801E000` | `0x2000` (8 KB)  | 元数据备份 /**NVM 配置区（共享，写保护约定）** |
 
 ```
 0x08000000 ┌──────────────────────┐
@@ -328,13 +328,13 @@ typedef struct
                 └────────────────────────────────────────┘
 ```
 
-| 状态 | 进入条件 | 处理动作 |
-|------|---------|---------|
-| `IDLE` | 默认 | 无操作 |
-| `PENDING` | 外部将 `trial_state` 置 1 | → `ACTIVE`；`trial_retry_count++`；`last_boot_reason = BOOT_REASON_OTA_ACT`；保存 metadata |
-| `ACTIVE` | PENDING 推进 | 若 `trial_retry_count > trial_max_retries`：`rollback_count++`、→ `IDLE`、`retry_count = 0`、`last_boot_reason = BOOT_REASON_ROLLBACK`，且若另一槽 `valid` 则切换 `active_slot` 到另一槽；保存 |
-| `CONFIRMED` | APP 在试运行期确认（写 `CONFIRMED`） | → `IDLE`；`retry_count = 0`；保存 |
-| 其他非法值 | - | 强制回 `IDLE` 并保存 |
+| 状态          | 进入条件                              | 处理动作                                                                                                                                                                                                     |
+| ------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `IDLE`      | 默认                                  | 无操作                                                                                                                                                                                                       |
+| `PENDING`   | 外部将`trial_state` 置 1            | →`ACTIVE`；`trial_retry_count++`；`last_boot_reason = BOOT_REASON_OTA_ACT`；保存 metadata                                                                                                             |
+| `ACTIVE`    | PENDING 推进                          | 若`trial_retry_count > trial_max_retries`：`rollback_count++`、→ `IDLE`、`retry_count = 0`、`last_boot_reason = BOOT_REASON_ROLLBACK`，且若另一槽 `valid` 则切换 `active_slot` 到另一槽；保存 |
+| `CONFIRMED` | APP 在试运行期确认（写`CONFIRMED`） | →`IDLE`；`retry_count = 0`；保存                                                                                                                                                                        |
+| 其他非法值    | -                                     | 强制回`IDLE` 并保存                                                                                                                                                                                        |
 
 **APP 侧确认**：APP 初始化时调用 `ota_confirm_if_needed()`，若读到
 `trial_state == TRIAL_STATE_ACTIVE (2)` 则改为 `TRIAL_STATE_CONFIRMED (3)` 并保存
@@ -450,6 +450,7 @@ Safe Mode 下的 CAN ID：
      [0x74, 0x20, (APP_A_SIZE>>8)&0xFF, APP_A_SIZE&0xFF]
      = [0x74, 0x20, 0xC0, 0x00]
      ```
+
      - `0x20` = lengthFormatIdentifier（32 位长度）；
      - `0xC000` = maxNumberOfBlockLength（本实现为**最大固件总大小**，
        并非单帧长度；单帧有效载荷实际 ≤ 6 字节：8 字节 CAN - SID - blockSeq）。
@@ -805,14 +806,14 @@ static void send_broadcast(void)
 - 仅接受 `id == CAN_PROTO_UDS_REQUEST (0x18DA0D03)` 的帧，其余直接丢弃；
 - `len == 0` 忽略；`service_id = data[0]` 分发。
 
-| 服务 | 请求格式 | 处理 | 响应 |
-|------|---------|------|------|
-| `0x10` 诊断会话控制 | `[0x10, sub]` | 回显会话类型；无第二字节时默认 `0x01` | `[0x50, sub]` 或 `[0x50, 0x01]` |
-| `0x11` ECU 复位 | `[0x11, sub]` | 先回正响应，**延时 ~2ms（36000 NOP @180MHz）确保响应发出**，然后 `ota_trigger_request()`（不复位不返回） | `[0x51, sub]` 或 `[0x51]` |
-| `0x34` 请求下载 | `[0x34, ...]` | 回正响应，**延时 ~2ms**，然后 `ota_trigger_request()` | `[0x74, 0x20, 0x00, 0x00, 0x10]`（5 字节） |
-| `0x38` 传输签名 | `[0x38, ...]` | APP 不处理签名传输，返回 NRC | `[0x7F, 0x38, 0x11]` |
-| `0x3E` TesterPresent | `[0x3E, sub]` | 回显保活 | `[0x7E, sub]` 或 `[0x7E]` |
-| 其他 | - | 不支持 | `[0x7F, SID, 0x11]` |
+| 服务                   | 请求格式        | 处理                                                                                                             | 响应                                         |
+| ---------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `0x10` 诊断会话控制  | `[0x10, sub]` | 回显会话类型；无第二字节时默认`0x01`                                                                           | `[0x50, sub]` 或 `[0x50, 0x01]`          |
+| `0x11` ECU 复位      | `[0x11, sub]` | 先回正响应，**延时 ~2ms（36000 NOP @180MHz）确保响应发出**，然后 `ota_trigger_request()`（不复位不返回） | `[0x51, sub]` 或 `[0x51]`                |
+| `0x34` 请求下载      | `[0x34, ...]` | 回正响应，**延时 ~2ms**，然后 `ota_trigger_request()`                                                    | `[0x74, 0x20, 0x00, 0x00, 0x10]`（5 字节） |
+| `0x38` 传输签名      | `[0x38, ...]` | APP 不处理签名传输，返回 NRC                                                                                     | `[0x7F, 0x38, 0x11]`                       |
+| `0x3E` TesterPresent | `[0x3E, sub]` | 回显保活                                                                                                         | `[0x7E, sub]` 或 `[0x7E]`                |
+| 其他                   | -               | 不支持                                                                                                           | `[0x7F, SID, 0x11]`                        |
 
 > APP 端 `0x34` 响应 `maxNumberOfBlockLength` 字段为 `0x0010`（示意值），
 > 实际下载由 Bootloader Safe Mode 接管，主机应忽略该示意值、以
@@ -913,15 +914,15 @@ static void ota_confirm_if_needed(void)
 
 **初始化**（`qi_uart_init()`）：
 
-| 配置项 | 值 |
-|--------|-----|
-| 外设 | USART2（APB1） |
-| TX 引脚 | PA2（AF MUX7，推挽） |
-| RX 引脚 | PA3（AF MUX7，上拉输入） |
-| 波特率 | 9600（`QI_UART_BAUDRATE`） |
-| 帧格式 | 8 数据位 / 1 停止位 / 无校验（8N1） |
-| 中断 | 接收数据寄存器非空 `USART_RDBF_INT`，NVIC 优先级 (3, 0) |
-| RX 缓冲区 | 软件环形 FIFO，64 字节（`QI_UART_RX_BUF_SIZE`） |
+| 配置项    | 值                                                       |
+| --------- | -------------------------------------------------------- |
+| 外设      | USART2（APB1）                                           |
+| TX 引脚   | PA2（AF MUX7，推挽）                                     |
+| RX 引脚   | PA3（AF MUX7，上拉输入）                                 |
+| 波特率    | 9600（`QI_UART_BAUDRATE`）                             |
+| 帧格式    | 8 数据位 / 1 停止位 / 无校验（8N1）                      |
+| 中断      | 接收数据寄存器非空`USART_RDBF_INT`，NVIC 优先级 (3, 0) |
+| RX 缓冲区 | 软件环形 FIFO，64 字节（`QI_UART_RX_BUF_SIZE`）        |
 
 **软件 FIFO**（ISR 写 / 主循环读）：
 
@@ -1014,6 +1015,7 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
 ### 5.2 分阶段说明
 
 **阶段 1 — APP 触发**（主机 → APP）：
+
 1. 主机向 `0x18DA0D03` 发送 `0x34`（或 `0x11`）；
 2. APP 回正响应并延时 ~2 ms 保证 CAN 发送完成；
 3. APP 写 metadata（`ota_state = 0x01`）到 `0x0801C000`，随后 `NVIC_SystemReset()`。
@@ -1042,19 +1044,20 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
 
 ### 5.3 错误处理与回滚策略
 
-| 错误场景 | 检测点 | 处理 |
-|---------|--------|------|
-| 下载帧序号错乱 | 0x36 中 `block_seq != ++g_dl_block_seq` | 终止下载（`g_dl_active=0`），回 NRC `0x71`，需重新 0x34 开始 |
-| 数据超限 | `bytes_written + data_len > MAX_IMAGE_SIZE` | 终止下载，回 NRC `0x14` |
-| 帧长非法 | `len < 3` | 回 NRC `0x13` |
-| Flash 擦除/编程失败 | `flash_sector_erase` / `flash_word_program` | 回 NRC `0x72`；下载状态复位 |
-| 未开始下载就发 0x36/0x37 | `g_dl_active == 0` | 回 NRC `0x71` |
-| 镜像校验失败（magic/length/CRC） | `boot_verify_image` | 尝试另一槽位；双槽失败 → Safe Mode |
-| 新镜像启动即崩溃/超时 | IWDG 复位 → `detect_boot_reason()` = WDG | Trial retry 计数，超过 `trial_max_retries (3)` → 回滚到另一槽位 |
-| metadata 损坏 | `meta_validate`（magic/version/CRC） | 主区→备份区→默认值三级回退 |
-| 0x34 擦除中断/掉电 | 下次上电镜像校验失败 | 走槽位回退逻辑，不会启动半成品镜像 |
+| 错误场景                         | 检测点                                          | 处理                                                              |
+| -------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
+| 下载帧序号错乱                   | 0x36 中`block_seq != ++g_dl_block_seq`        | 终止下载（`g_dl_active=0`），回 NRC `0x71`，需重新 0x34 开始  |
+| 数据超限                         | `bytes_written + data_len > MAX_IMAGE_SIZE`   | 终止下载，回 NRC`0x14`                                          |
+| 帧长非法                         | `len < 3`                                     | 回 NRC`0x13`                                                    |
+| Flash 擦除/编程失败              | `flash_sector_erase` / `flash_word_program` | 回 NRC`0x72`；下载状态复位                                      |
+| 未开始下载就发 0x36/0x37         | `g_dl_active == 0`                            | 回 NRC`0x71`                                                    |
+| 镜像校验失败（magic/length/CRC） | `boot_verify_image`                           | 尝试另一槽位；双槽失败 → Safe Mode                               |
+| 新镜像启动即崩溃/超时            | IWDG 复位 →`detect_boot_reason()` = WDG      | Trial retry 计数，超过`trial_max_retries (3)` → 回滚到另一槽位 |
+| metadata 损坏                    | `meta_validate`（magic/version/CRC）          | 主区→备份区→默认值三级回退                                      |
+| 0x34 擦除中断/掉电               | 下次上电镜像校验失败                            | 走槽位回退逻辑，不会启动半成品镜像                                |
 
 **回滚原则**：
+
 - **双槽位 + 校验**：只有通过 magic + length + CRC32 的镜像才会被跳转；
 - **Trial Boot**：新固件须在重试上限内被 APP 确认（`CONFIRMED`），否则切换
   `active_slot` 到另一有效槽位；
@@ -1069,13 +1072,13 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
 
 定义于 `qi_wireless_bootloader/mdk_can/Inc/can_driver.h`：
 
-| CAN ID | 方向 | 用途 |
-|--------|------|------|
-| `0x18DA0D03` | CCU/Tester → Qi | UDS 请求（`CAN_ID_UDS_REQUEST` / `SAFE_MODE_CAN_ID_REQUEST` / `CAN_PROTO_UDS_REQUEST`） |
+| CAN ID         | 方向             | 用途                                                                                             |
+| -------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| `0x18DA0D03` | CCU/Tester → Qi | UDS 请求（`CAN_ID_UDS_REQUEST` / `SAFE_MODE_CAN_ID_REQUEST` / `CAN_PROTO_UDS_REQUEST`）    |
 | `0x18DA030D` | Qi → CCU/Tester | UDS 响应（`CAN_ID_UDS_RESPONSE` / `SAFE_MODE_CAN_ID_RESPONSE` / `CAN_PROTO_UDS_RESPONSE`） |
-| `0x18DB33D0` | 广播 | UDS 功能寻址广播（`CAN_ID_FUNCTIONAL_REQUEST`，预留） |
-| `0x18FF260D` | Qi → CCU | 生命周期广播（100 ms，`CAN_ID_LIFECYCLE_BROADCAST`） |
-| `0x18FF270D` | CCU → Qi | CCU 控制命令（`CAN_ID_CCU_CONTROL`，预留） |
+| `0x18DB33D0` | 广播             | UDS 功能寻址广播（`CAN_ID_FUNCTIONAL_REQUEST`，预留）                                          |
+| `0x18FF260D` | Qi → CCU        | 生命周期广播（100 ms，`CAN_ID_LIFECYCLE_BROADCAST`）                                           |
+| `0x18FF270D` | CCU → Qi        | CCU 控制命令（`CAN_ID_CCU_CONTROL`，预留）                                                     |
 
 ID 格式遵循 SAE J1939 风格（PGN + 源地址/目标地址）：
 
@@ -1096,14 +1099,14 @@ NRC:   [ 0x7F | SID | NRC码 ]                  负响应
 
 负响应码（NRC）汇总：
 
-| NRC | 含义 | 使用方 |
-|-----|------|--------|
-| `0x11` | serviceNotSupported | Bootloader / APP |
-| `0x12` | subFunctionNotSupported | APP（已定义，未使用） |
-| `0x13` | incorrectMessageLengthOrInvalidFormat | Bootloader 0x36 |
-| `0x14` | responseTooLong（数据超限） | Bootloader 0x36 |
-| `0x71` | transferDataAborted | Bootloader 0x36/0x37 |
-| `0x72` | generalProgrammingFailure | Bootloader 0x34/0x36 |
+| NRC      | 含义                                  | 使用方                |
+| -------- | ------------------------------------- | --------------------- |
+| `0x11` | serviceNotSupported                   | Bootloader / APP      |
+| `0x12` | subFunctionNotSupported               | APP（已定义，未使用） |
+| `0x13` | incorrectMessageLengthOrInvalidFormat | Bootloader 0x36       |
+| `0x14` | responseTooLong（数据超限）           | Bootloader 0x36       |
+| `0x71` | transferDataAborted                   | Bootloader 0x36/0x37  |
+| `0x72` | generalProgrammingFailure             | Bootloader 0x34/0x36  |
 
 ### 6.3 各命令/响应格式
 
@@ -1181,15 +1184,15 @@ NRC   [0x7F, 0x37, 0x71]
 中断处理集中于 `qi_wireless_code/mdk_user/Src/at32f422_426_int.c`
 （Bootloader 与 APP 共用同一套 SPL 中断文件结构）。
 
-| 中断 | 优先级 (抢占,子) | 处理函数 | 说明 |
-|------|-----------------|---------|------|
-| `SysTick_Handler` | 内核 | `timer_tick_inc()` | 1 ms 时基累加（软件定时器驱动） |
-| `CAN1_RX_IRQHandler` | (1, 0) | `can_driver_rx_irq_handler()` | 读硬件 RX 缓冲 → 软件 FIFO |
-| `CAN1_ERR_IRQHandler` | (2, 0) | `can_driver_err_irq_handler()` | 总线错误/离线恢复 |
-| `USART2_IRQHandler` | (3, 0) | `qi_uart_rx_irq_handler()` | Qi UART 接收字节入 FIFO |
-| `USART1_IRQn` | — | 当前未使用 | Debug 调试串口（PB6=TX / PB7=RX），预留 |
-| `NMI_Handler` / `SVC_Handler` / `DebugMon_Handler` / `PendSV_Handler` | - | 空实现 | - |
-| `HardFault_Handler` / `MemManage_Handler` / `BusFault_Handler` / `UsageFault_Handler` | - | `while(1)` | 异常死循环（可配合调试器/看门狗恢复） |
+| 中断                                                                                          | 优先级 (抢占,子) | 处理函数                         | 说明                                    |
+| --------------------------------------------------------------------------------------------- | ---------------- | -------------------------------- | --------------------------------------- |
+| `SysTick_Handler`                                                                           | 内核             | `timer_tick_inc()`             | 1 ms 时基累加（软件定时器驱动）         |
+| `CAN1_RX_IRQHandler`                                                                        | (1, 0)           | `can_driver_rx_irq_handler()`  | 读硬件 RX 缓冲 → 软件 FIFO             |
+| `CAN1_ERR_IRQHandler`                                                                       | (2, 0)           | `can_driver_err_irq_handler()` | 总线错误/离线恢复                       |
+| `USART2_IRQHandler`                                                                         | (3, 0)           | `qi_uart_rx_irq_handler()`     | Qi UART 接收字节入 FIFO                 |
+| `USART1_IRQn`                                                                               | —               | 当前未使用                       | Debug 调试串口（PB6=TX / PB7=RX），预留 |
+| `NMI_Handler` / `SVC_Handler` / `DebugMon_Handler` / `PendSV_Handler`                 | -                | 空实现                           | -                                       |
+| `HardFault_Handler` / `MemManage_Handler` / `BusFault_Handler` / `UsageFault_Handler` | -                | `while(1)`                     | 异常死循环（可配合调试器/看门狗恢复）   |
 
 ### 7.1 CAN1_RX_IRQHandler
 
@@ -1306,16 +1309,16 @@ CAN1_RX  (1,0)  >  CAN1_ERR (2,0)  >  USART2 (3,0)
 /* bit_time = 1 + 54 + 17 = 72 Tq → bitrate = 18 MHz / 72 = 250 kbps */
 ```
 
-| 参数 | 值 |
-|------|-----|
-| 帧格式 | CAN 2.0B 扩展帧（29-bit ID）+ 数据帧 |
-| 位率 | 250 kbps |
-| 采样点 | (1+54)/72 ≈ 76.4% |
-| 引脚 | PA11 = CAN_RX（MUX4，上拉），PA12 = CAN_TX（MUX4，推挽） |
-| 过滤器 | Filter0：mask=0，接受所有扩展数据帧 |
-| 中断 | `CAN_RIE_INT`（RX）+ `CAN_EIE_INT`（错误） |
-| 发送策略 | 优先 PTB（主发送缓冲），满则 STB（次发送缓冲），双满返回 -1 |
-| 软件 RX FIFO | 16 帧（`CAN_DRIVER_RX_FIFO_SIZE`） |
+| 参数         | 值                                                          |
+| ------------ | ----------------------------------------------------------- |
+| 帧格式       | CAN 2.0B 扩展帧（29-bit ID）+ 数据帧                        |
+| 位率         | 250 kbps                                                    |
+| 采样点       | (1+54)/72 ≈ 76.4%                                          |
+| 引脚         | PA11 = CAN_RX（MUX4，上拉），PA12 = CAN_TX（MUX4，推挽）    |
+| 过滤器       | Filter0：mask=0，接受所有扩展数据帧                         |
+| 中断         | `CAN_RIE_INT`（RX）+ `CAN_EIE_INT`（错误）              |
+| 发送策略     | 优先 PTB（主发送缓冲），满则 STB（次发送缓冲），双满返回 -1 |
+| 软件 RX FIFO | 16 帧（`CAN_DRIVER_RX_FIFO_SIZE`）                        |
 
 ### 8.3 看门狗配置（wdg_drv.h）
 
@@ -1327,31 +1330,31 @@ void wdg_drv_init(void);
 void wdg_drv_refresh(void);   /* 需在超时窗口内周期性调用 */
 ```
 
-| 参数 | 值 |
-|------|-----|
-| 时钟源 | LSI（约 40 kHz） |
-| 分频 | 128 → 312.5 Hz（3.2 ms/tick） |
-| 重装值 | 312 |
-| 超时 | ≈ 998 ms（约 1 s） |
-| 特性 | 一旦使能不可关闭；复位后 `CRM_WDT_RESET_FLAG` 可检测 |
+| 参数   | 值                                                    |
+| ------ | ----------------------------------------------------- |
+| 时钟源 | LSI（约 40 kHz）                                      |
+| 分频   | 128 → 312.5 Hz（3.2 ms/tick）                        |
+| 重装值 | 312                                                   |
+| 超时   | ≈ 998 ms（约 1 s）                                   |
+| 特性   | 一旦使能不可关闭；复位后`CRM_WDT_RESET_FLAG` 可检测 |
 
 喂狗点：Bootloader Safe Mode 循环、Bootloader 兜底循环、APP 主循环。
 
 ### 8.4 定时器配置（timer_drv.h / timer_drv.c）
 
-| 参数 | 值 |
-|------|-----|
-| 时基 | SysTick 1 ms 中断（`SysTick_Handler` → `timer_tick_inc()`） |
-| 软件定时器数量 | 最多 16 个（`TIMER_DRV_MAX_TIMERS`） |
-| 无效 ID | `0xFF`（`TIMER_INVALID_ID`） |
-| API | `timer_create(period_ms, cb, auto_reload)` / `timer_start` / `timer_stop` / `timer_reset` / `timer_is_running` / `timer_get_tick` / `timer_poll` |
+| 参数           | 值                                                                                                                                                             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 时基           | SysTick 1 ms 中断（`SysTick_Handler` → `timer_tick_inc()`）                                                                                               |
+| 软件定时器数量 | 最多 16 个（`TIMER_DRV_MAX_TIMERS`）                                                                                                                         |
+| 无效 ID        | `0xFF`（`TIMER_INVALID_ID`）                                                                                                                               |
+| API            | `timer_create(period_ms, cb, auto_reload)` / `timer_start` / `timer_stop` / `timer_reset` / `timer_is_running` / `timer_get_tick` / `timer_poll` |
 
 **工程内使用的定时器**：
 
-| 定时器 | 周期 | 自动重载 | 用途 |
-|--------|------|---------|------|
-| Bootloader Trial 定时器 | 1000 ms（`TRIAL_TIMER_PERIOD_MS`） | 是 | `trial_timer_callback()`：试运行计时 |
-| APP 广播定时器 | 100 ms | 是 | `broadcast_timer_callback()`：置位广播标志 |
+| 定时器                  | 周期                                 | 自动重载 | 用途                                         |
+| ----------------------- | ------------------------------------ | -------- | -------------------------------------------- |
+| Bootloader Trial 定时器 | 1000 ms（`TRIAL_TIMER_PERIOD_MS`） | 是       | `trial_timer_callback()`：试运行计时       |
+| APP 广播定时器          | 100 ms                               | 是       | `broadcast_timer_callback()`：置位广播标志 |
 
 ### 8.5 NVIC 优先级配置
 
@@ -1380,14 +1383,12 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
    已写入 `trial_state = TRIAL_STATE_PENDING`、`trial_slot = SLOT_A` 以及
    `active_slot = SLOT_A`，确保下载完成后 Bootloader 下次启动时进入
    PENDING→ACTIVE 试运行流程。
-
 2. **Trial 超时计数未消费**：`trial_timer_callback()` 每秒递增
    `g_trial_elapsed_sec` 并置 `g_trial_timer_flag`，但当前可见代码中没有逻辑
    依据 `trial_timeout_sec (10)` 执行超时回滚；实际回滚依赖
    “看门狗复位 + `trial_retry_count > trial_max_retries (3)`” 路径
    （而 retry_count 仅在 PENDING→ACTIVE 时递增，若 PENDING 从未被置位，该路径
    同样不会触发）。**若需启用 Trial 回滚，需补充置 PENDING 及超时/重试消费逻辑。**
-
 3. **APP 链接地址与 VTOR 需核对**：Bootloader 跳转目标为
    `slot_addr + IMAGE_HEADER_SIZE`（槽 A 为 `0x08004100`），并在跳转前设置
    `VTOR = 0x08004100`；而 APP `main()` 开头将 `SCB->VTOR` 设为
@@ -1395,21 +1396,17 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
    链接地址与 Image Header 之后的偏移一致**（即向量表位于 `0x08004000+0x100`），
    否则中断向量取址错误。当前 `uvprojx` 的 IROM 仍为 `0x08000000`（整片），
    需按槽位布局修改 scatter/链接配置。
-
 4. **单帧 UDS 限制**：Bootloader 仅支持单帧 UDS（每帧 8 字节，0x36 载荷
    ≤ 6 字节）。48 KB 固件约需 ~8192 帧；代码注释已说明后续可扩展
    ISO-TP 多帧提升吞吐。
-
 5. **0x36 载荷与对齐建议**：`g_dl_write_addr` 按 `data_len`（帧载荷字节数）
    累加，而 Flash 按 4 字节 word 编程。若主机每帧载荷不是 4 的倍数，会造成
    后续帧写入地址非 4 字节对齐，`flash_word_program` 行为异常。**建议主机每帧
    固定发送 4 字节载荷**（8 字节 CAN 帧中 `[SID, seq, d0, d1, d2, d3]`），
    或将代码改为按 4 字节对齐地址推进。
-
 6. **0x37 active_slot 写回已修复**：`0x37` 处理中已显式设置
    `g_meta.active_slot = SLOT_A`，与 `trial_state = TRIAL_STATE_PENDING`
    配合，确保下载新固件后 Bootloader 必定从 A 槽启动试运行。
-
 7. **ECDSA P-256 签名验证已集成**：`boot_verify_image()` 已完成
    micro-ecc（secp256r1）验签集成。验证流程：SHA-256(image_data) →
    `uECC_verify(public_key, hash, signature)`。公钥为 65 字节非压缩 SEC1 点，
@@ -1418,14 +1415,11 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
    存储于 `image_header_t.signature[64]`。验签失败返回 -1，镜像不予启动。
    SHA-256 使用软件实现（~1.5 KB Flash），micro-ecc P-256 验签约 ~5 KB Flash。
    **注意**：当前公钥为占位值，量产前必须替换为真实密钥对的公钥。
-
 8. **Qi 协议解析层未实现**：`qi_uart.c` 已完成 USART2 收发与 FIFO，但
    Qi 芯片命令/响应协议、充电状态机、FOD 等均为 TODO；当前广播字节 1-7 全 0。
-
 9. **备份区写入约定**：`boot_metadata_save()` / `ota_metadata_save()` 均只写
    主区 `0x0801C000`，以保护 `0x0801E000` 处的 NVM 配置；备份区仅作为读取回退。
    任何新增写入该区域的代码需遵循此约定。
-
 10. **0x11 复位依赖 IWDG**：Bootloader 的 ECUReset 通过空转等待看门狗复位
     （~1 s），期间不喂狗属预期行为；主机应在收到 `[0x51]` 后等待至少 1 s 再开始
     下一阶段操作。
