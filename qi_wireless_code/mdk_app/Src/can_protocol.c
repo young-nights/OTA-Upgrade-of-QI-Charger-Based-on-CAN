@@ -28,6 +28,19 @@
 #include "can_driver.h"
 #include "ota_trigger.h"
 
+/* private constants ---------------------------------------------------------*/
+
+/** @brief  DID definitions for ReadDataByIdentifier (0x22) */
+#define DID_SOFTWARE_VERSION      0xF195U   /*!< software version (matches bootloader) */
+#define DID_OTA_STATE             0x2112U   /*!< OTA state from metadata */
+#define DID_ACTIVE_SLOT           0x2113U   /*!< active firmware slot */
+#define DID_LAST_BOOT_REASON      0x2115U   /*!< last boot reason */
+#define DID_ROLLBACK_COUNT        0x2116U   /*!< rollback counter */
+
+/** @brief  Software version string (2 bytes, major.minor) */
+#define SW_VERSION_MAJOR          0x01U
+#define SW_VERSION_MINOR          0x00U
+
 /* private functions ---------------------------------------------------------*/
 
 /**
@@ -132,6 +145,120 @@ static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
     case UDS_SID_TRANSFER_SIGNATURE:
       /* APP does not handle signature transfer - this is done in boot safe mode */
+      proto_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
+      break;
+
+    case UDS_SID_READ_DATA_BY_ID:
+      /* ReadDataByIdentifier: requires at least SID + 2-byte DID */
+      if (len < 3U)
+      {
+        proto_send_nrc(service_id, 0x13U);  /* incorrectMessageLengthOrInvalidFormat */
+        break;
+      }
+      {
+        uint16_t did = ((uint16_t)data[1] << 8) | (uint16_t)data[2];
+        uint8_t nrc = 0x00U;
+
+        switch (did)
+        {
+          case DID_SOFTWARE_VERSION:
+            /* echo DID + 2-byte version */
+            resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+            resp[1] = data[1];  /* DID high byte */
+            resp[2] = data[2];  /* DID low byte */
+            resp[3] = SW_VERSION_MAJOR;
+            resp[4] = SW_VERSION_MINOR;
+            proto_send_response(resp, 5);
+            break;
+
+          case DID_OTA_STATE:
+          {
+            ota_metadata_t meta;
+            resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+            resp[1] = data[1];
+            resp[2] = data[2];
+            if (ota_metadata_read(&meta) == 0)
+            {
+              resp[3] = meta.ota_state;
+            }
+            else
+            {
+              resp[3] = 0xFFU;  /* unknown */
+            }
+            proto_send_response(resp, 4);
+            break;
+          }
+
+          case DID_ACTIVE_SLOT:
+          {
+            ota_metadata_t meta;
+            resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+            resp[1] = data[1];
+            resp[2] = data[2];
+            if (ota_metadata_read(&meta) == 0)
+            {
+              resp[3] = meta.active_slot;
+            }
+            else
+            {
+              resp[3] = 0xFFU;  /* unknown */
+            }
+            proto_send_response(resp, 4);
+            break;
+          }
+
+          case DID_LAST_BOOT_REASON:
+          {
+            ota_metadata_t meta;
+            resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+            resp[1] = data[1];
+            resp[2] = data[2];
+            if (ota_metadata_read(&meta) == 0)
+            {
+              resp[3] = meta.last_boot_reason;
+            }
+            else
+            {
+              resp[3] = 0xFFU;  /* unknown */
+            }
+            proto_send_response(resp, 4);
+            break;
+          }
+
+          case DID_ROLLBACK_COUNT:
+          {
+            ota_metadata_t meta;
+            resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+            resp[1] = data[1];
+            resp[2] = data[2];
+            if (ota_metadata_read(&meta) == 0)
+            {
+              resp[3] = (uint8_t)(meta.rollback_count & 0xFFU);
+            }
+            else
+            {
+              resp[3] = 0x00U;
+            }
+            proto_send_response(resp, 4);
+            break;
+          }
+
+          default:
+            nrc = 0x31U;  /* requestOutOfRange */
+            break;
+        }
+
+        if (nrc != 0x00U)
+        {
+          proto_send_nrc(service_id, nrc);
+        }
+      }
+      break;
+
+    case UDS_SID_SECURITY_ACCESS:
+      /* APP side does not support SecurityAccess (done in bootloader safe mode).
+       * Return NRC 0x11 (serviceNotSupported) to indicate this service is
+       * not available in the application session. */
       proto_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
       break;
 

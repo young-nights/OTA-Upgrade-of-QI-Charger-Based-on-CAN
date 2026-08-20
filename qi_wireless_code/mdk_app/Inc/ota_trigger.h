@@ -86,10 +86,10 @@ typedef struct
   uint16_t trial_timeout_sec;   /*!< trial timeout in seconds (default 10) */
   uint16_t reserved1;           /*!< reserved for alignment */
   uint32_t rollback_count;      /*!< number of rollbacks performed */
-  uint8_t  last_boot_reason;    /*!< boot reason code */
+  uint8_t  last_boot_reason;    /*!< 0x00=power-on, 0x02=WDG, 0x03=OTA, 0x04=rollback */
   uint8_t  ota_state;           /*!< 0x00=idle, 0x01=downloading */
   uint8_t  reserved2[2];        /*!< reserved */
-  uint8_t  padding[472];        /*!< padding to 512 bytes */
+  uint8_t  padding[232];        /*!< padding to 276 bytes (must match bootloader) */
   uint32_t crc32;               /*!< CRC32 of all above fields */
 } ota_metadata_t;
 
