@@ -233,7 +233,13 @@ boot_result = try_boot_slot(boot_slot, &g_meta);
    → 与 header->crc32 比对
    → 不一致 → 镜像无效
 
-④ 全部通过 → 镜像有效
+④ ECDSA P-256 签名验证
+   → 从 `.ecdsa_pubkey` section 读取 65 字节非压缩公钥
+   → 计算 SHA256(image_data)
+   → 调用 uECC_verify() 验证签名
+   → 验签失败 → 镜像无效
+
+⑤ 全部通过 → 镜像有效
 ```
 
 **跳转流程** (`boot_jump_to_app`):
@@ -294,11 +300,15 @@ if (boot_result != 0)
 | 服务 | SID | 功能 |
 |------|-----|------|
 | DiagnosticSessionCtrl | 0x10 | 切换诊断会话 |
-| SecurityAccess | 0x27 | 安全访问（简化版，接受任意 key） |
-| RequestDownload | 0x34 | 请求下载 |
+| SecurityAccess | 0x27 | 安全访问（ECDSA P-256，子功能 0x01/0x03/0x02） |
+| ReadDataByIdentifier | 0x22 | 读取 DID（0xF195 软件版本） |
+| WriteDataByIdentifier | 0x2E | 写入 DID（0x2010 固件类型选择） |
+| RoutineControl | 0x31 | 例程控制（0xFF00 擦除内存） |
+| RequestDownload | 0x34 | 请求下载（初始化下载状态） |
 | TransferData | 0x36 | 传输数据块 |
-| RequestTransferExit | 0x37 | 传输结束 |
-| ECUReset | 11 | ECU 复位（通过看门狗） |
+| TransferSignature | 0x38 | 传输固件签名 |
+| RequestTransferExit | 0x37 | 传输结束（CRC32 + 写 header） |
+| ECUReset | 0x11 | ECU 复位 |
 
 **安全模式是"砖机恢复"机制**：即使两个 slot 的固件都损坏，也能通过 CAN 重新烧录。
 
@@ -468,9 +478,7 @@ Bootloader
 
 3. **retry_count 的累加时机**：每次 bootloader 启动时在 `process_trial_state` 中累加，而不是在应用固件崩溃时。这意味着如果应用固件正常运行很久后崩溃，retry_count 从上次的值继续累加。
 
-4. **签名验证是占位**：`boot_verify_image` 中的 ECDSA P-256 签名验证标记为 TODO，当前只做 CRC32 校验。
-
-5. **Safe Mode UDS 是简化版**：`SecurityAccess` 接受任意 seed/key，`TransferData` 仅 ACK 不实际写入 Flash。生产环境需要补全。
+4. **SecurityAccess 采用 ECDSA P-256 分帧验签**：`SecurityAccess`（0x27）通过子功能 0x01/0x03/0x02 三步完成验签。Host 先请求 seed（4B），然后通过 0x03 分帧传输 64B ECDSA 签名（每帧 6B，共约 11 帧），最后 0x02 触发 MCU 验签（SHA256(seed) + uECC_verify）。3 次失败后锁定 60 秒。
 
 ---
 
@@ -479,3 +487,4 @@ Bootloader
 | 版本 | 日期 | 改动说明 |
 |------|------|----------|
 | v1.0 | 2026-08-17 | 初始版本：基于源码梳理 bootloader 细节流程、试运行状态机、OTA 完整流程 |
+| v1.1 | 2026-08-20 | 对齐 SRS v1.1：ECDSA P-256 签名验证已实现（非占位）；SecurityAccess 改为分帧验签；新增 0x22/0x2E/0x31 服务；OTA 流程顺序更新 |

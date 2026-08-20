@@ -339,7 +339,10 @@ void system_init(void)
 
 ### 4.2 会话管理
 
+> **说明**：Bootloader Safe Mode 下无显式会话概念，直接处理所有 UDS 请求，不区分 Default/Extended/Programming 会话。
+
 ```c
+/* 会话管理在 APP 端实现 */
 typedef enum {
     SESSION_DEFAULT     = 0x01,
     SESSION_EXTENDED    = 0x03,
@@ -372,35 +375,37 @@ typedef struct {
 | Programming → Default | 清除 | 清除安全解锁，中止传输 |
 | 任何 → Default | 清除 | 清除安全解锁，中止传输 |
 
-### 4.3 SecurityAccess (ECDSA P-256)
+### 4.3 SecurityAccess (ECDSA P-256 分帧验签)
 
-**流程**:
+**三步流程**:
 
 ```
-CCU                          MCU (服务端)
+CCU                          MCU (Bootloader Safe Mode)
  │                              │
  │── 0x27 0x01 (请求种子) ────→│
- │                              │ 生成 32 字节随机种子
- │                              │ 对 seed 做 SHA-256 哈希
- │←─ 0x67 0x01 + seed ─────────│
+ │                              │ 生成 4 字节随机种子 (g_seed)
+ │                              │ 重置签名接收缓冲区
+ │←─ 0x67 0x01 + seed (4B) ────│
  │                              │
- │ 对 seed_hash 做 ECDSA 签名   │
- │ (使用 CCU 私钥)              │
+ │── 0x27 0x03 + seq + chunk ──→│ × N 帧（每帧 6B，共 ~11 帧）
+ │   累积 64B ECDSA 签名        │ 校验 blockSeq 连续性
+ │←─ 0x67 0x03 + seq ──────────│
  │                              │
- │── 0x27 0x02 + signature ───→│
- │                              │ 用预置公钥验证签名
- │                              │
- │←─ 0x67 0x02 (成功) ─────────│ 或 NRC 0x35 (失败)
+ │── 0x27 0x02 (验签请求) ────→│
+ │                              │ SHA256(g_seed) → hash
+ │                              │ uECC_verify(pubkey, hash, sig)
+ │←─ 0x67 0x02 (成功) ─────────│ 或 NRC 0x33/0x35
  │                              │
 ```
 
 **实现要点**:
 
-- 种子来源: AT32F426 硬件 RNG (如果支持) 或 PRNG
-- 哈希算法: SHA-256 (对 seed 进行哈希)
+- 种子来源: 4 字节随机种子 (PRNG, 基于 SysTick + Flash 偏移)
+- 哈希算法: SHA-256 (对 4 字节 seed 进行哈希)
 - 签名格式: R‖S, 固定 64 字节 (IEEE P1363, 非 ASN.1 DER)
-- 公钥存储: 65 字节非压缩 SEC1 点 (0x04 ‖ X ‖ Y), 写入 Bootloader 只读区
-- 验签库: micro-ecc (~5KB Flash, ~1KB RAM)
+- 签名传输: 0x27 0x03 分帧接收，每帧 6B 签名数据 + blockSeq，共约 11 帧
+- 公钥存储: 65 字节非压缩 SEC1 点 (0x04 ‖ X ‖ Y)，存放在 `.ecdsa_pubkey` section，附带 magic marker ("KEYP") 用于损坏检测
+- 验签函数: `verify_security_ecdsa_signature()` — 使用 `sha256_hash(g_seed)` + `uECC_verify()`
 - 超时处理: ECDSA 验签可能需要 200~800ms, 超过 P2 (50ms) 时发送 NRC 0x78 (ResponsePending), P2* = 5000ms
 
 **NRC 处理**:
@@ -409,7 +414,7 @@ CCU                          MCU (服务端)
 |------|-----|
 | 安全未解锁时访问受保护服务 | 0x33 (SecurityAccessDenied) |
 | 签名验证失败 | 0x35 (InvalidKey) |
-| 连续 3 次失败 | 0x36 (ExceededNumberOfAttempts) |
+| 连续 3 次失败 → 60 秒锁定 | 0x35 (ExceededNumberOfAttempts) |
 | 锁定期间再次请求 | 0x37 (RequiredTimeDelayNotExpired) |
 
 ### 4.4 固件下载流程
@@ -425,12 +430,11 @@ CCU                          MCU (服务端)
 
 **MCU 处理逻辑**:
 
-1. 检查当前会话 = Programming
-2. 检查 SecurityAccess Level 1 已解锁
-3. 检查 firmware_type (DID 0x2010) 已设置
-4. 验证 memoryAddress 和 memorySize 在目标槽位范围内
-5. 擦除目标槽位 Flash
-6. 返回 maxNumberOfBlockLength (建议 256 字节)
+1. 检查 SecurityAccess 已解锁
+2. 仅初始化下载状态（不执行擦除）
+3. 返回 maxNumberOfBlockLength (建议 256 字节)
+
+> **注意**: 按 SRS 规范，擦除操作由 0x31 0xFF00 独立执行，0x34 不再执行擦除。
 
 #### 4.4.2 TransferData (0x36)
 
@@ -497,9 +501,9 @@ CCU                          MCU (服务端)
 
 | DID | 读/写 | 实现位置 | 说明 |
 |-----|-------|----------|------|
-| 0xF189 | 读 | APP | 活动槽位的版本字符串 |
+| 0xF195 | 读 | Bootloader | 软件版本字符串 (SW_VERSION "1.0.0") |
 | 0xF18D | 读 | Bootloader | Bootloader 版本 |
-| 0x2010 | 读/写 | APP | 固件类型选择 |
+| 0x2010 | 读/写 | Bootloader | 固件类型选择 (0=app, 1=bootloader)，需安全解锁 |
 | 0x2112 | 读 | APP/Bootloader | OTA 状态 |
 | 0x2113 | 读 | APP/Bootloader | 活动槽位 |
 | 0x2114 | 读 | APP/Bootloader | 待定槽位 |
@@ -527,20 +531,21 @@ Bootloader 区域 (只读, 写保护)
 ┌─────────────────────────────────────┐
 │ 0x0800_0000  启动代码               │
 │ ...                                 │
-│ 0x0800_3C00  ECDSA P-256 公钥       │ (65 字节)
-│ 0x0800_3C41  公钥 CRC32             │ (4 字节)
-│ 0x0800_3C45  保留                   │
+│ .ecdsa_pubkey section:              │
+│   65 字节非压缩 SEC1 公钥 (04‖X‖Y) │
+│   4 字节 magic marker "KEYP"        │
 │ ...                                 │
 │ 0x0800_3FFF  Bootloader 结束        │
 └─────────────────────────────────────┘
 ```
 
-**密钥注入流程 (工厂)**:
+**密钥管理**:
 
-1. 生成 ECDSA P-256 密钥对 (私钥 + 公钥)
-2. 私钥由 CCU/上位机保管, 用于签名固件
-3. 公钥通过 SWD 烧录器写入 Bootloader 只读区
-4. 启用 Bootloader 区域的 Flash 写保护
+- 测试密钥已生成，保存在 `docs/keys/` 目录：
+  - `docs/keys/private.pem` — 测试私钥（Host 侧签名用）
+  - `docs/keys/public.pem` — 测试公钥（编译进 Bootloader）
+- 量产时需替换为正式密钥对，私钥由 CCU/上位机保管
+- 公钥通过 `.ecdsa_pubkey` section 的 `__attribute__((section(...)))` 编译进 Bootloader，附带 magic marker 用于损坏检测
 
 ### 5.3 签名验证流程
 
@@ -560,17 +565,24 @@ bool ota_verify_image_signature(uint8_t slot)
         return false;
     }
     
-    /* 2. 计算镜像数据的 SHA-256 哈希 */
+    /* 2. 检查镜像长度 */
+    if (header->image_length == 0 || header->image_length > slot_size - 256) {
+        return false;
+    }
+    
+    /* 3. CRC32 校验 */
+    if (crc32_compute(image_data, header->image_length) != header->crc32) {
+        return false;
+    }
+    
+    /* 4. ECDSA P-256 签名验证 */
     uint8_t hash[32];
-    sha256_compute((uint8_t*)(base_addr + IMAGE_HEADER_SIZE), 
-                   header->image_length, hash);
+    sha256_hash(image_data, header->image_length, hash);
     
-    /* 3. 使用预置公钥验证签名 */
-    uint8_t *public_key = get_stored_public_key();  /* 从只读区读取 */
-    bool result = uECC_verify(public_key, hash, 32, 
-                              header->signature, uECC_secp256r1());
+    const uint8_t *public_key = boot_verify_get_public_key();
+    if (public_key == NULL) return false;
     
-    return result;
+    return uECC_verify(public_key, hash, header->signature, uECC_secp256r1()) == 1;
 }
 ```
 
@@ -817,24 +829,24 @@ typedef struct {
 | UDS 服务框架 (0x10/0x11/0x22/0x27/0x3E) | 6h | boot_uds.c |
 | 会话管理 + S3 超时 | 4h | boot_session.c |
 
-### 阶段 3: ECDSA P-256 + 安全访问 (第 8 周, 16h)
+### 阶段 3: ECDSA P-256 + 安全访问 (第 8 周, 16h) ✅ 已完成
 
-| 任务 | 工时 | 产出 |
-|------|------|------|
-| micro-ecc 库集成 | 4h | uECC.c/h |
-| SHA-256 实现 (或使用硬件加速) | 4h | sha256.c |
-| SecurityAccess (0x27) 完整流程 | 6h | boot_security.c |
-| 公钥存储与管理 | 2h | boot_key.c |
+| 任务 | 工时 | 产出 | 状态 |
+|------|------|------|------|
+| micro-ecc 库集成 | 4h | uECC.c/h | ✅ |
+| SHA-256 实现 | 4h | sha256.c | ✅ |
+| SecurityAccess (0x27) 分帧验签流程 | 6h | boot_safe_mode.c | ✅ |
+| 公钥存储与管理 (.ecdsa_pubkey section) | 2h | boot_verify.c | ✅ |
 
-### 阶段 4: OTA 下载流程 (第 8 周, 16h)
+### 阶段 4: OTA 下载流程 (第 8 周, 16h) ✅ 已完成
 
-| 任务 | 工时 | 产出 |
-|------|------|------|
-| RequestDownload (0x34) | 4h | boot_download.c |
-| TransferData (0x36) + 块序号管理 | 4h | boot_download.c |
-| RequestTransferExit (0x37) + 验证 | 4h | boot_download.c |
-| 擦除例程 (0x31 0xFF00) | 2h | boot_routine.c |
-| DID 读写 (0x2112-0x2116, 0xF189, 0xF18D) | 2h | boot_did.c |
+| 任务 | 工时 | 产出 | 状态 |
+|------|------|------|------|
+| RequestDownload (0x34) — 仅初始化下载状态 | 4h | boot_safe_mode.c | ✅ |
+| TransferData (0x36) + 块序号管理 (& 0xFF 回绕) | 4h | boot_safe_mode.c | ✅ |
+| RequestTransferExit (0x37) + 验证 | 4h | boot_safe_mode.c | ✅ |
+| 擦除例程 (0x31 0xFF00) | 2h | boot_safe_mode.c | ✅ |
+| DID 读写 (0xF195, 0x2010, 0x22/0x2E) | 2h | boot_safe_mode.c | ✅ |
 
 ### 阶段 5: 试启动与回滚 (第 9 周, 12h)
 
@@ -896,3 +908,4 @@ typedef struct {
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|----------|------|
 | V1.0 | 2026-08-15 | 初稿 | Mr.Hu |
+| V1.1 | 2026-08-20 | 对齐 SRS v1.1：SecurityAccess 改为 ECDSA P-256 分帧验签；0x34 不再执行擦除（由 0x31 独立完成）；新增 0x22/0x2E 服务；DID 0xF189→0xF195；公钥存储改用 .ecdsa_pubkey section + magic marker；阶段 3/4 标记为已完成 | Mr.Hu |

@@ -156,7 +156,7 @@ Flash 地址 0x0801C000 开始:
 1. 检查 `magic == 0x4F544158`
 2. 检查 `image_length` 在合法范围内 (0 < length ≤ slot_size - 256)
 3. 对 header 之后的 `image_length` 字节计算 CRC32，与 `header->crc32` 比对
-4. 签名验证 (TODO，当前为占位)
+4. ECDSA P-256 签名验证（SHA256(image_data) + uECC_verify 公钥验签）— 已实现
 
 ---
 
@@ -206,16 +206,18 @@ NVM 驱动参数:
            │  Vector Table               │ ← 中断向量表
            │  Bootloader Code            │ ← 含以下模块:
            │   - boot_metadata.c         │   元数据读写
-           │   - boot_verify.c           │   镜像校验 (CRC32)
+           │   - boot_verify.c           │   镜像校验 (CRC32 + ECDSA P-256)
            │   - boot_jump.c             │   跳转应用
            │   - can_driver              │   CAN 通信
            │   - UDS safe mode handler   │   安全模式 OTA
            │   - trial boot state machine│   试运行状态机
            │   - nvm_drv.c               │   NVM 驱动
+           │   - uECC.c                  │   ECDSA P-256 验签库
+           │   - sha256.c                │   SHA-256 哈希库
 0x08003FFF └─────────────────────────────┘
 ```
 
-链接脚本配置: `LR_IROM1 0x08000000 0x00003FFF`
+链接脚本配置: `LR_IROM1 0x08000000 0x00004000`
 
 ---
 
@@ -285,3 +287,4 @@ NVM 驱动参数:
 | 版本 | 日期 | 改动说明 |
 |------|------|----------|
 | v1.0 | 2026-08-16 | 初始版本：基于源码梳理 Flash 空间分配、ota_metadata_t 结构、image_header_t 结构 |
+| v1.1 | 2026-08-20 | 对齐 SRS v1.1：ECDSA P-256 验签已实现（非占位）；Bootloader 模块列表新增 uECC/SHA-256；链接脚本尺寸修正为 0x00004000 |
