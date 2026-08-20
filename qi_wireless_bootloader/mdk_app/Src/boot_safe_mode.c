@@ -39,6 +39,9 @@
 #include "sha256.h"
 #include <string.h>
 
+/** @brief  Software version string for DID 0xF195 */
+#define SW_VERSION  "1.0.0"
+
 /* private define ------------------------------------------------------------*/
 
 /** @brief  safe mode CAN IDs for OTA download */
@@ -53,6 +56,9 @@
 #define UDS_REQUEST_TRANSFER_EXIT   0x37U
 #define UDS_TRANSFER_SIGNATURE      0x38U
 #define UDS_ECU_RESET               0x11U
+#define UDS_READ_DATA_BY_ID         0x22U
+#define UDS_WRITE_DATA_BY_ID        0x2EU
+#define UDS_ROUTINE_CONTROL         0x31U
 
 /** @brief  UDS negative response code */
 #define UDS_NEGATIVE_RESPONSE       0x7FU
@@ -65,6 +71,7 @@
 #define UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS 0x35U
 #define UDS_NRC_REQUIRED_TIME_DELAY_NOT_EXPIRED 0x37U
 #define UDS_NRC_SECURITY_ACCESS_DENIED 0x33U
+#define UDS_NRC_REQUEST_OUT_OF_RANGE    0x31U
 #define UDS_POSITIVE_RESPONSE_OFFSET 0x40U
 
 /* private variables ---------------------------------------------------------*/
@@ -94,6 +101,14 @@ static uint8_t  g_seed[4];
 static uint8_t  g_seed_sub = 0;
 static uint8_t  g_security_fail_count = 0;
 static uint32_t g_security_lockout_until_ms = 0;
+
+/** @brief  firmware type selected by 0x2E 0x2010 (0=app, 1=bootloader) */
+static uint8_t  g_firmware_type = 0;
+
+/** @brief  SecurityAccess ECDSA signature buffer */
+static uint8_t  g_sa_sig_buf[64];
+static uint8_t  g_sa_sig_bytes_received = 0;
+static uint8_t  g_sa_sig_block_seq = 0;
 
 /** @brief  security access lockout: 60 seconds */
 #define SECURITY_LOCKOUT_MS  60000U
@@ -127,40 +142,54 @@ static uint32_t generate_random_seed(void)
 }
 
 /**
- * @brief  verify security access key derived from seed
- * @note   Computes expected key from seed using a deterministic derivation,
- *         then compares with the host-provided key.
- *         For full ECDSA-based security, this should verify an ECDSA signature
- *         over the seed using the pre-provisioned public key. This requires
- *         ISO-TP multi-frame support (signature is 64 bytes, single frame is 8).
- * @param  key: pointer to 4-byte key from host
- * @retval 1 if key is valid, 0 if invalid
+ * @brief  verify ECDSA P-256 signature over seed
+ * @note   Verifies the 64-byte IEEE P1363 signature that the host computed
+ *         over SHA256(seed) using the pre-provisioned public key.
+ * @retval 1 if signature is valid, 0 if invalid
  */
-static uint8_t verify_security_key(const uint8_t *key)
+static uint8_t verify_security_ecdsa_signature(void)
 {
-  uint32_t expected;
-  uint32_t received;
-  uint32_t s;
+  const uint8_t *public_key;
+  uint8_t seed_hash[32];
+  int result;
 
-  /* Derive expected key from stored seed using a mixing function.
-   * In production, replace with ECDSA verify: hash(seed) + signature.
-   * The 64-byte ECDSA signature requires ISO-TP multi-frame support. */
-  s = ((uint32_t)g_seed[0] << 24) |
-      ((uint32_t)g_seed[1] << 16) |
-      ((uint32_t)g_seed[2] << 8)  |
-      (uint32_t)g_seed[3];
+  /* get the pre-provisioned public key */
+  public_key = boot_verify_get_public_key();
+  if (public_key == (const uint8_t *)0)
+  {
+    return 0U;
+  }
 
-  /* mixing function: multiply, XOR-shift, multiply again */
-  expected = s * 0x45D9F3BU;
-  expected ^= expected >> 16;
-  expected *= 0x45D9F3BU;
+  /* compute SHA-256 of the 4-byte seed */
+  sha256_hash(g_seed, 4U, seed_hash);
 
-  received = ((uint32_t)key[0] << 24) |
-             ((uint32_t)key[1] << 16) |
-             ((uint32_t)key[2] << 8)  |
-             (uint32_t)key[3];
+  /* verify ECDSA P-256 signature */
+  result = uECC_verify(public_key, seed_hash, g_sa_sig_buf);
 
-  return (expected == received) ? 1U : 0U;
+  return (result == 1) ? 1U : 0U;
+}
+
+/**
+ * @brief  erase all APP_A flash sectors
+ * @retval 0 on success, non-zero on error
+ */
+static uint8_t erase_app_a_flash(void)
+{
+  uint32_t sector_addr;
+
+  flash_unlock();
+  for (sector_addr = APP_A_BASE_ADDR;
+       sector_addr < (APP_A_BASE_ADDR + APP_A_SIZE);
+       sector_addr += 0x800U)  /* 2KB sectors for AT32F426 */
+  {
+    if (flash_sector_erase(sector_addr) != FLASH_OPERATE_DONE)
+    {
+      flash_lock();
+      return 1U;
+    }
+  }
+  flash_lock();
+  return 0U;
 }
 
 /**
@@ -270,6 +299,10 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         g_seed_generated = 1;
         g_seed_sub = sub_func;
 
+        /* reset signature accumulation state */
+        g_sa_sig_bytes_received = 0;
+        g_sa_sig_block_seq = 0;
+
         /* positive response: SID + sub + seed */
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = sub_func;
@@ -279,9 +312,73 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         resp[5] = g_seed[3];
         safe_mode_send_response(resp, 6);
       }
+      else if (sub_func == 0x03U)
+      {
+        /* Sub-function 0x03: Transfer Signature Chunk (for ECDSA P-256)
+         * Host sends 64-byte signature in chunks: 6 bytes per frame.
+         * Frame format: [0x27, 0x03, blockSeq, sig_byte0..sig_byte5]
+         * First frame resets accumulation.  Total ~11 frames for 64 bytes. */
+        uint8_t block_seq;
+        uint8_t chunk_len;
+        uint8_t i;
+
+        if (!g_seed_generated || g_seed_sub != 0x01U)
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+          break;
+        }
+
+        if (len < 3U)
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+          break;
+        }
+
+        block_seq = data[2];
+
+        /* first frame: blockSeq == 1, reset buffer */
+        if (block_seq == 0x01U)
+        {
+          g_sa_sig_block_seq = 0;
+          g_sa_sig_bytes_received = 0;
+          memset(g_sa_sig_buf, 0, 64);
+        }
+
+        g_sa_sig_block_seq++;
+        if (block_seq != g_sa_sig_block_seq)
+        {
+          /* sequence error */
+          g_sa_sig_bytes_received = 0;
+          safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+          break;
+        }
+
+        chunk_len = len - 3U; /* subtract SID, sub_func, blockSeq */
+        if ((g_sa_sig_bytes_received + chunk_len) > 64U)
+        {
+          g_sa_sig_bytes_received = 0;
+          safe_mode_send_nrc(service_id, UDS_NRC_RESPONSE_TOO_LONG);
+          break;
+        }
+
+        /* accumulate signature data */
+        for (i = 0; i < chunk_len; i++)
+        {
+          g_sa_sig_buf[g_sa_sig_bytes_received + i] = data[3U + i];
+        }
+        g_sa_sig_bytes_received += chunk_len;
+
+        /* positive response */
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = sub_func;
+        resp[2] = block_seq;
+        safe_mode_send_response(resp, 3);
+      }
       else if (sub_func == 0x02U)
       {
-        /* Sub-function 0x02: Send Key */
+        /* Sub-function 0x02: Verify Signature
+         * Host has finished sending 64B signature via 0x03 chunks.
+         * MCU now verifies SHA256(seed) + signature using ECDSA P-256. */
         if (!g_seed_generated || g_seed_sub != 0x01U)
         {
           /* no seed was requested first */
@@ -289,20 +386,23 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
           break;
         }
 
-        if (len < 6U)
+        if (g_sa_sig_bytes_received != 64U)
         {
-          safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+          /* incomplete signature */
           g_seed_generated = 0;
+          g_sa_sig_bytes_received = 0;
+          safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
           break;
         }
 
-        /* verify the key (bytes 2..5 of request) */
-        if (verify_security_key(&data[2]))
+        /* verify the ECDSA P-256 signature */
+        if (verify_security_ecdsa_signature())
         {
-          /* key valid: unlock security */
+          /* signature valid: unlock security */
           g_security_unlocked = 1;
           g_security_fail_count = 0;
           g_seed_generated = 0;
+          g_sa_sig_bytes_received = 0;
 
           resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
           resp[1] = sub_func;
@@ -310,9 +410,10 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         }
         else
         {
-          /* key invalid: increment failure counter */
+          /* signature invalid: increment failure counter */
           g_security_fail_count++;
           g_seed_generated = 0;
+          g_sa_sig_bytes_received = 0;
 
           if (g_security_fail_count >= SECURITY_MAX_FAILURES)
           {
@@ -334,11 +435,129 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       break;
     }
 
+    case UDS_READ_DATA_BY_ID:
+    {
+      uint16_t did;
+
+      if (len < 3U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      did = ((uint16_t)data[1] << 8) | (uint16_t)data[2];
+
+      if (did == 0xF195U)
+      {
+        /* DID 0xF195: Software Version */
+        const char *ver = SW_VERSION;
+        uint8_t ver_len = (uint8_t)strlen(ver);
+        uint8_t pos;
+
+        if (ver_len > 5U) ver_len = 5U; /* fit in single frame: SID+DID+5 chars = 8 */
+
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1]; /* DID high byte */
+        resp[2] = data[2]; /* DID low byte */
+        for (pos = 0; pos < ver_len; pos++)
+        {
+          resp[3U + pos] = (uint8_t)ver[pos];
+        }
+        safe_mode_send_response(resp, 3U + ver_len);
+      }
+      else
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
+      }
+      break;
+    }
+
+    case UDS_WRITE_DATA_BY_ID:
+    {
+      uint16_t did;
+
+      /* security gate */
+      if (!g_security_unlocked)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
+        break;
+      }
+
+      if (len < 4U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      did = ((uint16_t)data[1] << 8) | (uint16_t)data[2];
+
+      if (did == 0x2010U)
+      {
+        /* DID 0x2010: Firmware Type Selection (0=app, 1=bootloader) */
+        g_firmware_type = data[3];
+
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = data[3];
+        safe_mode_send_response(resp, 4);
+      }
+      else
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
+      }
+      break;
+    }
+
+    case UDS_ROUTINE_CONTROL:
+    {
+      uint16_t routine_id;
+
+      /* security gate */
+      if (!g_security_unlocked)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
+        break;
+      }
+
+      if (len < 4U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      routine_id = ((uint16_t)data[2] << 8) | (uint16_t)data[3];
+
+      if (data[1] == 0x01U && routine_id == 0xFF00U)
+      {
+        /* 0x31 0x01 0xFF00: Erase Memory (independent erase command) */
+        if (erase_app_a_flash() != 0U)
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+          break;
+        }
+
+        /* initialize download state after erase */
+        g_dl_write_addr    = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
+        g_dl_bytes_written = 0;
+        g_dl_block_seq     = 0;
+        g_dl_active        = 1;
+
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1]; /* sub-function */
+        resp[2] = data[2]; /* routine ID high */
+        resp[3] = data[3]; /* routine ID low */
+        safe_mode_send_response(resp, 4);
+      }
+      else
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
+      }
+      break;
+    }
+
     case UDS_REQUEST_DOWNLOAD:
     {
-      uint32_t sector_addr;
-      uint8_t erase_err = 0;
-
       /* security gate: require SecurityAccess (0x27) to be unlocked */
       if (!g_security_unlocked)
       {
@@ -346,27 +565,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         break;
       }
 
-      /* erase APP_A flash area */
-      flash_unlock();
-      for (sector_addr = APP_A_BASE_ADDR;
-           sector_addr < (APP_A_BASE_ADDR + APP_A_SIZE);
-           sector_addr += 0x800U)  /* 2KB sectors for AT32F426 */
-      {
-        if (flash_sector_erase(sector_addr) != FLASH_OPERATE_DONE)
-        {
-          erase_err = 1;
-          break;
-        }
-      }
-      flash_lock();
-
-      if (erase_err)
-      {
-        safe_mode_send_nrc(service_id, 0x72U);
-        break;
-      }
-
-      /* initialize download state */
+      /* per SRS: 0x34 only initializes download state, erase is done by 0x31 */
       g_dl_write_addr    = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
       g_dl_bytes_written = 0;
       g_dl_block_seq     = 0;
@@ -411,7 +610,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
       block_seq = data[1];
       g_dl_block_seq++;
-      if (block_seq != g_dl_block_seq)
+      if (block_seq != (g_dl_block_seq & 0xFFU))
       {
         g_dl_active = 0;
         safe_mode_send_nrc(service_id, 0x71U);
@@ -508,7 +707,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       }
 
       g_sig_block_seq++;
-      if (block_seq != g_sig_block_seq)
+      if (block_seq != (g_sig_block_seq & 0xFFU))
       {
         g_sig_active = 0;
         safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);

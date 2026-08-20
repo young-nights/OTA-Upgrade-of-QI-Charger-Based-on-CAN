@@ -29,7 +29,51 @@
 #include "uECC.h"
 #include "sha256.h"
 
+/* private constants ---------------------------------------------------------*/
+
+/** @brief  ECDSA P-256 public key (uncompressed SEC1: 04 || x || y)
+ *          Stored in a dedicated .rodata section.  The linker will place this
+ *          in the bootloader flash region (0x08000000..0x08003FFF).
+ *          A magic marker is appended after the key for corruption detection.
+ *          Generated via: openssl ecparam -genkey -name prime256v1
+ *          Private key stored at: docs/keys/private.pem (for host-side signing)
+ */
+__attribute__((section(".ecdsa_pubkey"), used))
+const uint8_t g_ecdsa_public_key[65] = {
+  0x04,  /* uncompressed point tag */
+  /* 32-byte X coordinate */
+  0x6a, 0x10, 0xf4, 0x3f, 0xb8, 0x9f, 0x45, 0x5b,
+  0x3b, 0xd4, 0x9c, 0xa4, 0x87, 0x1b, 0xa0, 0x78,
+  0xd0, 0xbb, 0x8f, 0x49, 0x14, 0x86, 0x91, 0xaa,
+  0xf4, 0xf4, 0x85, 0x24, 0xc5, 0x5b, 0x94, 0x9d,
+  /* 32-byte Y coordinate */
+  0x07, 0xeb, 0x0a, 0x32, 0xae, 0xb8, 0xd8, 0x61,
+  0x11, 0xc4, 0x91, 0x80, 0xc5, 0x00, 0xdc, 0x2e,
+  0xe6, 0x0f, 0x28, 0x9f, 0xfb, 0x69, 0x77, 0x59,
+  0x92, 0xc0, 0xd0, 0xd7, 0x2f, 0x0c, 0xe0, 0x43
+};
+
+/** @brief  Magic marker immediately after the public key (for corruption check) */
+__attribute__((section(".ecdsa_pubkey"), used))
+static const uint32_t g_pubkey_magic = ECDSA_PUBKEY_MAGIC;
+
 /* exported functions --------------------------------------------------------*/
+
+/**
+ * @brief  get pointer to the ECDSA public key
+ * @note   uses symbol address (not hard-coded), safe against linker movement
+ * @retval pointer to 65-byte uncompressed SEC1 public key
+ */
+const uint8_t *boot_verify_get_public_key(void)
+{
+  /* verify magic marker to detect Flash corruption (e.g. code overwrite) */
+  if (g_pubkey_magic != ECDSA_PUBKEY_MAGIC)
+  {
+    /* public key area corrupted — return NULL to force verification failure */
+    return (const uint8_t *)0;
+  }
+  return g_ecdsa_public_key;
+}
 
 /**
  * @brief  get pointer to image header at a given base address
@@ -88,8 +132,12 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
     uint8_t image_hash[32];
     int verify_result;
 
-    /* read the pre-provisioned public key from Bootloader read-only flash area */
-    public_key = (const uint8_t *)BOOT_ECDSA_PUBLIC_KEY_ADDR;
+    /* read the pre-provisioned public key (symbol-based, no hard-coded address) */
+    public_key = boot_verify_get_public_key();
+    if (public_key == (const uint8_t *)0)
+    {
+      return -1;
+    }
 
     /* compute SHA-256 hash of the image data (excluding header) */
     sha256_hash(image_data, header->image_length, image_hash);

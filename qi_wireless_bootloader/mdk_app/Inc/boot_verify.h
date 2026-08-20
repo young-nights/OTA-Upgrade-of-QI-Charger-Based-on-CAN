@@ -39,14 +39,21 @@ extern "C" {
 /** @brief  image header magic number: "XATO" */
 #define IMAGE_MAGIC   0x4F544158U
 
-/** @brief  ECDSA P-256 public key storage address in Bootloader read-only area.
- *          The 65-byte uncompressed SEC1 point (04 || x || y) is pre-programmed
- *          via SWD at production time.  Bootloader flash area (0x08000000..0x08003FFF)
- *          is write-protected by the linker layout — OTA downloads never touch it. */
-#define BOOT_ECDSA_PUBLIC_KEY_ADDR   0x08003C00U
-
 /** @brief  ECDSA P-256 public key size (uncompressed SEC1 point) */
 #define BOOT_ECDSA_PUBLIC_KEY_SIZE   65U
+
+/** @brief  Magic marker value to detect public key corruption in Flash */
+#define ECDSA_PUBKEY_MAGIC  0x4B594550U  /* "KEYP" */
+
+/** @brief  ECDSA P-256 uncompressed public key (SEC1: 04 || x || y)
+ *          Stored in a dedicated .rodata section to prevent code growth
+ *          from overwriting it.  The key is pre-provisioned at build time.
+ *          Replace this placeholder with the real production public key
+ *          (65 bytes: 04 prefix + 32-byte X + 32-byte Y coordinate). */
+extern const uint8_t g_ecdsa_public_key[65];
+
+/** @brief  Get pointer to the ECDSA public key (symbol-based, no hard-coded addr) */
+const uint8_t *boot_verify_get_public_key(void);
 
 /* exported types ------------------------------------------------------------*/
 

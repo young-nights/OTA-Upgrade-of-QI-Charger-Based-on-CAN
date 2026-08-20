@@ -104,7 +104,7 @@ typedef struct
   uint8_t  last_boot_reason;    /*!< 0x00=power-on, 0x02=WDG, 0x03=OTA, 0x04=rollback */
   uint8_t  ota_state;           /*!< 0x00=idle, 0x01=downloading */
   uint8_t  reserved2[2];        /*!< reserved */
-  uint8_t  padding[472];        /*!< padding to 512 bytes */
+  uint8_t  padding[232];        /*!< padding to 272 bytes (reduced from 512 for size optimization) */
   uint32_t crc32;               /*!< CRC32 of all above fields */
 } ota_metadata_t;
 
