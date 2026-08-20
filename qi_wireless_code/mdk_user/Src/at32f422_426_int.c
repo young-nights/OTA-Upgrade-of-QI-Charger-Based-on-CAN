@@ -55,7 +55,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* record fault info for post-mortem analysis at fixed SRAM location */
-  *(volatile uint32_t *)0x20000000 = 0xFAuLT;
+  *(volatile uint32_t *)0x20000000 = 0xFAUL;
 
   /* go to infinite loop when hard fault exception occurs, keep feeding
      watchdog to allow debug attach and prevent immediate reset */
@@ -72,7 +72,7 @@ void HardFault_Handler(void)
   */
 void MemManage_Handler(void)
 {
-  *(volatile uint32_t *)0x20000000 = 0xFAuLT;
+  *(volatile uint32_t *)0x20000000 = 0xFAUL;
 
   /* go to infinite loop when memory manage exception occurs */
   while(1)
@@ -88,7 +88,7 @@ void MemManage_Handler(void)
   */
 void BusFault_Handler(void)
 {
-  *(volatile uint32_t *)0x20000000 = 0xFAuLT;
+  *(volatile uint32_t *)0x20000000 = 0xFAUL;
 
   /* go to infinite loop when bus fault exception occurs */
   while(1)
@@ -104,7 +104,7 @@ void BusFault_Handler(void)
   */
 void UsageFault_Handler(void)
 {
-  *(volatile uint32_t *)0x20000000 = 0xFAuLT;
+  *(volatile uint32_t *)0x20000000 = 0xFAUL;
 
   /* go to infinite loop when usage fault exception occurs */
   while(1)
