@@ -4,9 +4,8 @@
   * @brief    Safe mode implementation: UDS OTA download via CAN
   **************************************************************************
   *
-  * @note    Current implementation supports single-frame UDS only (8 bytes per CAN frame).
-  *          For 48KB firmware, ~8192 frames are needed. ISO-TP multi-frame support
-  *          can be added in a future version for improved throughput.
+  * @note    This file implements the bootloader safe-mode UDS server.
+  *          ISO-TP multi-frame transport is supported for all UDS services.
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
   *
@@ -33,14 +32,18 @@
 #include "boot_verify.h"
 #include "boot_trial.h"
 #include "can_driver.h"
+#include "isotp.h"
 #include "timer_drv.h"
 #include "wdg_drv.h"
 #include "uECC.h"
 #include "sha256.h"
 #include <string.h>
 
-/** @brief  Software version string for DID 0xF195 */
+/** @brief  Software version string for DID 0xF189 */
 #define SW_VERSION  "1.0.0"
+
+/** @brief  Bootloader version string for DID 0xF18D */
+#define BL_VERSION  "1.0.0"
 
 /* private define ------------------------------------------------------------*/
 
@@ -59,6 +62,7 @@
 #define UDS_READ_DATA_BY_ID         0x22U
 #define UDS_WRITE_DATA_BY_ID        0x2EU
 #define UDS_ROUTINE_CONTROL         0x31U
+#define UDS_TESTER_PRESENT          0x3EU
 
 /** @brief  UDS negative response code */
 #define UDS_NEGATIVE_RESPONSE       0x7FU
@@ -66,18 +70,32 @@
 #define UDS_NRC_SUBFUNCTION_NOT_SUPPORTED 0x12U
 #define UDS_NRC_INCORRECT_MSG_LENGTH  0x13U
 #define UDS_NRC_RESPONSE_TOO_LONG     0x14U
+#define UDS_NRC_CONDITIONS_NOT_CORRECT 0x22U
+#define UDS_NRC_REQUEST_SEQUENCE_ERROR 0x24U
+#define UDS_NRC_REQUEST_OUT_OF_RANGE    0x31U
+#define UDS_NRC_SECURITY_ACCESS_DENIED 0x33U
+#define UDS_NRC_INVALID_KEY             0x35U
+#define UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS 0x36U
+#define UDS_NRC_REQUIRED_TIME_DELAY_NOT_EXPIRED 0x37U
+#define UDS_NRC_UPLOAD_DOWNLOAD_NOT_ACCEPTED 0x70U
 #define UDS_NRC_TRANSFER_DATA_ABORTED 0x71U
 #define UDS_NRC_GENERAL_PROGRAMMING_FAILURE 0x72U
-#define UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS 0x35U
-#define UDS_NRC_REQUIRED_TIME_DELAY_NOT_EXPIRED 0x37U
-#define UDS_NRC_SECURITY_ACCESS_DENIED 0x33U
-#define UDS_NRC_REQUEST_OUT_OF_RANGE    0x31U
+#define UDS_NRC_WRONG_BLOCK_SEQUENCE  0x73U
+#define UDS_NRC_RESPONSE_PENDING      0x78U
 #define UDS_POSITIVE_RESPONSE_OFFSET 0x40U
+
+/** @brief  Diagnostic session values */
+#define SESSION_DEFAULT     0x01U
+#define SESSION_PROGRAMMING 0x02U
+#define SESSION_EXTENDED    0x03U
 
 /* private variables ---------------------------------------------------------*/
 
 /** @brief  safe mode flag */
 static uint8_t g_safe_mode = 0;
+
+/** @brief  current diagnostic session (default: 0x01) */
+static uint8_t g_current_session = SESSION_DEFAULT;
 
 /** @brief  download state variables */
 static uint32_t g_dl_write_addr    = 0;
@@ -193,23 +211,14 @@ static uint8_t erase_app_a_flash(void)
 }
 
 /**
- * @brief  update security lockout timer (call from safe mode main loop)
+ * @brief  send a CAN response frame via ISO-TP
+ * @param  data: pointer to UDS response payload
+ * @param  len:  payload length in bytes
  * @retval none
  */
-static void safe_mode_update_security_timer(void)
+static void safe_mode_send_response(uint8_t *data, uint16_t len)
 {
-  /* lockout expires when system tick reaches the deadline */
-}
-
-/**
- * @brief  send a CAN response frame
- * @param  data: pointer to response data
- * @param  len: data length
- * @retval none
- */
-static void safe_mode_send_response(uint8_t *data, uint8_t len)
-{
-  can_driver_send(SAFE_MODE_CAN_ID_RESPONSE, data, len);
+  isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, data, len);
 }
 
 /**
@@ -228,20 +237,17 @@ static void safe_mode_send_nrc(uint8_t service_id, uint8_t nrc)
 }
 
 /**
- * @brief  handle UDS request in safe mode
- * @param  id: CAN frame ID
- * @param  data: pointer to frame data
- * @param  len: frame data length
+ * @brief  handle UDS request (called from ISO-TP callback)
+ * @param  data: pointer to complete UDS payload (PCI already stripped)
+ * @param  len:  payload length in bytes
  * @retval none
  */
-static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
+static void uds_process_message(uint8_t *data, uint16_t len)
 {
   uint8_t service_id;
   uint8_t resp[8];
 
-  (void)id;
-
-  if (len == 0)
+  if ((data == (uint8_t *)0) || (len == 0U))
   {
     return;
   }
@@ -251,11 +257,118 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
   switch (service_id)
   {
     case UDS_DIAG_SESSION_CTRL:
-      /* DiagnosticSessionControl: positive response */
-      resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      resp[1] = data[1];
-      safe_mode_send_response(resp, 2);
+    {
+      uint8_t sub_func;
+      uint8_t suppress;
+
+      if (len < 2U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      sub_func = data[1] & 0x7FU;  /* strip suppressPositiveResponse bit */
+      suppress = data[1] & 0x80U;
+
+      /* validate session value */
+      if (sub_func != SESSION_DEFAULT &&
+          sub_func != SESSION_PROGRAMMING &&
+          sub_func != SESSION_EXTENDED)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+        break;
+      }
+
+      /* switching to default session clears security state */
+      if (sub_func == SESSION_DEFAULT)
+      {
+        g_security_unlocked = 0;
+        g_security_fail_count = 0;
+        g_dl_active = 0;
+        g_sig_active = 0;
+      }
+
+      /* switching between non-default sessions clears security state */
+      if (g_current_session != SESSION_DEFAULT && sub_func != SESSION_DEFAULT &&
+          g_current_session != sub_func)
+      {
+        g_security_unlocked = 0;
+      }
+
+      g_current_session = sub_func;
+
+      /* send positive response only if suppress bit is not set */
+      if (!suppress)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = sub_func;
+        safe_mode_send_response(resp, 2);
+      }
       break;
+    }
+
+    case UDS_ECU_RESET:
+    {
+      uint8_t sub_func;
+      uint8_t suppress;
+
+      if (len < 2U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      sub_func = data[1] & 0x7FU;
+      suppress = data[1] & 0x80U;
+
+      if (sub_func != 0x01U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+        break;
+      }
+
+      if (!suppress)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = sub_func;
+        safe_mode_send_response(resp, 2);
+      }
+
+      /* wait for watchdog reset */
+      while (1)
+      {
+        /* wait for watchdog reset */
+      }
+    }
+
+    case UDS_TESTER_PRESENT:
+    {
+      uint8_t sub_func;
+      uint8_t suppress;
+
+      if (len < 2U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+        break;
+      }
+
+      sub_func = data[1] & 0x7FU;
+      suppress = data[1] & 0x80U;
+
+      if (sub_func != 0x00U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+        break;
+      }
+
+      if (!suppress)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = sub_func;
+        safe_mode_send_response(resp, 2);
+      }
+      break;
+    }
 
     case UDS_SECURITY_ACCESS:
     {
@@ -353,7 +466,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
           break;
         }
 
-        chunk_len = len - 3U; /* subtract SID, sub_func, blockSeq */
+        chunk_len = (uint8_t)(len - 3U); /* subtract SID, sub_func, blockSeq */
         if ((g_sa_sig_bytes_received + chunk_len) > 64U)
         {
           g_sa_sig_bytes_received = 0;
@@ -423,7 +536,8 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
           }
           else
           {
-            safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
+            /* invalid signature: NRC 0x35 (InvalidKey) */
+            safe_mode_send_nrc(service_id, UDS_NRC_INVALID_KEY);
           }
         }
       }
@@ -438,6 +552,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
     case UDS_READ_DATA_BY_ID:
     {
       uint16_t did;
+      uint8_t pos;
 
       if (len < 3U)
       {
@@ -447,14 +562,26 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
       did = ((uint16_t)data[1] << 8) | (uint16_t)data[2];
 
-      if (did == 0xF195U)
+      if (did == 0xF189U)
       {
-        /* DID 0xF195: Software Version */
+        /* DID 0xF189: Software Version */
         const char *ver = SW_VERSION;
         uint8_t ver_len = (uint8_t)strlen(ver);
-        uint8_t pos;
 
-        if (ver_len > 5U) ver_len = 5U; /* fit in single frame: SID+DID+5 chars = 8 */
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1]; /* DID high byte */
+        resp[2] = data[2]; /* DID low byte */
+        for (pos = 0; pos < ver_len; pos++)
+        {
+          resp[3U + pos] = (uint8_t)ver[pos];
+        }
+        safe_mode_send_response(resp, 3U + ver_len);
+      }
+      else if (did == 0xF18DU)
+      {
+        /* DID 0xF18D: Bootloader Version */
+        const char *ver = BL_VERSION;
+        uint8_t ver_len = (uint8_t)strlen(ver);
 
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1]; /* DID high byte */
@@ -613,11 +740,11 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       if (block_seq != (g_dl_block_seq & 0xFFU))
       {
         g_dl_active = 0;
-        safe_mode_send_nrc(service_id, 0x71U);
+        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
         break;
       }
 
-      data_len = len - 2U;
+      data_len = (uint8_t)(len - 2U);
 
       if ((g_dl_bytes_written + (uint32_t)data_len) > MAX_IMAGE_SIZE)
       {
@@ -714,7 +841,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
         break;
       }
 
-      sig_data_len = len - 2U; /* subtract SID and blockSeq */
+      sig_data_len = (uint8_t)(len - 2U); /* subtract SID and blockSeq */
 
       if ((g_sig_bytes_received + sig_data_len) > 64U)
       {
@@ -825,20 +952,39 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
       break;
     }
 
-    case UDS_ECU_RESET:
-      /* ECUReset: acknowledge then reset via watchdog */
-      resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      safe_mode_send_response(resp, 1);
-      /* let watchdog reset us */
-      while(1)
-      {
-        /* wait for watchdog reset */
-      }
-
     default:
       /* unsupported service */
       safe_mode_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
       break;
+  }
+}
+
+/**
+ * @brief  ISO-TP message received callback
+ * @note   called by isotp_rx_process when a complete UDS message is reassembled
+ * @param  data: pointer to complete UDS payload (PCI already stripped)
+ * @param  len:  payload length in bytes
+ * @retval none
+ */
+static void isotp_message_received(uint8_t *data, uint16_t len)
+{
+  uds_process_message(data, len);
+}
+
+/**
+ * @brief  CAN RX handler for safe mode: ID filtering + ISO-TP dispatch
+ * @param  id:   CAN frame ID
+ * @param  data: pointer to frame data
+ * @param  len:  frame data length
+ * @retval none
+ */
+static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
+{
+  /* accept physical addressing (0x18DA0D03) and functional addressing (0x18DB33xx) */
+  if (id == SAFE_MODE_CAN_ID_REQUEST ||
+      (id & 0x1FFFFF00U) == 0x18DB3300U)
+  {
+    isotp_rx_process(data, len);
   }
 }
 
@@ -854,10 +1000,14 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 void enter_safe_mode(void)
 {
   g_safe_mode = 1;
+  g_current_session = SESSION_DEFAULT;
 
   /* initialize CAN for safe mode communication */
   can_driver_init();
   can_driver_register_rx_callback(safe_mode_can_rx_handler);
+
+  /* initialize ISO-TP receiver with UDS message callback */
+  isotp_init(isotp_message_received);
 
   /* safe mode event loop */
   while (1)
@@ -865,6 +1015,5 @@ void enter_safe_mode(void)
     timer_poll();
     can_driver_poll();
     wdg_drv_refresh();
-    safe_mode_update_security_timer();
   }
 }
