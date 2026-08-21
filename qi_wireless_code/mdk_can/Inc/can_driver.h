@@ -71,6 +71,12 @@ typedef struct
  */
 typedef void (*can_rx_callback_t)(uint32_t id, uint8_t *data, uint8_t len);
 
+/**
+ * @brief  CAN bus-off recovery callback function type
+ * @note   invoked from can_driver_poll() after bus-off recovery is detected.
+ */
+typedef void (*can_busoff_recovery_callback_t)(void);
+
 /* exported functions -------------------------------------------------------*/
 
 /**
@@ -125,6 +131,15 @@ void can_driver_rx_irq_handler(void);
  * @retval none
  */
 void can_driver_err_irq_handler(void);
+
+/**
+ * @brief  register a callback for bus-off recovery event
+ * @note   the callback is invoked from can_driver_poll() when bus-off
+ *         recovery is detected. keeps ISR context minimal.
+ * @param  cb: callback function pointer, or NULL to unregister
+ * @retval none
+ */
+void can_driver_register_busoff_recovery_callback(can_busoff_recovery_callback_t cb);
 
 #ifdef __cplusplus
 }

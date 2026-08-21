@@ -30,6 +30,7 @@
 #include "wdg_drv.h"
 #include "can_driver.h"
 #include "can_protocol.h"
+#include "lifecycle.h"
 #include "ota_trigger.h"
 #include "nvm_drv.h"
 #include "qi_uart.h"
@@ -46,31 +47,11 @@
  *          VTOR must point to the real vector table at that offset. */
 #define IMAGE_HEADER_SIZE       256U
 
-
-
 /** @brief  OTA metadata trial states */
 #define TRIAL_STATE_ACTIVE      2U
 #define TRIAL_STATE_CONFIRMED   3U
 
-/* private variables ---------------------------------------------------------*/
-
-/** @brief  broadcast timer ID */
-static uint8_t g_broadcast_timer_id = 0xFF;
-
-/** @brief  broadcast flag (set from timer callback) */
-static volatile uint8_t g_broadcast_flag = 0;
-
 /* private functions ---------------------------------------------------------*/
-
-/**
- * @brief  broadcast timer callback (called every 100ms)
- * @param  none
- * @retval none
- */
-static void broadcast_timer_callback(void)
-{
-  g_broadcast_flag = 1;
-}
 
 /**
  * @brief  confirm new image after trial boot
@@ -102,25 +83,6 @@ static void ota_confirm_if_needed(void)
 }
 
 /**
- * @brief  send lifecycle broadcast (0x18FF260D)
- * @note   simplified version: sends lifecycle=OPERATIONAL + status bytes
- * @param  none
- * @retval none
- */
-static void send_broadcast(void)
-{
-  uint8_t data[8];
-
-  memset(data, 0, sizeof(data));
-
-  /* byte 0: lifecycle = OPERATIONAL (0x03) */
-  data[0] = 0x03U;
-  /* byte 1-7: reserved, all zeros */
-
-  can_driver_send(0x18FF260DU, data, 8);
-}
-
-/**
  * @brief  main function.
  * @param  none
  * @retval none
@@ -148,12 +110,11 @@ int main(void)
   /* initialize CAN protocol module (registers UDS handler) */
   can_protocol_init();
 
-  /* create 100ms periodic broadcast timer */
-  g_broadcast_timer_id = timer_create(100, broadcast_timer_callback, 1);
-  timer_start(g_broadcast_timer_id);
+  /* initialize lifecycle broadcast (sends BOOTUP) */
+  lifecycle_init();
 
-  /* send BOOTUP broadcast */
-  send_broadcast();
+  /* report OPERATIONAL after core init is complete */
+  lifecycle_set_state(LIFECYCLE_OPERATIONAL);
 
   /* main loop */
   while (1)
@@ -170,15 +131,8 @@ int main(void)
     /* feed watchdog */
     wdg_drv_refresh();
 
-    /* send periodic lifecycle broadcast */
-    if (g_broadcast_flag)
-    {
-      g_broadcast_flag = 0;
-      send_broadcast();
-    }
-
-    /* TODO: poll UART for Qi chip data */
-    /* TODO: run charging state machine */
+    /* poll lifecycle for periodic broadcast (1 Hz in OPERATIONAL/DEGRADED) */
+    lifecycle_poll();
   }
 }
 

@@ -52,6 +52,12 @@ static volatile uint8_t rx_fifo_count = 0;  /*!< number of pending frames */
 /** @brief  RX callback function pointer */
 static volatile can_rx_callback_t rx_callback = (can_rx_callback_t)0;
 
+/** @brief  bus-off recovery callback function pointer */
+static volatile can_busoff_recovery_callback_t busoff_recovery_cb = (can_busoff_recovery_callback_t)0;
+
+/** @brief  flag set by error ISR when bus-off recovery is needed */
+static volatile uint8_t busoff_recovery_pending = 0;
+
 /* private functions ---------------------------------------------------------*/
 
 /**
@@ -117,20 +123,43 @@ void can_driver_init(void)
   can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
   can_bittime_set(CAN1, &can_bittime_struct);
 
-  /* configure filter 0 to accept all extended data frames (any ID, any DLC).
-   * default_para_init() leaves code DLC=0 and mask DLC=0xF (compare all bits),
-   * which would only accept empty frames and drop UDS payloads. */
+  /* configure filters to accept only diagnostic requests addressed to this
+   * module (N_TA = 0x0D) and functional broadcast requests (N_TA = 0x33).
+   *
+   * Filter 0 (mask mode): physical addressing
+   *   code  = 0x18DA0D03  (PF=0xDA, TA=0x0D, SA=0x03)
+   *   mask  = 0x0000FF00  (compare only TA byte at bits [15:8])
+   *   accepts any SA, any PF matching on TA = 0x0D
+   *
+   * Filter 1 (mask mode): functional addressing
+   *   code  = 0x18DB0000  (PF=0xDB, TA=0x33)
+   *   mask  = 0x1FFF0000  (compare PF + TA, ignore SA)
+   *   accepts functional broadcast with TA = 0x33
+   */
   can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = 0x00000000U;
+  can_filter_struct.code_para.id         = 0x18DA0D03U;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x00000000U;  /*!< 0: don't care ID */
+  can_filter_struct.mask_para.id         = 0x0000FF00U;  /*!< mask: compare TA byte only */
   can_filter_struct.mask_para.id_type    = TRUE;         /*!< care: extended */
   can_filter_struct.mask_para.frame_type = TRUE;         /*!< care: data frame */
   can_filter_struct.mask_para.data_length = 0U;          /*!< 0: don't care DLC */
   can_filter_struct.mask_para.recv_frame = FALSE;        /*!< don't care RX mode */
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
+
+  /* Filter 1: functional addressing (0x18DB33xx, TA=0x33) */
+  can_filter_default_para_init(&can_filter_struct);
+  can_filter_struct.code_para.id         = 0x18DB0000U;
+  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
+  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
+  can_filter_struct.mask_para.id         = 0x1FFF0000U;  /*!< mask: compare PF + TA, ignore SA */
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0U;
+  can_filter_struct.mask_para.recv_frame = FALSE;
+  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
+  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
 
   /* enable RX interrupt and error interrupt */
   can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);
@@ -147,6 +176,8 @@ void can_driver_init(void)
   rx_fifo_tail  = 0;
   rx_fifo_count = 0;
   rx_callback   = (can_rx_callback_t)0;
+  busoff_recovery_cb     = (can_busoff_recovery_callback_t)0;
+  busoff_recovery_pending = 0;
 }
 
 /**
@@ -284,6 +315,16 @@ void can_driver_poll(void)
       rx_callback(frame.id, frame.data, frame.len);
     }
   }
+
+  /* handle pending bus-off recovery notification (deferred from ISR) */
+  if (busoff_recovery_pending)
+  {
+    busoff_recovery_pending = 0;
+    if (busoff_recovery_cb != (can_busoff_recovery_callback_t)0)
+    {
+      busoff_recovery_cb();
+    }
+  }
 }
 
 /**
@@ -348,6 +389,9 @@ void can_driver_err_irq_handler(void)
     {
       /* recover from bus-off by requesting recovery */
       can_busoff_reset(CAN1);
+
+      /* set flag for deferred notification in can_driver_poll() */
+      busoff_recovery_pending = 1;
     }
 
     /* clear error interrupt flag */
@@ -371,4 +415,16 @@ void can_driver_err_irq_handler(void)
   {
     can_flag_clear(CAN1, CAN_EPIF_FLAG);
   }
+}
+
+/**
+ * @brief  register a callback for bus-off recovery event
+ * @note   the callback is invoked from can_driver_poll() when bus-off
+ *         recovery is detected. keeps ISR context minimal.
+ * @param  cb: callback function pointer, or NULL to unregister
+ * @retval none
+ */
+void can_driver_register_busoff_recovery_callback(can_busoff_recovery_callback_t cb)
+{
+  busoff_recovery_cb = cb;
 }
