@@ -237,6 +237,22 @@ static void safe_mode_send_nrc(uint8_t service_id, uint8_t nrc)
 }
 
 /**
+ * @brief  send NRC 0x78 ResponsePending before a long operation
+ * @note   ECDSA verification (200-800ms) and Flash erase (1-2s) exceed P2 (50ms).
+ *         ISO 14229 requires NRC 0x78 to keep the host waiting.
+ * @param  service_id: the service that will take time
+ * @retval none
+ */
+static void safe_mode_send_pending(uint8_t service_id)
+{
+  uint8_t resp[3];
+  resp[0] = UDS_NEGATIVE_RESPONSE;
+  resp[1] = service_id;
+  resp[2] = UDS_NRC_RESPONSE_PENDING;  /* 0x78 */
+  safe_mode_send_response(resp, 3);
+}
+
+/**
  * @brief  handle UDS request (called from ISO-TP callback)
  * @param  data: pointer to complete UDS payload (PCI already stripped)
  * @param  len:  payload length in bytes
@@ -334,11 +350,16 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         safe_mode_send_response(resp, 2);
       }
 
-      /* wait for watchdog reset */
-      while (1)
+      /* small delay to allow CAN TX to complete before reset */
       {
-        /* wait for watchdog reset */
+        volatile uint32_t d;
+        for (d = 0; d < 36000U; d++) { __NOP(); }
       }
+
+      /* active system reset instead of waiting for watchdog */
+      NVIC_SystemReset();
+      /* not reached */
+      break;
     }
 
     case UDS_TESTER_PRESENT:
@@ -458,6 +479,11 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
 
         g_sa_sig_block_seq++;
+        /* skip 0x00 on wraparound: host jumps from 0xFF to 0x01 */
+        if (g_sa_sig_block_seq == 0x00U)
+        {
+          g_sa_sig_block_seq = 0x01U;
+        }
         if (block_seq != g_sa_sig_block_seq)
         {
           /* sequence error */
@@ -467,11 +493,10 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
 
         chunk_len = (uint8_t)(len - 3U); /* subtract SID, sub_func, blockSeq */
+        /* truncate if host pads last frame with zeros beyond 64-byte signature */
         if ((g_sa_sig_bytes_received + chunk_len) > 64U)
         {
-          g_sa_sig_bytes_received = 0;
-          safe_mode_send_nrc(service_id, UDS_NRC_RESPONSE_TOO_LONG);
-          break;
+          chunk_len = 64U - g_sa_sig_bytes_received;
         }
 
         /* accumulate signature data */
@@ -508,7 +533,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
           break;
         }
 
-        /* verify the ECDSA P-256 signature */
+        /* verify the ECDSA P-256 signature (may take 200-800ms) */
+        safe_mode_send_pending(service_id);
+
         if (verify_security_ecdsa_signature())
         {
           /* signature valid: unlock security */
@@ -603,6 +630,13 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     {
       uint16_t did;
 
+      /* programming session check */
+      if (g_current_session != SESSION_PROGRAMMING)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
+        break;
+      }
+
       /* security gate */
       if (!g_security_unlocked)
       {
@@ -640,6 +674,13 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     {
       uint16_t routine_id;
 
+      /* programming session check */
+      if (g_current_session != SESSION_PROGRAMMING)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
+        break;
+      }
+
       /* security gate */
       if (!g_security_unlocked)
       {
@@ -657,7 +698,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       if (data[1] == 0x01U && routine_id == 0xFF00U)
       {
-        /* 0x31 0x01 0xFF00: Erase Memory (independent erase command) */
+        /* 0x31 0x01 0xFF00: Erase Memory (may take 1-2s for full erase) */
+        safe_mode_send_pending(service_id);
+
         if (erase_app_a_flash() != 0U)
         {
           safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
@@ -685,6 +728,13 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
     case UDS_REQUEST_DOWNLOAD:
     {
+      /* programming session check */
+      if (g_current_session != SESSION_PROGRAMMING)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
+        break;
+      }
+
       /* security gate: require SecurityAccess (0x27) to be unlocked */
       if (!g_security_unlocked)
       {
@@ -698,13 +748,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       g_dl_block_seq     = 0;
       g_dl_active        = 1;
 
-      /* maxNumberOfBlockLength = maximum firmware size (not per-frame size).
-       * actual per-frame payload is limited to 6 bytes (8-byte CAN - SID - blockSeq). */
+      /* maxNumberOfBlockLength = maximum firmware image size (excluding header). */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       resp[1] = 0x20;
       resp[2] = 0x00;
-      resp[3] = (uint8_t)((APP_A_SIZE >> 8) & 0xFFU);
-      resp[4] = (uint8_t)(APP_A_SIZE & 0xFFU);
+      resp[3] = (uint8_t)((MAX_IMAGE_SIZE >> 8) & 0xFFU);
+      resp[4] = (uint8_t)(MAX_IMAGE_SIZE & 0xFFU);
       safe_mode_send_response(resp, 5);
       break;
     }
@@ -715,6 +764,13 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       uint8_t data_len;
       uint8_t i;
       flash_status_type flash_status;
+
+      /* programming session check */
+      if (g_current_session != SESSION_PROGRAMMING)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
+        break;
+      }
 
       if (!g_dl_active)
       {
@@ -737,7 +793,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       block_seq = data[1];
       g_dl_block_seq++;
-      if (block_seq != (g_dl_block_seq & 0xFFU))
+      /* skip 0x00 on wraparound: host jumps from 0xFF to 0x01 */
+      if (g_dl_block_seq == 0x00U)
+      {
+        g_dl_block_seq = 0x01U;
+      }
+      if (block_seq != g_dl_block_seq)
       {
         g_dl_active = 0;
         safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
@@ -834,7 +895,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
 
       g_sig_block_seq++;
-      if (block_seq != (g_sig_block_seq & 0xFFU))
+      /* skip 0x00 on wraparound: host jumps from 0xFF to 0x01 */
+      if (g_sig_block_seq == 0x00U)
+      {
+        g_sig_block_seq = 0x01U;
+      }
+      if (block_seq != g_sig_block_seq)
       {
         g_sig_active = 0;
         safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
@@ -871,6 +937,13 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       const uint32_t *hdr_words;
       uint32_t hdr_word_count;
       uint32_t w;
+
+      /* programming session check */
+      if (g_current_session != SESSION_PROGRAMMING)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
+        break;
+      }
 
       if (!g_dl_active)
       {

@@ -117,41 +117,26 @@ void can_driver_init(void)
   can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
   can_bittime_set(CAN1, &can_bittime_struct);
 
-  /* configure filters to accept only diagnostic requests addressed to this
-   * module (physical 0x18DA0D03) and functional broadcast (0x18DB33xx).
+  /* Single filter: match both physical (0x18DAxxxx) and functional (0x18DBxxxx)
+   * diagnostic requests by comparing only Priority+PF fields.
    *
-   * Filter 0 (mask mode): physical addressing
-   *   code = 0x18DA0D03, mask = 0x0000FF00
-   *   match: byte SA ignored, TA must be 0x0D => 0x18DA0Dxx
-   *
-   * Filter 1 (mask mode): functional addressing
-   *   code = 0x18DB3300, mask = 0x1FFFFF00
-   *   match: SA ignored, TA must be 0x33 => 0x18DB33xx
+   * AT32 mask semantics: bit=1 must match code, bit=0 don't care.
+   *   code = 0x18DA0000  (Priority+PF = 0x18DA, PF covers both 0xDA and 0xDB)
+   *   mask = 0x1FFC0000  (compare bits [28:18] = Priority+PF, ignore TA+SA)
+   *   PF 0xDA = 0b1101_1010, PF 0xDB = 0b1101_1011 => differ only in bit[18],
+   *   mask bit[18]=0 => don't care => both 0xDA and 0xDB pass.
    */
   can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = 0x18DA0D03U;
+  can_filter_struct.code_para.id         = 0x18DA0000U;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x0000FF00U;  /*!< mask: compare TA byte only */
-  can_filter_struct.mask_para.id_type    = TRUE;         /*!< care: extended */
-  can_filter_struct.mask_para.frame_type = TRUE;         /*!< care: data frame */
-  can_filter_struct.mask_para.data_length = 0U;          /*!< 0: don't care DLC */
-  can_filter_struct.mask_para.recv_frame = FALSE;        /*!< don't care RX mode */
+  can_filter_struct.mask_para.id         = 0x1FFC0000U;  /* compare Priority+PF only */
+  can_filter_struct.mask_para.id_type    = TRUE;         /* care: extended */
+  can_filter_struct.mask_para.frame_type = TRUE;         /* care: data frame */
+  can_filter_struct.mask_para.data_length = 0U;          /* don't care DLC */
+  can_filter_struct.mask_para.recv_frame = FALSE;        /* don't care RX mode */
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
-
-  /* Filter 1: functional addressing (0x18DB33xx, TA=0x33) */
-  can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = 0x18DB3300U;
-  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
-  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFFFF00U;  /*!< mask: compare PF+TA, ignore SA */
-  can_filter_struct.mask_para.id_type    = TRUE;
-  can_filter_struct.mask_para.frame_type = TRUE;
-  can_filter_struct.mask_para.data_length = 0U;
-  can_filter_struct.mask_para.recv_frame = FALSE;
-  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
-  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
 
   /* enable RX interrupt and error interrupt */
   can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);
