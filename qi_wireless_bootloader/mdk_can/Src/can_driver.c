@@ -117,14 +117,18 @@ void can_driver_init(void)
   can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
   can_bittime_set(CAN1, &can_bittime_struct);
 
-  /* configure filter 0 to accept all extended frames */
+  /* configure filter 0 to accept all extended data frames (any ID, any DLC).
+   * default_para_init() leaves code DLC=0 and mask DLC=0xF (compare all bits),
+   * which would only accept empty frames and drop UDS payloads. */
   can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id        = 0x00000000U;
-  can_filter_struct.code_para.id_type   = CAN_ID_EXTENDED;
+  can_filter_struct.code_para.id         = 0x00000000U;
+  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id        = 0x00000000U;  /*!< mask = 0: don't care any ID bits */
-  can_filter_struct.mask_para.id_type   = TRUE;         /*!< care about ID type (extended) */
-  can_filter_struct.mask_para.frame_type = TRUE;         /*!< care about frame type (data) */
+  can_filter_struct.mask_para.id         = 0x00000000U;  /*!< 0: don't care ID */
+  can_filter_struct.mask_para.id_type    = TRUE;         /*!< care: extended */
+  can_filter_struct.mask_para.frame_type = TRUE;         /*!< care: data frame */
+  can_filter_struct.mask_para.data_length = 0U;          /*!< 0: don't care DLC */
+  can_filter_struct.mask_para.recv_frame = FALSE;        /*!< don't care RX mode */
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
 
