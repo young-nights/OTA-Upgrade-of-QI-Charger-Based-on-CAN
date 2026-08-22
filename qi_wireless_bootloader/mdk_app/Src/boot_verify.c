@@ -28,6 +28,7 @@
 #include "boot_metadata.h"
 #include "uECC.h"
 #include "sha256.h"
+#include "wdg_drv.h"
 
 /* private constants ---------------------------------------------------------*/
 
@@ -140,7 +141,9 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
     }
 
     /* compute SHA-256 hash of the image data (excluding header) */
+    wdg_drv_refresh();
     sha256_hash(image_data, header->image_length, image_hash);
+    wdg_drv_refresh();
 
     /* verify ECDSA P-256 signature
      * public_key : 65-byte uncompressed SEC1 point (04 || x || y)

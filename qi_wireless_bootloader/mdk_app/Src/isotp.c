@@ -26,6 +26,8 @@
 /* includes ------------------------------------------------------------------*/
 #include "isotp.h"
 #include "can_driver.h"
+#include "timer_drv.h"
+#include "wdg_drv.h"
 
 /* private variables ---------------------------------------------------------*/
 
@@ -155,6 +157,7 @@ void isotp_rx_process(uint8_t *data, uint8_t len)
       /* reject if payload exceeds our buffer */
       if (payload_len > ISOTP_MAX_PAYLOAD)
       {
+        isotp_send_fc(CAN_ID_UDS_RESPONSE, ISOTP_FC_STATUS_OVERFLOW, 0U, 0U);
         return;
       }
 
@@ -266,6 +269,47 @@ void isotp_rx_process(uint8_t *data, uint8_t len)
  * @param  len:     payload length in bytes (1..4095)
  * @retval 0 on success, -1 on failure
  */
+static void isotp_delay_ms(uint32_t ms)
+{
+  uint32_t start = timer_get_tick();
+  while ((timer_get_tick() - start) < ms)
+  {
+    wdg_drv_refresh();
+  }
+}
+
+static int8_t isotp_wait_cts(void)
+{
+  uint32_t start = timer_get_tick();
+  uint32_t id;
+  uint8_t data[ISOTP_CAN_FRAME_SIZE];
+  uint8_t n;
+
+  while ((timer_get_tick() - start) < ISOTP_N_BS_TIMEOUT_MS)
+  {
+    wdg_drv_refresh();
+    if (can_driver_recv(&id, data, &n) != 0)
+    {
+      continue;
+    }
+    if ((n == 0U) || ((data[0] & ISOTP_PCI_TYPE_MASK) != ISOTP_PCI_TYPE_FC))
+    {
+      continue;
+    }
+    if ((data[0] & 0x0FU) == ISOTP_FC_STATUS_CTS)
+    {
+      return 0;
+    }
+    if ((data[0] & 0x0FU) == ISOTP_FC_STATUS_OVERFLOW)
+    {
+      return -1;
+    }
+    /* FC Wait: restart N_Bs */
+    start = timer_get_tick();
+  }
+  return -1;
+}
+
 int8_t isotp_tx_send(uint32_t can_id, uint8_t *payload, uint16_t len)
 {
   uint8_t frame[ISOTP_CAN_FRAME_SIZE];
@@ -278,9 +322,6 @@ int8_t isotp_tx_send(uint32_t can_id, uint8_t *payload, uint16_t len)
     return -1;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Single Frame: payload fits in one CAN frame (1..7 bytes)           */
-  /* ------------------------------------------------------------------ */
   if (len <= 7U)
   {
     frame[0] = ISOTP_PCI_TYPE_SF | (uint8_t)len;
@@ -291,7 +332,6 @@ int8_t isotp_tx_send(uint32_t can_id, uint8_t *payload, uint16_t len)
         frame[1 + i] = payload[i];
       }
     }
-    /* pad unused bytes for consistent frame size */
     {
       uint16_t i;
       for (i = 1 + len; i < ISOTP_CAN_FRAME_SIZE; i++)
@@ -302,11 +342,6 @@ int8_t isotp_tx_send(uint32_t can_id, uint8_t *payload, uint16_t len)
     return can_driver_send(can_id, frame, ISOTP_CAN_FRAME_SIZE);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Multi-frame: First Frame + Consecutive Frames                      */
-  /* ------------------------------------------------------------------ */
-
-  /* send First Frame (6 data bytes: PCI = 2 bytes + 6 bytes data) */
   frame[0] = ISOTP_PCI_TYPE_FF | (uint8_t)((len >> 8) & 0x0FU);
   frame[1] = (uint8_t)(len & 0xFFU);
   {
@@ -321,12 +356,19 @@ int8_t isotp_tx_send(uint32_t can_id, uint8_t *payload, uint16_t len)
     return -1;
   }
 
-  /* send Consecutive Frames */
-  offset = 6U;  /* first 6 bytes already sent in FF */
-  sn = 1U;      /* first CF has SN = 1 */
+  /* ISO 15765-2: wait for Flow Control before Consecutive Frames */
+  if (isotp_wait_cts() != 0)
+  {
+    return -1;
+  }
+
+  offset = 6U;
+  sn = 1U;
 
   while (offset < len)
   {
+    isotp_delay_ms(ISOTP_FC_DEFAULT_STMIN);
+
     frame[0] = ISOTP_PCI_TYPE_CF | (sn & 0x0FU);
 
     copy_len = (uint8_t)(len - offset);
@@ -342,7 +384,6 @@ int8_t isotp_tx_send(uint32_t can_id, uint8_t *payload, uint16_t len)
         frame[1 + i] = payload[offset + i];
       }
     }
-    /* pad unused bytes */
     {
       uint8_t i;
       for (i = 1 + copy_len; i < ISOTP_CAN_FRAME_SIZE; i++)

@@ -25,6 +25,7 @@
 
 /* includes ------------------------------------------------------------------*/
 #include "boot_metadata.h"
+#include "at32f422_426_conf.h"
 #include <string.h>
 
 /* private define ------------------------------------------------------------*/
@@ -83,9 +84,12 @@ static int8_t meta_write_to_flash(uint32_t addr, const ota_metadata_t *meta)
   uint32_t words;
   uint32_t i;
 
-  /* erase the page first */
+  flash_unlock();
+
+  /* erase the first 2KB sector (metadata is 272 bytes) */
   if (meta_flash_erase_page(addr) != 0)
   {
+    flash_lock();
     return -1;
   }
 
@@ -97,10 +101,22 @@ static int8_t meta_write_to_flash(uint32_t addr, const ota_metadata_t *meta)
   {
     if (meta_flash_write_word(addr + (i * 4U), src[i]) != 0)
     {
+      flash_lock();
       return -1;
     }
   }
 
+  /* readback */
+  for (i = 0; i < words; i++)
+  {
+    if (*(volatile uint32_t *)(addr + (i * 4U)) != src[i])
+    {
+      flash_lock();
+      return -1;
+    }
+  }
+
+  flash_lock();
   return 0;
 }
 

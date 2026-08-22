@@ -141,16 +141,20 @@ void process_trial_state(ota_metadata_t *meta)
       break;
 
     case TRIAL_STATE_ACTIVE:
-      /* trial is active: check timeout and retry count */
+      /* WDG reset while trial is active counts as a failed attempt */
+      if (meta->last_boot_reason == BOOT_REASON_WDG)
+      {
+        meta->trial_retry_count++;
+        boot_metadata_save(meta);
+      }
+
       if (meta->trial_retry_count > meta->trial_max_retries)
       {
-        /* max retries exceeded, rollback */
         meta->rollback_count++;
         meta->trial_state       = TRIAL_STATE_IDLE;
         meta->trial_retry_count = 0;
         meta->last_boot_reason  = BOOT_REASON_ROLLBACK;
 
-        /* switch to the other slot */
         other_slot = (meta->trial_slot == SLOT_A) ? SLOT_B : SLOT_A;
         if ((other_slot == SLOT_A && meta->slot_a_valid) ||
             (other_slot == SLOT_B && meta->slot_b_valid))
@@ -219,8 +223,8 @@ int8_t try_boot_slot(uint8_t slot, ota_metadata_t *meta)
     /* jump to application */
     boot_jump_to_app(slot_addr + IMAGE_HEADER_SIZE);
 
-    /* should not reach here */
-    return 0;
+    /* jump returned: vector/MSP invalid */
+    return -1;
   }
 
   return -1;

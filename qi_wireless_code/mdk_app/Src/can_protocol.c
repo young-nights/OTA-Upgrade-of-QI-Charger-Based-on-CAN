@@ -59,7 +59,7 @@ static uint32_t last_tester_present_tick  = 0;
  */
 static void proto_send_response(uint8_t *data, uint8_t len)
 {
-  can_driver_send(CAN_PROTO_UDS_RESPONSE, data, len);
+  (void)isotp_tx_send(CAN_PROTO_UDS_RESPONSE, data, (uint16_t)len);
 }
 
 /**
@@ -195,6 +195,7 @@ static void handle_ecu_reset(uint8_t *data, uint16_t len)
   uint8_t resp[8];
   uint8_t sub_func;
   uint8_t suppress;
+  uint8_t enter_ota;
 
   if (len < 2U)
   {
@@ -202,26 +203,36 @@ static void handle_ecu_reset(uint8_t *data, uint16_t len)
     return;
   }
 
-  sub_func = data[1];
-  suppress = sub_func & UDS_SUBFUNC_SUPPRESS_POS_RESP;
+  sub_func = data[1] & UDS_SUBFUNC_MASK;
+  suppress = data[1] & UDS_SUBFUNC_SUPPRESS_POS_RESP;
 
-  /* send positive response unless suppressed */
+  if (sub_func != 0x01U)
+  {
+    proto_send_nrc(UDS_SID_ECU_RESET, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+    return;
+  }
+
+  /* programming session + hardReset: enter bootloader download */
+  enter_ota = (current_session == SESSION_PROGRAMMING) ? 1U : 0U;
+
+  if (enter_ota)
+  {
+    if (ota_trigger_prepare() != 0)
+    {
+      proto_send_nrc(UDS_SID_ECU_RESET, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+      return;
+    }
+  }
+
   if (!suppress)
   {
     resp[0] = UDS_SID_ECU_RESET + UDS_POSITIVE_RESPONSE_OFFSET;
-    resp[1] = sub_func & UDS_SUBFUNC_MASK;
+    resp[1] = sub_func;
     proto_send_response(resp, 2);
   }
 
-  /* small delay to ensure CAN response is transmitted before reset */
-  {
-    volatile uint32_t d;
-    for (d = 0; d < 36000; d++) { __NOP(); }  /* ~2ms at 180MHz */
-  }
-
-  /* trigger OTA mode: sets metadata flag and resets */
-  ota_trigger_request();
-  /* does not return */
+  (void)can_driver_wait_tx_idle(5U);
+  NVIC_SystemReset();
 }
 
 /**

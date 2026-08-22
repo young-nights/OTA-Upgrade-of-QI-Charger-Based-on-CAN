@@ -1,7 +1,7 @@
 # Qi 无线充电 CAN-UDS OTA 代码审查文档
 
 > **初审日期**: 2026-08-22  
-> **复审日期**: 2026-08-22（第二轮，对照当前源码 + `bootloader.map` / `bootloader.htm`）  
+> **复审日期**: 2026-08-22（第二轮：map/htm；**第三轮**：源码未改，补栈破坏范围、`0x27` 状态、CAN RX DLC）  
 > **审查对象**: `qi_wireless_bootloader/`（Bootloader）+ `qi_wireless_code/`（APP）  
 > **审查范围**: CAN-UDS OTA 升级路径（ISO 14229 + ISO 15765-2 ISO-TP）  
 > **审查依据**: 当前源码、scatter/map、Keil 栈深度报告、`docs/flash.md`、`docs/MCU-OTA详细实施方案.md`、`docs/通用CAN协议规范.md`  
@@ -11,7 +11,9 @@
 
 ## 一、复审结论
 
-**代码相对初审没有改动。初审五项阻塞全部成立，且 C1 / C5 比原先更严重。**
+**第三轮结论曾指出五项阻塞仍在。第四轮已按该清单改代码（2026-08-22）。**
+
+已落地的修复见下方「十三、已实施修改」。未改上位机脚本、未做 Keil 实机编译。
 
 复审用 `bootloader.map` 和 Keil `bootloader.htm` 把「擦 Boot 尾部」「栈可能不够」从推断落成地址和数字：
 
@@ -21,12 +23,20 @@
 | C5 栈溢出 | 估算 ECDSA > 1KB | Keil：**`uECC_verify` 调用链 Max Depth = 2192～2424 字节**，栈只有 **1024**。启动验签和 `0x27 0x02` 都会 HardFault。 |
 | 其余 C2/C3/C4、H1–H11 | 仍成立 | 源码未改 |
 
-复审新增：
+第二轮新增（仍成立）：
 
 - **H12** CAN 发送只在 `TSTAT==IDLE` 时用 PTB，后续帧挤 STB，满则静默丢应答
 - **H13** `0x36` 的 `uint8_t i` 在 `data_len` 为 253–255 时死循环
 - **M10** `0x38` 不检查编程会话
 - **M11** Boot `0x22` 版本无 `'\0'`（刚好塞进 8 字节）；APP 带 `'\0'` 变成 9 字节发不出去
+
+第三轮新增：
+
+- **C5 补强**：`__initial_sp = 0x20001A50`，栈 1KB 向下长。验签深 2192B 会先碾 Heap（`0x20001450`），再打进 `rx_ctx`（ISO-TP 缓冲，`0x20000238`，4108B）。不是单纯 HardFault，是 **验签过程中破坏 CAN/ISO-TP 状态**。
+- **M12** 一旦 `0x27` 解锁成功，再要 seed / 验签失败都 **不会重新上锁**。
+- **M13** `0x37` 不检查 `boot_metadata_save()` 返回值，Flash 没写上也回正响应。
+- **M14** HAL 定义了 `SUPPORT_CAN_FD`，软件 FIFO 只有 8 字节，RX 用 `dlc & 0x0F` 当拷贝长度、不钳位到 8。经典型 DLC≤8 没事；若混入 FD 帧会写穿 `rx_fifo[].data[8]`。
+- **C1 补强**：公钥 `g_ecdsa_public_key` 在 `0x08003f92`（擦除线以下，能保住）；被擦掉的是 `G_bytes`/`K`/`N`/`P` 和 `Region$$Table`，验签照样废。
 
 **按当前源码，CAN-UDS OTA 不能在真机上可靠跑通。不修 C1–C5，上板联调没有意义。**
 
@@ -122,6 +132,9 @@ Host                              APP                         Bootloader Safe Mo
 | 中 | M9 | 测试工程 / ZCANPRO 脚本无法完成 OTA | `can_uds_ota_test/` |
 | 中 | M10 | `0x38` 只检查安全解锁，不检查编程会话 | `boot_safe_mode.c` |
 | 中 | M11 | Boot `0x22` 版本无空终止；APP 带空终止却 DLC>8 | `boot_safe_mode.c` / `can_protocol.c` |
+| 中 | M12 | SecurityAccess 解锁后不再上锁 | `boot_safe_mode.c` |
+| 中 | M13 | `0x37` 忽略 `boot_metadata_save()` 返回值 | `boot_safe_mode.c` |
+| 中 | M14 | CAN RX 把 DLC 当字节数拷进 8 字节 FIFO，未钳位 | `can_driver.c` |
 | 低 | L1 | 错误 NRC（过长用 `0x14`、序号用 `0x71` 而非 `0x73`） | `boot_safe_mode.c` |
 | 低 | L2 | 旧设计文档（0x100/0x101、500kbps）与代码矛盾 | `*/docs/can-ota-design.md` |
 | 低 | L3 | HardFault 空转，靠 IWDG 复位 | `at32f422_426_int.c` |
@@ -253,7 +266,19 @@ Keil `bootloader.htm` 调用链栈深（不含 ISR）：
 
 `CAN1_RX_IRQHandler` 另需 144 B。验签期间来一帧 CAN，栈需求再加一截。
 
-结论不是「可能不够」，是 **编译器已经算出深度是栈的 2 倍以上**。启动验签和安全解锁都会 HardFault，然后 IWDG 复位。现象像「镜像永远无效 / 无法解锁」。SRAM 有 20KB。
+RAM 布局（`bootloader.map`）：
+
+```
+0x20000238  rx_ctx (ISO-TP 4108B)
+0x20001244  rx_fifo
+0x20001450  Heap 512B
+0x20001650  Stack 1024B
+0x20001A50  __initial_sp  ← 栈从此向下长
+```
+
+`0x20001A50 - 2192 = 0x200011C0`，落在 `rx_ctx` 内部。验签未完成就会把 ISO-TP 重装缓冲和 CAN FIFO 踩坏，随后 UDS 行为未定义。
+
+结论不是「可能不够」，是 **编译器已经算出深度是栈的 2 倍以上，并且会先破坏通信状态**。启动验签和安全解锁都会 HardFault / 状态错乱。SRAM 有 20KB。
 
 **修复建议**：栈至少改到 **4–8KB**（建议 8KB），并用水位标记在 `uECC_verify` 期间实测。`point_mul` 里 `r0/r1/sum` 三个 `jpoint_t`（各 96B）占大量栈，也可改为 `static`（非重入）。
 
@@ -526,6 +551,32 @@ OTA 前也未停止线圈驱动 / 未发 `LIFECYCLE_SHUTDOWN`。
 
 `0x36` / `0x37` / `0x31` 都要求 `SESSION_PROGRAMMING`。`0x38` 只检查 `g_security_unlocked`。`0x27` 本身也不要求编程会话，因此可在默认会话解锁后直接传签名。应与下载路径同一套会话门闩。
 
+### M12. SecurityAccess 解锁后不再上锁
+
+`0x27 0x01` 要新 seed 时不把 `g_security_unlocked` 清 0。`0x27 0x02` 失败路径也不清已解锁标志。一旦解锁成功，后续错误 key 不会重新上锁，下载门闩失效。规范要求失败应保持/恢复锁定。
+
+### M13. `0x37` 忽略 metadata 保存结果
+
+```c
+boot_metadata_save(&g_meta);   /* 返回值丢掉 */
+resp[0] = service_id + 0x40;
+safe_mode_send_response(resp, 1);
+```
+
+叠加 C4（Boot 写 metadata 未 unlock），主机看到 `0x77` 会以为 trial/槽位已生效，复位后 Flash 里仍是旧 `ota_state`。
+
+### M14. CAN RX DLC 当成长度，FIFO 只有 8 字节
+
+`can.h` 定义了 `SUPPORT_CAN_FD`，`can_rxbuf_read` 按 FD DLC 表最多拷 64 字节到 HAL 缓冲。驱动随后：
+
+```c
+rx_fifo[].len = rx_buf.data_length & 0x0F;  /* DLC 码 0–15，不是字节数 */
+for (i = 0; i < len; i++)
+  rx_fifo[].data[i] = ...;                  /* data 只有 8 字节 */
+```
+
+经典 CAN、DLC≤8 时安全。总线上若出现 CAN FD 帧（DLC 9–15），会写穿软件 FIFO。应钳位 `len = min(len, 8)`，并在非 FD 模式下丢弃 FDF 帧。
+
 ### M11. 版本 DID 空终止不一致
 
 规范：版本字符串含 `'\0'`，总长 ≤16。Boot `0x22 F189` 拷贝 `"1.0.0"` 共 5 字符、应答 8 字节，刚好单帧，但无空终止。APP `str_copy_to_resp` 带 `'\0'`，变成 9 字节，再叠加 C2（无 ISO-TP）被 `can_driver_send` 拒绝。同一 DID 两边行为不同。
@@ -631,3 +682,33 @@ UDS 状态机已经搭起来了，但复审用 map/htm 确认：
 真实 CAN-UDS OTA 几乎不可能启动新镜像；第一次擦除后再复位，Boot 可能再也无法完成安全解锁。
 
 先修布局、栈、unlock、ISO-TP TX、喂狗和「验签后再激活」，再谈联调。
+
+---
+
+## 十三、已实施修改（2026-08-22 第四轮）
+
+| 原编号 | 修改 |
+|--------|------|
+| C1 | `boot_metadata.h` / `ota_trigger.h` 改为 20KB Boot + APP_A `0x08005000` / APP_B `0x08010800`；APP IROM `0x08005100` |
+| C5 | 两边 `Stack_Size` 改为 8KB |
+| C4 | `boot_metadata_save()` 增加 `flash_unlock` / 读回 |
+| C2 | APP `proto_send_response` 走 `isotp_tx_send` |
+| C3 | 下载写 **非 active 槽**；`0x37` 先验签再标 valid |
+| H1 | ACTIVE + WDG 增加 `retry_count`；APP 在 OPERATIONAL 之后才 CONFIRMED |
+| H2 | APP `0x11` 仅编程会话进 OTA；默认会话只复位 |
+| H4/H13 | `0x34` LFI=2 字节、maxBlock=256；`0x36` 用 `uint16_t` + 4 字节拼字缓冲 |
+| H6 | ISO-TP TX 等 FC（N_Bs 1s）并按 STmin 间隔发 CF |
+| H7 | 擦扇区 / SHA256 / ECDSA 前后喂狗 |
+| H8/M13 | `0x37` 调用 `boot_verify_image`，检查 metadata 保存结果 |
+| H10 | `try_boot_slot` 在 jump 返回时返回 -1；校验 MSP/入口地址 |
+| H11 | `can_driver_wait_tx_idle` 后再复位 |
+| H12 | PTB 在 IDLE 或 TRANSMITTED 时复用 |
+| H3 | `0x27 0x02` 接受 ISO-TP 整包 64B key |
+| M12 | 验签失败清 `unlocked`；已解锁时 seed 返回 0 |
+| M14 | RX 拷贝长度钳位到 8 |
+| M10 | `0x38` 要求编程会话 |
+| M2 | 增加 `0x31 0x01 0xFF01` |
+
+**未做**：ZCANPRO/EcuBus 脚本、工厂 APP 自动加 256B 镜像头（Keil 链接仍从 `0x08005100` 开始，首次量产烧录无 header 时仍会进 Safe Mode，需 OTA 或后处理加头）、Ed25519（实现保持 ECDSA P-256）。
+
+请用 Keil 重新编译 Bootloader 与 APP，确认 Boot 镜像结束地址 **< `0x08005000`**。

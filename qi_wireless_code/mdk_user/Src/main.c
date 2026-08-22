@@ -89,8 +89,7 @@ static void ota_confirm_if_needed(void)
  */
 int main(void)
 {
-  /* set vector table to real code start (skip image header written by bootloader).
-   * NOTE: Keil IROM start must also be set to 0x08004100 in the project options. */
+  /* vector table is at slot base + 256B image header (IROM 0x08005100). */
   SCB->VTOR = APP_BASE_ADDR + IMAGE_HEADER_SIZE;
 
   /* configure system clock to 180MHz */
@@ -104,9 +103,6 @@ int main(void)
   can_driver_init();
   qi_uart_init();
 
-  /* confirm trial boot image if needed (must be after flash init) */
-  ota_confirm_if_needed();
-
   /* initialize CAN protocol module (registers UDS handler) */
   can_protocol_init();
 
@@ -115,6 +111,9 @@ int main(void)
 
   /* report OPERATIONAL after core init is complete */
   lifecycle_set_state(LIFECYCLE_OPERATIONAL);
+
+  /* confirm trial only after CAN/Qi/lifecycle are up */
+  ota_confirm_if_needed();
 
   /* main loop */
   while (1)

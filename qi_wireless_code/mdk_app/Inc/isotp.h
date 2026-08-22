@@ -62,6 +62,9 @@ extern "C" {
 /** @brief  ISO-TP default Separation Time (ms between CF frames) */
 #define ISOTP_FC_DEFAULT_STMIN          0x01U        /*!< 1 ms separation time (per spec) */
 
+/** @brief  N_Bs timeout waiting for Flow Control after First Frame (ms) */
+#define ISOTP_N_BS_TIMEOUT_MS           1000U
+
 /* exported types ------------------------------------------------------------*/
 
 /**

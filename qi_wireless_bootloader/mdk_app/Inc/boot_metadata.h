@@ -36,17 +36,21 @@ extern "C" {
 
 /* exported constants --------------------------------------------------------*/
 
-/** @brief  Flash layout constants */
+/** @brief  Flash layout constants (must match scatter / docs/flash.md)
+ *          Bootloader 20KB, APP_A/B 46KB each, 2KB-sector aligned. */
 #define BOOT_BASE_ADDR          0x08000000U   /*!< bootloader start address */
-#define BOOT_SIZE               0x4000U       /*!< bootloader size: 16KB */
-#define APP_A_BASE_ADDR         0x08004000U   /*!< application A start address */
-#define APP_A_SIZE              0xC000U       /*!< application A size: 48KB */
-#define APP_B_BASE_ADDR         0x08010000U   /*!< application B start address */
-#define APP_B_SIZE              0xC000U       /*!< application B size: 48KB */
+#define BOOT_SIZE               0x5000U       /*!< bootloader size: 20KB */
+#define APP_A_BASE_ADDR         0x08005000U   /*!< application A start address */
+#define APP_A_SIZE              0xB800U       /*!< application A size: 46KB */
+#define APP_B_BASE_ADDR         0x08010800U   /*!< application B start address */
+#define APP_B_SIZE              0xB800U       /*!< application B size: 46KB */
 #define META_PRIMARY_ADDR       0x0801C000U   /*!< primary metadata address */
 #define META_BACKUP_ADDR        0x0801E000U   /*!< backup metadata address */
 #define META_PAGE_SIZE          0x2000U       /*!< metadata page size: 8KB */
 #define IMAGE_HEADER_SIZE       256U          /*!< image header size in bytes */
+#define FLASH_SECTOR_SIZE       0x800U        /*!< AT32F426 sector size: 2KB */
+#define SRAM_BASE_ADDR          0x20000000U
+#define SRAM_SIZE               0x5000U       /*!< 20KB SRAM */
 
 /** @brief  OTA metadata magic and version */
 #define META_MAGIC              0x4F54414DU   /*!< "MATO" */

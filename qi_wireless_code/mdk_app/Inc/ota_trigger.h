@@ -36,11 +36,11 @@ extern "C" {
 
 /* exported constants --------------------------------------------------------*/
 
-/** @brief  Flash layout constants (must match bootloader definitions) */
-#define OTA_APP_A_BASE_ADDR     0x08004000U   /*!< application A start address */
-#define OTA_APP_A_SIZE          0xC000U       /*!< application A size: 48KB */
-#define OTA_APP_B_BASE_ADDR     0x08010000U   /*!< application B start address */
-#define OTA_APP_B_SIZE          0xC000U       /*!< application B size: 48KB */
+/** @brief  Flash layout constants (must match bootloader / scatter / docs/flash.md) */
+#define OTA_APP_A_BASE_ADDR     0x08005000U   /*!< application A start address */
+#define OTA_APP_A_SIZE          0xB800U       /*!< application A size: 46KB */
+#define OTA_APP_B_BASE_ADDR     0x08010800U   /*!< application B start address */
+#define OTA_APP_B_SIZE          0xB800U       /*!< application B size: 46KB */
 #define OTA_META_PRIMARY_ADDR   0x0801C000U   /*!< primary metadata address */
 #define OTA_META_BACKUP_ADDR    0x0801E000U   /*!< backup metadata address */
 #define OTA_META_PAGE_SIZE      0x2000U       /*!< metadata page size: 8KB */
@@ -104,6 +104,12 @@ typedef struct
  * @retval none (does not return)
  */
 void ota_trigger_request(void);
+
+/**
+ * @brief  write OTA_STATE_DOWNLOADING to metadata without resetting
+ * @retval 0 on success, -1 on flash write error
+ */
+int8_t ota_trigger_prepare(void);
 
 /**
  * @brief  read metadata from primary flash location

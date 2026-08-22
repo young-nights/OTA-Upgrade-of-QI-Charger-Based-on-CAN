@@ -102,9 +102,16 @@ static uint32_t g_dl_write_addr    = 0;
 static uint32_t g_dl_bytes_written = 0;
 static uint8_t  g_dl_block_seq     = 0;
 static uint8_t  g_dl_active        = 0;
+static uint8_t  g_dl_slot          = SLOT_A;
+static uint32_t g_dl_slot_base     = APP_A_BASE_ADDR;
+static uint32_t g_dl_slot_size     = APP_A_SIZE;
+static uint8_t  g_dl_pad[4];
+static uint8_t  g_dl_pad_len       = 0;
 
-/** @brief  maximum image size (APP_A size minus header) */
-#define MAX_IMAGE_SIZE    (APP_A_SIZE - IMAGE_HEADER_SIZE)
+/** @brief  maxNumberOfBlockLength advertised in 0x34 (SID+BSC+data) */
+#define UDS_MAX_BLOCK_LEN     256U
+
+
 
 /** @brief  signature transfer buffer (accumulated from 0x38 frames) */
 static uint8_t  g_sig_buf[64];
@@ -187,19 +194,64 @@ static uint8_t verify_security_ecdsa_signature(void)
   return (result == 1) ? 1U : 0U;
 }
 
+static uint8_t select_inactive_slot(void)
+{
+  if ((g_meta.slot_a_valid != 0U) && (g_meta.active_slot == SLOT_A))
+  {
+    return SLOT_B;
+  }
+  if ((g_meta.slot_b_valid != 0U) && (g_meta.active_slot == SLOT_B))
+  {
+    return SLOT_A;
+  }
+  if (g_meta.slot_a_valid == 0U)
+  {
+    return SLOT_A;
+  }
+  return SLOT_B;
+}
+
+static void dl_bind_slot(uint8_t slot)
+{
+  g_dl_slot      = slot;
+  g_dl_slot_base = boot_metadata_slot_addr(slot);
+  g_dl_slot_size = boot_metadata_slot_size(slot);
+  if (g_dl_slot_base == 0U)
+  {
+    g_dl_slot      = SLOT_A;
+    g_dl_slot_base = APP_A_BASE_ADDR;
+    g_dl_slot_size = APP_A_SIZE;
+  }
+}
+
+static void dl_reset_state(void)
+{
+  g_dl_write_addr    = g_dl_slot_base + IMAGE_HEADER_SIZE;
+  g_dl_bytes_written = 0;
+  g_dl_block_seq     = 0;
+  g_dl_pad_len       = 0;
+  g_dl_active        = 1;
+}
+
 /**
- * @brief  erase all APP_A flash sectors
+ * @brief  erase all 2KB sectors of the target APP slot
  * @retval 0 on success, non-zero on error
  */
-static uint8_t erase_app_a_flash(void)
+static uint8_t erase_slot_flash(uint8_t slot)
 {
   uint32_t sector_addr;
+  uint32_t base = boot_metadata_slot_addr(slot);
+  uint32_t size = boot_metadata_slot_size(slot);
+
+  if ((base == 0U) || (base < APP_A_BASE_ADDR) || (size == 0U))
+  {
+    return 1U;
+  }
 
   flash_unlock();
-  for (sector_addr = APP_A_BASE_ADDR;
-       sector_addr < (APP_A_BASE_ADDR + APP_A_SIZE);
-       sector_addr += 0x800U)  /* 2KB sectors for AT32F426 */
+  for (sector_addr = base; sector_addr < (base + size); sector_addr += FLASH_SECTOR_SIZE)
   {
+    wdg_drv_refresh();
     if (flash_sector_erase(sector_addr) != FLASH_OPERATE_DONE)
     {
       flash_lock();
@@ -207,6 +259,82 @@ static uint8_t erase_app_a_flash(void)
     }
   }
   flash_lock();
+  return 0U;
+}
+
+static uint8_t program_image_bytes(const uint8_t *src, uint16_t src_len)
+{
+  uint16_t n = src_len;
+  uint16_t idx = 0;
+  flash_status_type flash_status;
+  uint32_t max_len = g_dl_slot_size - IMAGE_HEADER_SIZE;
+
+  while (n > 0U)
+  {
+    while ((g_dl_pad_len < 4U) && (n > 0U))
+    {
+      g_dl_pad[g_dl_pad_len++] = src[idx++];
+      n--;
+    }
+    if (g_dl_pad_len < 4U)
+    {
+      break;
+    }
+
+    if ((g_dl_bytes_written + 4U) > max_len)
+    {
+      return 1U;
+    }
+
+    {
+      uint32_t word_data;
+      word_data  =  (uint32_t)g_dl_pad[0];
+      word_data |= ((uint32_t)g_dl_pad[1] << 8);
+      word_data |= ((uint32_t)g_dl_pad[2] << 16);
+      word_data |= ((uint32_t)g_dl_pad[3] << 24);
+      flash_status = flash_word_program(g_dl_write_addr, word_data);
+      if (flash_status != FLASH_OPERATE_DONE)
+      {
+        return 1U;
+      }
+    }
+
+    g_dl_write_addr    += 4U;
+    g_dl_bytes_written += 4U;
+    g_dl_pad_len        = 0;
+    wdg_drv_refresh();
+  }
+
+  return 0U;
+}
+
+static uint8_t program_image_flush(void)
+{
+  uint32_t word_data;
+  uint8_t k;
+  flash_status_type flash_status;
+
+  if (g_dl_pad_len == 0U)
+  {
+    return 0U;
+  }
+
+  word_data = 0xFFFFFFFFU;
+  for (k = 0; k < g_dl_pad_len; k++)
+  {
+    word_data &= ~((uint32_t)0xFFU << (k * 8U));
+    word_data |= ((uint32_t)g_dl_pad[k] << (k * 8U));
+  }
+
+  flash_status = flash_word_program(g_dl_write_addr, word_data);
+  if (flash_status != FLASH_OPERATE_DONE)
+  {
+    return 1U;
+  }
+
+  g_dl_write_addr    += (uint32_t)g_dl_pad_len;
+  g_dl_bytes_written += (uint32_t)g_dl_pad_len;
+  g_dl_pad_len        = 0;
   return 0U;
 }
 
@@ -261,7 +389,7 @@ static void safe_mode_send_pending(uint8_t service_id)
 static void uds_process_message(uint8_t *data, uint16_t len)
 {
   uint8_t service_id;
-  uint8_t resp[8];
+  uint8_t resp[20];
 
   if ((data == (uint8_t *)0) || (len == 0U))
   {
@@ -350,13 +478,8 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         safe_mode_send_response(resp, 2);
       }
 
-      /* small delay to allow CAN TX to complete before reset */
-      {
-        volatile uint32_t d;
-        for (d = 0; d < 36000U; d++) { __NOP(); }
-      }
+      (void)can_driver_wait_tx_idle(5U);
 
-      /* active system reset instead of waiting for watchdog */
       NVIC_SystemReset();
       /* not reached */
       break;
@@ -408,21 +531,30 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         /* Sub-function 0x01: Request Seed */
         uint32_t now_ms;
 
-        /* check security lockout */
         now_ms = timer_get_tick();
         if (g_security_fail_count >= SECURITY_MAX_FAILURES)
         {
           if ((int32_t)(now_ms - g_security_lockout_until_ms) < 0)
           {
-            /* still in lockout period */
             safe_mode_send_nrc(service_id, UDS_NRC_REQUIRED_TIME_DELAY_NOT_EXPIRED);
             break;
           }
-          /* lockout expired, reset failure counter */
           g_security_fail_count = 0;
         }
 
-        /* generate random 4-byte seed */
+        /* already unlocked: ISO 14229 returns seed 0 */
+        if (g_security_unlocked)
+        {
+          resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+          resp[1] = sub_func;
+          resp[2] = 0U;
+          resp[3] = 0U;
+          resp[4] = 0U;
+          resp[5] = 0U;
+          safe_mode_send_response(resp, 6);
+          break;
+        }
+
         {
           uint32_t seed_val = generate_random_seed();
           g_seed[0] = (uint8_t)((seed_val >> 24) & 0xFFU);
@@ -432,12 +564,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
         g_seed_generated = 1;
         g_seed_sub = sub_func;
-
-        /* reset signature accumulation state */
         g_sa_sig_bytes_received = 0;
         g_sa_sig_block_seq = 0;
 
-        /* positive response: SID + sub + seed */
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = sub_func;
         resp[2] = g_seed[0];
@@ -514,31 +643,38 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
       else if (sub_func == 0x02U)
       {
-        /* Sub-function 0x02: Verify Signature
-         * Host has finished sending 64B signature via 0x03 chunks.
-         * MCU now verifies SHA256(seed) + signature using ECDSA P-256. */
+        /* Sub-function 0x02: SendKey / Verify Signature.
+         * Accept 64-byte key in this ISO-TP message (data[2..65]),
+         * or the buffer accumulated via 0x03 chunks. */
         if (!g_seed_generated || g_seed_sub != 0x01U)
         {
-          /* no seed was requested first */
-          safe_mode_send_nrc(service_id, UDS_NRC_SUBFUNCTION_NOT_SUPPORTED);
+          safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_SEQUENCE_ERROR);
           break;
+        }
+
+        if (len >= 66U)
+        {
+          uint16_t k;
+          for (k = 0; k < 64U; k++)
+          {
+            g_sa_sig_buf[k] = data[2U + k];
+          }
+          g_sa_sig_bytes_received = 64U;
         }
 
         if (g_sa_sig_bytes_received != 64U)
         {
-          /* incomplete signature */
           g_seed_generated = 0;
           g_sa_sig_bytes_received = 0;
           safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
           break;
         }
 
-        /* verify the ECDSA P-256 signature (may take 200-800ms) */
         safe_mode_send_pending(service_id);
+        wdg_drv_refresh();
 
         if (verify_security_ecdsa_signature())
         {
-          /* signature valid: unlock security */
           g_security_unlocked = 1;
           g_security_fail_count = 0;
           g_seed_generated = 0;
@@ -550,20 +686,18 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
         else
         {
-          /* signature invalid: increment failure counter */
+          g_security_unlocked = 0;
           g_security_fail_count++;
           g_seed_generated = 0;
           g_sa_sig_bytes_received = 0;
 
           if (g_security_fail_count >= SECURITY_MAX_FAILURES)
           {
-            /* enter lockout period */
             g_security_lockout_until_ms = timer_get_tick() + SECURITY_LOCKOUT_MS;
             safe_mode_send_nrc(service_id, UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS);
           }
           else
           {
-            /* invalid signature: NRC 0x35 (InvalidKey) */
             safe_mode_send_nrc(service_id, UDS_NRC_INVALID_KEY);
           }
         }
@@ -598,11 +732,16 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1]; /* DID high byte */
         resp[2] = data[2]; /* DID low byte */
+        if (ver_len > 15U)
+        {
+          ver_len = 15U;
+        }
         for (pos = 0; pos < ver_len; pos++)
         {
           resp[3U + pos] = (uint8_t)ver[pos];
         }
-        safe_mode_send_response(resp, 3U + ver_len);
+        resp[3U + ver_len] = 0U;
+        safe_mode_send_response(resp, 4U + ver_len);
       }
       else if (did == 0xF18DU)
       {
@@ -613,11 +752,16 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1]; /* DID high byte */
         resp[2] = data[2]; /* DID low byte */
+        if (ver_len > 15U)
+        {
+          ver_len = 15U;
+        }
         for (pos = 0; pos < ver_len; pos++)
         {
           resp[3U + pos] = (uint8_t)ver[pos];
         }
-        safe_mode_send_response(resp, 3U + ver_len);
+        resp[3U + ver_len] = 0U;
+        safe_mode_send_response(resp, 4U + ver_len);
       }
       else
       {
@@ -654,14 +798,18 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       if (did == 0x2010U)
       {
-        /* DID 0x2010: Firmware Type Selection (0=app, 1=bootloader) */
+        /* DID 0x2010: 0x01=APP (supported), 0x03=bootloader (not supported) */
+        if (data[3] != 0x01U)
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
+          break;
+        }
         g_firmware_type = data[3];
 
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1];
         resp[2] = data[2];
-        resp[3] = data[3];
-        safe_mode_send_response(resp, 4);
+        safe_mode_send_response(resp, 3);
       }
       else
       {
@@ -698,25 +846,38 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       if (data[1] == 0x01U && routine_id == 0xFF00U)
       {
-        /* 0x31 0x01 0xFF00: Erase Memory (may take 1-2s for full erase) */
+        /* erase the inactive slot (never the running image's last-known slot) */
+        dl_bind_slot(select_inactive_slot());
         safe_mode_send_pending(service_id);
 
-        if (erase_app_a_flash() != 0U)
+        if (erase_slot_flash(g_dl_slot) != 0U)
         {
           safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
           break;
         }
 
-        /* initialize download state after erase */
-        g_dl_write_addr    = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
-        g_dl_bytes_written = 0;
-        g_dl_block_seq     = 0;
-        g_dl_active        = 1;
+        dl_reset_state();
 
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-        resp[1] = data[1]; /* sub-function */
-        resp[2] = data[2]; /* routine ID high */
-        resp[3] = data[3]; /* routine ID low */
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = data[3];
+        safe_mode_send_response(resp, 4);
+      }
+      else if (data[1] == 0x01U && routine_id == 0xFF01U)
+      {
+        /* checkProgrammingDependencies: verify programmed slot */
+        safe_mode_send_pending(service_id);
+        wdg_drv_refresh();
+        if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+          break;
+        }
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = data[3];
         safe_mode_send_response(resp, 4);
       }
       else
@@ -742,30 +903,27 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      /* per SRS: 0x34 only initializes download state, erase is done by 0x31 */
-      g_dl_write_addr    = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
-      g_dl_bytes_written = 0;
-      g_dl_block_seq     = 0;
-      g_dl_active        = 1;
+      /* 0x34 initializes download pointer; erase must already have been done by 0x31 */
+      if (g_dl_slot_base == 0U)
+      {
+        dl_bind_slot(select_inactive_slot());
+      }
+      dl_reset_state();
 
-      /* maxNumberOfBlockLength = maximum firmware image size (excluding header). */
+      /* LFI 0x20 = 2-byte maxNumberOfBlockLength (one TransferData request) */
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       resp[1] = 0x20;
-      resp[2] = 0x00;
-      resp[3] = (uint8_t)((MAX_IMAGE_SIZE >> 8) & 0xFFU);
-      resp[4] = (uint8_t)(MAX_IMAGE_SIZE & 0xFFU);
-      safe_mode_send_response(resp, 5);
+      resp[2] = (uint8_t)((UDS_MAX_BLOCK_LEN >> 8) & 0xFFU);
+      resp[3] = (uint8_t)(UDS_MAX_BLOCK_LEN & 0xFFU);
+      safe_mode_send_response(resp, 4);
       break;
     }
 
     case UDS_TRANSFER_DATA:
     {
       uint8_t block_seq;
-      uint8_t data_len;
-      uint8_t i;
-      flash_status_type flash_status;
+      uint16_t data_len;
 
-      /* programming session check */
       if (g_current_session != SESSION_PROGRAMMING)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
@@ -774,11 +932,10 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       if (!g_dl_active)
       {
-        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_SEQUENCE_ERROR);
         break;
       }
 
-      /* security gate */
       if (!g_security_unlocked)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
@@ -793,7 +950,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       block_seq = data[1];
       g_dl_block_seq++;
-      /* skip 0x00 on wraparound: host jumps from 0xFF to 0x01 */
       if (g_dl_block_seq == 0x00U)
       {
         g_dl_block_seq = 0x01U;
@@ -801,56 +957,29 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       if (block_seq != g_dl_block_seq)
       {
         g_dl_active = 0;
+        safe_mode_send_nrc(service_id, UDS_NRC_WRONG_BLOCK_SEQUENCE);
+        break;
+      }
+
+      data_len = (uint16_t)(len - 2U);
+
+      if ((g_dl_bytes_written + g_dl_pad_len + (uint32_t)data_len) >
+          (g_dl_slot_size - IMAGE_HEADER_SIZE))
+      {
+        g_dl_active = 0;
         safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
         break;
       }
 
-      data_len = (uint8_t)(len - 2U);
-
-      if ((g_dl_bytes_written + (uint32_t)data_len) > MAX_IMAGE_SIZE)
+      flash_unlock();
+      if (program_image_bytes(&data[2], data_len) != 0U)
       {
         g_dl_active = 0;
-        safe_mode_send_nrc(service_id, UDS_NRC_RESPONSE_TOO_LONG);
-        break;
-      }
-
-      /* check 4-byte alignment of write address */
-      if ((g_dl_write_addr & 0x03U) != 0U)
-      {
-        g_dl_active = 0;
+        flash_lock();
         safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
         break;
       }
-
-      /* write data to flash (4-byte aligned, unused bytes in last word remain 0xFF) */
-      flash_unlock();
-      for (i = 0; i < data_len; i += 4U)
-      {
-        uint32_t word_data = 0xFFFFFFFFU;
-        uint8_t  remaining = data_len - i;
-        uint8_t  copy_len  = (remaining > 4U) ? 4U : remaining;
-        uint8_t  k;
-
-        for (k = 0; k < copy_len; k++)
-        {
-          word_data &= ~((uint32_t)0xFFU << (k * 8U));
-          word_data |= ((uint32_t)data[2U + i + k] << (k * 8U));
-        }
-
-        flash_status = flash_word_program(g_dl_write_addr + (uint32_t)i, word_data);
-        if (flash_status != FLASH_OPERATE_DONE)
-        {
-          g_dl_active = 0;
-          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-          break;
-        }
-      }
       flash_lock();
-
-      if (!g_dl_active) break;
-
-      g_dl_write_addr    += (uint32_t)data_len;
-      g_dl_bytes_written += (uint32_t)data_len;
 
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       resp[1] = block_seq;
@@ -861,10 +990,15 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     case UDS_TRANSFER_SIGNATURE:
     {
       uint8_t block_seq;
-      uint8_t sig_data_len;
-      uint8_t i;
+      uint16_t sig_data_len;
+      uint16_t i;
 
-      /* security gate */
+      if (g_current_session != SESSION_PROGRAMMING)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
+        break;
+      }
+
       if (!g_security_unlocked)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
@@ -907,12 +1041,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      sig_data_len = (uint8_t)(len - 2U); /* subtract SID and blockSeq */
+      sig_data_len = (uint16_t)(len - 2U);
 
       if ((g_sig_bytes_received + sig_data_len) > 64U)
       {
         g_sig_active = 0;
-        safe_mode_send_nrc(service_id, UDS_NRC_RESPONSE_TOO_LONG);
+        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
         break;
       }
 
@@ -960,28 +1094,36 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       g_dl_active = 0;
 
-      /* compute CRC32 of downloaded image */
-      image_data_addr = APP_A_BASE_ADDR + IMAGE_HEADER_SIZE;
+      flash_unlock();
+      if (program_image_flush() != 0U)
+      {
+        flash_lock();
+        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+        break;
+      }
+      flash_lock();
+
+      if (g_dl_bytes_written == 0U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+        break;
+      }
+
+      if (g_sig_bytes_received != 64U)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+        break;
+      }
+
+      image_data_addr = g_dl_slot_base + IMAGE_HEADER_SIZE;
       computed_crc = boot_crc32((const void *)image_data_addr, g_dl_bytes_written);
 
-      /* prepare and write image header */
       memset((void *)&header, 0xFF, sizeof(image_header_t));
       header.magic        = IMAGE_MAGIC;
       header.image_length = g_dl_bytes_written;
       header.crc32        = computed_crc;
+      memcpy(header.signature, g_sig_buf, 64U);
 
-      /* fill signature from 0x38 TransferSignature data */
-      if (g_sig_bytes_received == 64U)
-      {
-        memcpy(header.signature, g_sig_buf, 64U);
-      }
-      else
-      {
-        /* no signature received or incomplete -- use 0xFF (will fail verification) */
-        memset(header.signature, 0xFF, 64U);
-      }
-
-      /* reset signature transfer state */
       g_sig_bytes_received = 0;
       g_sig_active = 0;
       g_sig_block_seq = 0;
@@ -991,14 +1133,18 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       hdr_word_count = sizeof(image_header_t) / sizeof(uint32_t);
       for (w = 0; w < hdr_word_count; w++)
       {
-        flash_word_program(APP_A_BASE_ADDR + (w * 4U), hdr_words[w]);
+        if (flash_word_program(g_dl_slot_base + (w * 4U), hdr_words[w]) != FLASH_OPERATE_DONE)
+        {
+          flash_lock();
+          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+          return;
+        }
       }
       flash_lock();
 
-      /* readback verification: ensure header was written correctly */
       for (w = 0; w < hdr_word_count; w++)
       {
-        uint32_t readback = *(volatile uint32_t *)(APP_A_BASE_ADDR + (w * 4U));
+        uint32_t readback = *(volatile uint32_t *)(g_dl_slot_base + (w * 4U));
         if (readback != hdr_words[w])
         {
           safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
@@ -1006,19 +1152,34 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
       }
 
-      /* update metadata to mark slot A as valid */
-      g_meta.slot_a_valid  = 1;
-      g_meta.slot_a_crc32  = computed_crc;
-      g_meta.ota_state     = OTA_STATE_IDLE;
+      safe_mode_send_pending(service_id);
+      wdg_drv_refresh();
+      if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+        break;
+      }
 
-      /* switch active slot to the newly downloaded slot A */
-      g_meta.active_slot   = SLOT_A;
+      if (g_dl_slot == SLOT_A)
+      {
+        g_meta.slot_a_valid = 1;
+        g_meta.slot_a_crc32 = computed_crc;
+      }
+      else
+      {
+        g_meta.slot_b_valid = 1;
+        g_meta.slot_b_crc32 = computed_crc;
+      }
+      g_meta.ota_state   = OTA_STATE_IDLE;
+      g_meta.active_slot = g_dl_slot;
+      g_meta.trial_state = TRIAL_STATE_PENDING;
+      g_meta.trial_slot  = g_dl_slot;
 
-      /* set trial boot so bootloader will roll back if APP fails to confirm */
-      g_meta.trial_state   = TRIAL_STATE_PENDING;
-      g_meta.trial_slot    = SLOT_A;
-
-      boot_metadata_save(&g_meta);
+      if (boot_metadata_save(&g_meta) != 0)
+      {
+        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+        break;
+      }
 
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       safe_mode_send_response(resp, 1);

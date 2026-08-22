@@ -99,6 +99,19 @@ void can_driver_init(void);
 int8_t can_driver_send(uint32_t id, uint8_t *data, uint8_t len);
 
 /**
+ * @brief  pop one frame from the software RX FIFO (no callback)
+ * @retval 0 if a frame was copied, -1 if FIFO empty
+ */
+int8_t can_driver_recv(uint32_t *id, uint8_t *data, uint8_t *len);
+
+/**
+ * @brief  wait until a TX mailbox has finished (or timeout)
+ * @param  timeout_ms: maximum wait
+ * @retval 0 on success, -1 on timeout
+ */
+int8_t can_driver_wait_tx_idle(uint32_t timeout_ms);
+
+/**
  * @brief  register a callback for received CAN frames
  * @note   the callback is invoked from can_driver_poll() in main loop context
  * @param  cb: callback function pointer, or NULL to unregister

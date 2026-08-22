@@ -25,6 +25,7 @@
 
 /* includes ------------------------------------------------------------------*/
 #include "boot_jump.h"
+#include "boot_metadata.h"
 #include "core_cm4.h"
 #include "at32f422_426_conf.h"
 
@@ -92,10 +93,19 @@ void boot_jump_to_app(uint32_t app_addr)
   /* step 6: read reset handler address from application vector table [1] */
   app_reset_addr = *(volatile uint32_t *)(app_addr + 4U);
 
-  /* validate reset handler address (must be in valid flash range and thumb mode) */
+  /* validate MSP is in SRAM and reset handler is in application flash */
+  if ((app_msp < SRAM_BASE_ADDR) ||
+      (app_msp > (SRAM_BASE_ADDR + SRAM_SIZE)))
+  {
+    return;
+  }
   if ((app_reset_addr == 0xFFFFFFFFU) || (app_reset_addr == 0x00000000U))
   {
-    /* invalid reset handler, cannot jump */
+    return;
+  }
+  if ((app_reset_addr < (APP_A_BASE_ADDR + IMAGE_HEADER_SIZE)) ||
+      (app_reset_addr >= META_PRIMARY_ADDR))
+  {
     return;
   }
 

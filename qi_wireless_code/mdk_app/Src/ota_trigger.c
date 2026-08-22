@@ -176,16 +176,13 @@ int8_t ota_metadata_save(const ota_metadata_t *meta)
   memcpy((void *)&meta_copy, (const void *)meta, sizeof(ota_metadata_t));
   meta_copy.crc32 = ota_crc32((const void *)&meta_copy, META_CRC32_OFFSET);
 
-  /* erase primary metadata page (8KB = 4 sectors of 2KB) */
+  /* erase first 2KB sector (metadata is 272 bytes) */
   flash_unlock();
-  for (i = 0; i < (OTA_META_PAGE_SIZE / OTA_FLASH_SECTOR_SIZE); i++)
+  status = flash_sector_erase(OTA_META_PRIMARY_ADDR);
+  if (status != FLASH_OPERATE_DONE)
   {
-    status = flash_sector_erase(OTA_META_PRIMARY_ADDR + (i * OTA_FLASH_SECTOR_SIZE));
-    if (status != FLASH_OPERATE_DONE)
-    {
-      flash_lock();
-      return -1;
-    }
+    flash_lock();
+    return -1;
   }
 
   /* write metadata word by word */
@@ -207,26 +204,31 @@ int8_t ota_metadata_save(const ota_metadata_t *meta)
 }
 
 /**
- * @brief  trigger OTA upgrade mode
- * @note   reads current metadata, sets ota_state to OTA_STATE_DOWNLOADING,
- *         saves metadata to primary flash, then performs a system reset.
- *         this function does NOT return.
- * @param  none
- * @retval none (does not return)
+ * @brief  mark metadata for bootloader download mode
+ * @retval 0 on success, -1 if flash write failed
  */
-void ota_trigger_request(void)
+int8_t ota_trigger_prepare(void)
 {
   ota_metadata_t meta;
 
-  /* read current metadata */
   ota_metadata_read(&meta);
-
-  /* set OTA state to downloading */
   meta.ota_state = OTA_STATE_DOWNLOADING;
 
-  /* save metadata to primary flash */
-  ota_metadata_save(&meta);
+  if (ota_metadata_save(&meta) != 0)
+  {
+    return -1;
+  }
 
-  /* perform system reset - bootloader will enter safe mode for download */
+  return 0;
+}
+
+/**
+ * @brief  trigger OTA upgrade mode
+ * @note   sets ota_state to DOWNLOADING, saves metadata, then resets.
+ *         does not return on success.
+ */
+void ota_trigger_request(void)
+{
+  (void)ota_trigger_prepare();
   NVIC_SystemReset();
 }

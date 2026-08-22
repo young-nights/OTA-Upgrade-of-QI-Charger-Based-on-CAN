@@ -25,6 +25,8 @@
 
 /* includes ------------------------------------------------------------------*/
 #include "can_driver.h"
+#include "timer_drv.h"
+#include "wdg_drv.h"
 
 /* private define ------------------------------------------------------------*/
 
@@ -203,9 +205,11 @@ int8_t can_driver_send(uint32_t id, uint8_t *data, uint8_t len)
     tx_buf.data[i] = data[i];
   }
 
-  /* try primary transmit buffer (PTB) first for higher priority */
+  /* try primary transmit buffer (PTB) first for higher priority.
+   * TRANSMITTED(3) also means PTB is free for a new frame. */
   can_transmit_status_get(CAN1, &tx_status);
-  if (tx_status.current_tstat == 0)  /* PTB empty */
+  if ((tx_status.current_tstat == CAN_TSTAT_IDLE) ||
+      (tx_status.current_tstat == CAN_TSTAT_TRANSMITTED))
   {
     txbuf_sel = CAN_TXBUF_PTB;
   }
@@ -248,6 +252,55 @@ int8_t can_driver_send(uint32_t id, uint8_t *data, uint8_t len)
 void can_driver_register_rx_callback(can_rx_callback_t cb)
 {
   rx_callback = cb;
+}
+
+int8_t can_driver_recv(uint32_t *id, uint8_t *data, uint8_t *len)
+{
+  uint8_t i;
+  uint8_t n;
+
+  if ((id == (uint32_t *)0) || (data == (uint8_t *)0) || (len == (uint8_t *)0))
+  {
+    return -1;
+  }
+
+  __disable_irq();
+  if (rx_fifo_count == 0U)
+  {
+    __enable_irq();
+    return -1;
+  }
+
+  *id  = rx_fifo[rx_fifo_tail].id;
+  n    = rx_fifo[rx_fifo_tail].len;
+  *len = n;
+  for (i = 0; i < n; i++)
+  {
+    data[i] = rx_fifo[rx_fifo_tail].data[i];
+  }
+  rx_fifo_tail = (rx_fifo_tail + 1) % CAN_DRIVER_RX_FIFO_SIZE;
+  rx_fifo_count--;
+  __enable_irq();
+  return 0;
+}
+
+int8_t can_driver_wait_tx_idle(uint32_t timeout_ms)
+{
+  uint32_t start = timer_get_tick();
+  can_transmit_status_type tx_status;
+
+  do
+  {
+    can_transmit_status_get(CAN1, &tx_status);
+    if ((tx_status.current_tstat == CAN_TSTAT_IDLE) ||
+        (tx_status.current_tstat == CAN_TSTAT_TRANSMITTED))
+    {
+      return 0;
+    }
+    wdg_drv_refresh();
+  } while ((timer_get_tick() - start) < timeout_ms);
+
+  return -1;
 }
 
 /**
@@ -314,6 +367,10 @@ void can_driver_rx_irq_handler(void)
       {
         rx_fifo[rx_fifo_head].id  = rx_buf.id;
         rx_fifo[rx_fifo_head].len = (uint8_t)(rx_buf.data_length & 0x0F);
+        if (rx_fifo[rx_fifo_head].len > CAN_DRIVER_MAX_DATA_LEN)
+        {
+          rx_fifo[rx_fifo_head].len = CAN_DRIVER_MAX_DATA_LEN;
+        }
         for (i = 0; i < rx_fifo[rx_fifo_head].len; i++)
         {
           rx_fifo[rx_fifo_head].data[i] = rx_buf.data[i];
