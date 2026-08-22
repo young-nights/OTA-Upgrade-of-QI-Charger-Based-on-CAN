@@ -11,27 +11,31 @@
 
 | 区域 | 起始地址 | 结束地址 | 大小 | 说明 |
 |------|----------|----------|------|------|
-| Bootloader | `0x08000000` | `0x08003FFF` | 16KB | 引导程序，含 OTA 逻辑 |
-| Application Slot A | `0x08004000` | `0x0800FFFF` | 48KB | 应用固件 A |
-| Application Slot B | `0x08010000` | `0x0801BFFF` | 48KB | 应用固件 B |
-| Metadata Primary | `0x0801C000` | `0x0801DFFF` | 8KB | OTA 元数据主副本 |
-| Metadata Backup | `0x0801E000` | `0x0801FFFF` | 8KB | OTA 元数据备份 / NVM 配置区 |
+| Bootloader | `0x08000000` | `0x08004FFF` | 20KB (0x5000) | 引导程序，含 OTA 逻辑 |
+| Application Slot A | `0x08005000` | `0x080107FF` | 46KB (0xB800) | 应用固件 A |
+| Application Slot B | `0x08010800` | `0x0801BFFF` | 46KB (0xB800) | 应用固件 B |
+| Metadata Primary | `0x0801C000` | `0x0801DFFF` | 8KB (0x2000) | OTA 元数据主副本 |
+| Metadata Backup | `0x0801E000` | `0x0801FFFF` | 8KB (0x2000) | OTA 元数据备份 / NVM 配置区 |
 
-```
+```text
 0x08000000 ┌─────────────────────────────┐
-           │      Bootloader (16KB)      │
-0x08004000 ├─────────────────────────────┤
-           │   Application Slot A (48KB) │ ← image_header (256B) + app code
+           │      Bootloader (20KB)      │  0x5000 bytes
+0x08005000 ├─────────────────────────────┤
+           │   Application Slot A (46KB) │  0xB800 bytes
+           │  image_header (256B) + app  │  header @ 0x08005000, app @ 0x08005100
            │                             │
-0x08010000 ├─────────────────────────────┤
-           │   Application Slot B (48KB) │ ← image_header (256B) + app code
+0x08010800 ├─────────────────────────────┤
+           │   Application Slot B (46KB) │  0xB800 bytes
+           │  image_header (256B) + app  │  header @ 0x08010800, app @ 0x08010900
            │                             │
 0x0801C000 ├─────────────────────────────┤
-           │  Metadata Primary (8KB)     │ ← ota_metadata_t (512B)
+           │  Metadata Primary (8KB)     │  0x2000 bytes, ota_metadata_t (512B)
 0x0801E000 ├─────────────────────────────┤
-           │  Metadata Backup (8KB)      │ ← ota_metadata_t 备份 / NVM 配置
+           │  Metadata Backup (8KB)      │  0x2000 bytes, ota_metadata_t backup / NVM
 0x0801FFFF └─────────────────────────────┘
 ```
+
+**地址对齐验证**: 所有区域起始地址均为 2KB (0x800) sector 对齐 ✅
 
 ---
 
@@ -41,7 +45,7 @@
 
 **结构体定义** (来源: `boot_metadata.h`):
 
-```
+```text
 Flash 地址 0x0801C000 开始:
 ┌──────────────────────────────────────────┐
 │ magic (4字节)              │ ← 0x4F54414D "MATO"          偏移 0x00
@@ -107,10 +111,10 @@ Flash 地址 0x0801C000 开始:
 
 每个 Application Slot 的起始位置包含一个 256 字节的 `image_header_t`，实际应用代码紧随其后。
 
-### Slot A (`0x08004000` ~ `0x0800FFFF`, 48KB)
+### Slot A (`0x08005000` ~ `0x080107FF`, 46KB)
 
-```
-0x08004000 ┌─────────────────────────────┐
+```text
+0x08005000 ┌─────────────────────────────┐
            │  image_header_t (256字节)    │ ← 镜像头
            │  ┌───────────────────────┐  │
            │  │ magic    (4字节)      │  │ ← 0x4F544158 "XATO"
@@ -121,21 +125,21 @@ Flash 地址 0x0801C000 开始:
            │  │ build_timestamp(4字节)│  │ ← Unix 时间戳
            │  │ reserved (156字节)    │  │ ← 填充至 256 字节
            │  └───────────────────────┘  │
-0x08004100 ├─────────────────────────────┤
-           │  Application Code           │ ← boot_jump_to_app(0x08004100)
-           │  (最大 48KB - 256B = 48896B) │
+0x08005100 ├─────────────────────────────┤
+           │  Application Code           │ ← boot_jump_to_app(0x08005100)
+           │  (最大 46KB - 256B = 46848B) │
            │                             │
-0x0800FFFF └─────────────────────────────┘
+0x080107FF └─────────────────────────────┘
 ```
 
-### Slot B (`0x08010000` ~ `0x0801BFFF`, 48KB)
+### Slot B (`0x08010800` ~ `0x0801BFFF`, 46KB)
 
-```
-0x08010000 ┌─────────────────────────────┐
+```text
+0x08010800 ┌─────────────────────────────┐
            │  image_header_t (256字节)    │ ← 同 Slot A 结构
-0x08010100 ├─────────────────────────────┤
-           │  Application Code           │ ← boot_jump_to_app(0x08010100)
-           │  (最大 48896 字节)           │
+0x08010900 ├─────────────────────────────┤
+           │  Application Code           │ ← boot_jump_to_app(0x08010900)
+           │  (最大 46848 字节)           │
            │                             │
 0x0801BFFF └─────────────────────────────┘
 ```
@@ -147,7 +151,7 @@ Flash 地址 0x0801C000 开始:
 | `magic` | uint32_t | 4B | 魔数 `0x4F544158` ("XATO") |
 | `image_length` | uint32_t | 4B | 镜像数据长度 (不含 header) |
 | `crc32` | uint32_t | 4B | 镜像数据的 CRC32 校验 |
-| `signature` | uint8_t[64] | 64B | ECDSA P-256 签名 (当前为预留) |
+| `signature` | uint8_t[64] | 64B | ECDSA P-256 签名 |
 | `version` | char[16] | 16B | 版本字符串 "MAJOR.MINOR.PATCH\0" |
 | `build_timestamp` | uint32_t | 4B | 构建时间 Unix 时间戳 |
 | `reserved` | uint8_t[156] | 156B | 填充至 256 字节 |
@@ -156,7 +160,7 @@ Flash 地址 0x0801C000 开始:
 1. 检查 `magic == 0x4F544158`
 2. 检查 `image_length` 在合法范围内 (0 < length ≤ slot_size - 256)
 3. 对 header 之后的 `image_length` 字节计算 CRC32，与 `header->crc32` 比对
-4. ECDSA P-256 签名验证（SHA256(image_data) + uECC_verify 公钥验签）— 已实现
+4. ECDSA P-256 签名验证（SHA256(image_data) + uECC_verify 公钥验签）
 
 ---
 
@@ -164,11 +168,11 @@ Flash 地址 0x0801C000 开始:
 
 ### Metadata Primary (`0x0801C000` ~ `0x0801DFFF`, 8KB)
 
-```
+```text
 0x0801C000 ┌─────────────────────────────┐
            │  ota_metadata_t (512字节)    │ ← 元数据主副本
 0x0801C200 ├─────────────────────────────┤
-           │  未使用 (7680字节)           │ ← 一个 8KB page 剩余空间
+           │  未使用 (7680字节)           │ ← 一个 8KB sector 剩余空间
            │                             │
 0x0801DFFF └─────────────────────────────┘
 ```
@@ -178,7 +182,7 @@ Flash 地址 0x0801C000 开始:
 
 ### Metadata Backup / NVM Config (`0x0801E000` ~ `0x0801FFFF`, 8KB)
 
-```
+```text
 0x0801E000 ┌─────────────────────────────┐
            │  ota_metadata_t 备份 (512B)  │ ← boot_metadata_save() 写入
            │  ── 或 ──                    │
@@ -199,9 +203,9 @@ NVM 驱动参数:
 
 ---
 
-## 五、Bootloader 区域 (`0x08000000` ~ `0x08003FFF`)
+## 五、Bootloader 区域 (`0x08000000` ~ `0x08004FFF`)
 
-```
+```text
 0x08000000 ┌─────────────────────────────┐
            │  Vector Table               │ ← 中断向量表
            │  Bootloader Code            │ ← 含以下模块:
@@ -214,16 +218,16 @@ NVM 驱动参数:
            │   - nvm_drv.c               │   NVM 驱动
            │   - uECC.c                  │   ECDSA P-256 验签库
            │   - sha256.c                │   SHA-256 哈希库
-0x08003FFF └─────────────────────────────┘
+0x08004FFF └─────────────────────────────┘
 ```
 
-链接脚本配置: `LR_IROM1 0x08000000 0x00004000`
+链接脚本配置: `LR_IROM1 0x08000000 0x00005000`
 
 ---
 
 ## 六、启动流程与 Flash 交互
 
-```
+```text
 上电 / 复位
     │
     ▼
@@ -265,11 +269,13 @@ NVM 驱动参数:
 | 宏名 | 值 | 含义 |
 |------|-----|------|
 | `BOOT_BASE_ADDR` | `0x08000000` | Bootloader 起始地址 |
-| `BOOT_SIZE` | `0x4000` (16KB) | Bootloader 大小 |
-| `APP_A_BASE_ADDR` | `0x08004000` | Slot A 起始地址 |
-| `APP_A_SIZE` | `0xC000` (48KB) | Slot A 大小 |
-| `APP_B_BASE_ADDR` | `0x08010000` | Slot B 起始地址 |
-| `APP_B_SIZE` | `0xC000` (48KB) | Slot B 大小 |
+| `BOOT_SIZE` | `0x5000` (20KB) | Bootloader 大小 |
+| `APP_A_BASE_ADDR` | `0x08005000` | Slot A 起始地址 (含 image_header) |
+| `APP_A_SIZE` | `0xB800` (46KB) | Slot A 大小 |
+| `APP_A_ENTRY_ADDR` | `0x08005100` | Slot A 应用入口 (header 后 256B) |
+| `APP_B_BASE_ADDR` | `0x08010800` | Slot B 起始地址 (含 image_header) |
+| `APP_B_SIZE` | `0xB800` (46KB) | Slot B 大小 |
+| `APP_B_ENTRY_ADDR` | `0x08010900` | Slot B 应用入口 (header 后 256B) |
 | `META_PRIMARY_ADDR` | `0x0801C000` | 元数据主副本地址 |
 | `META_BACKUP_ADDR` | `0x0801E000` | 元数据备份地址 |
 | `META_PAGE_SIZE` | `0x2000` (8KB) | 元数据 page 大小 |
@@ -282,9 +288,99 @@ NVM 驱动参数:
 
 ---
 
-## 八、变更记录
+## 八、链接脚本（Scatter-Loading Description）
+
+### Bootloader `.sct` 文件
+
+```text
+; *************************************************************
+; * Bootloader Scatter-Loading Description File
+; * MCU: AT32F426KBU7-4 (128KB Flash, 20KB SRAM)
+; * Bootloader region: 0x08000000 - 0x08004FFF (20KB)
+; *************************************************************
+
+LR_IROM1 0x08000000 0x00005000  {    ; Load Region: 20KB bootloader
+  ER_IROM1 0x08000000 0x00005000  {  ; Code region
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+   .ANY (+XO)
+  }
+  RW_IRAM1 0x20000000 0x00005000  {  ; RW data: full 20KB SRAM
+   .ANY (+RW +ZI)
+  }
+}
+```
+
+### Application `.sct` 文件
+
+```text
+; *************************************************************
+; * Application Scatter-Loading Description File
+; * MCU: AT32F426KBU7-4 (128KB Flash, 20KB SRAM)
+; * App Slot A: 0x08005000 - 0x080107FF (46KB)
+; *   image_header @ 0x08005000 (256B)
+; *   app code     @ 0x08005100 (entry point)
+; *
+; * NOTE: For Slot B, change base to 0x08010800 and
+; *       ER_IROM1 start to 0x08010900.
+; *************************************************************
+
+LR_IROM1 0x08005100 0x0000B700  {    ; Load Region: 46KB - 256B header
+  ER_IROM1 0x08005100 0x0000B700  {  ; Code region starts after image_header
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+   .ANY (+XO)
+  }
+  RW_IRAM1 0x20000000 0x00005000  {  ; RW data: full 20KB SRAM
+   .ANY (+RW +ZI)
+  }
+}
+```
+
+**Slot B `.sct` 文件** (仅地址不同):
+
+```text
+; *************************************************************
+; * Application Slot B Scatter-Loading Description File
+; * App Slot B: 0x08010800 - 0x0801BFFF (46KB)
+; *************************************************************
+
+LR_IROM1 0x08010900 0x0000B700  {    ; Load Region: 46KB - 256B header
+  ER_IROM1 0x08010900 0x0000B700  {  ; Code region starts after image_header
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+   .ANY (+XO)
+  }
+  RW_IRAM1 0x20000000 0x00005000  {  ; RW data: full 20KB SRAM
+   .ANY (+RW +ZI)
+  }
+}
+```
+
+---
+
+## 九、空间利用率分析
+
+| 区域 | 大小 | 占比 |
+|------|------|------|
+| Bootloader | 20KB | 15.6% |
+| App Slot A | 46KB | 35.9% |
+| App Slot B | 46KB | 35.9% |
+| Metadata (Primary + Backup) | 16KB | 12.5% |
+| **合计** | **128KB** | **100%** |
+
+- 单个 App 最大可用代码空间: 46KB - 256B(image_header) = **46,848 字节**
+- Metadata 区每副本 8KB，实际使用 512B，剩余空间可扩展
+
+---
+
+## 十、变更记录
 
 | 版本 | 日期 | 改动说明 |
 |------|------|----------|
 | v1.0 | 2026-08-16 | 初始版本：基于源码梳理 Flash 空间分配、ota_metadata_t 结构、image_header_t 结构 |
 | v1.1 | 2026-08-20 | 对齐 SRS v1.1：ECDSA P-256 验签已实现（非占位）；Bootloader 模块列表新增 uECC/SHA-256；链接脚本尺寸修正为 0x00004000 |
+| v2.0 | 2026-08-22 | Flash 布局重新规划：Bootloader 扩容至 20KB (0x5000)；App Slot A/B 各 46KB (0xB800)，地址按 2KB sector 对齐；新增 APP_x_ENTRY_ADDR 宏定义；新增完整 .sct 链接脚本示例（Bootloader / Slot A / Slot B）；新增空间利用率分析 |

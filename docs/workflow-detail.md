@@ -52,8 +52,8 @@
                     └───────▲──────────────────────▲────────────┘
                             │ UDS 请求/响应          │ 生命周期广播
               ┌─────────────┴───────────┐  ┌───────┴──────────┐
-              │  Bootloader (16 KB)     │  │  APP 主应用(48KB) │
-              │  0x08000000             │  │  0x08004000+      │
+              │  Bootloader (20 KB)     │  │  APP 主应用(46KB) │
+              │  0x08000000             │  │  0x08005000+      │
               │  · 启动引导/槽位选择     │  │  · 充电业务逻辑    │
               │  · Safe Mode + UDS OTA  │  │  · UDS 触发 OTA    │
               │  · 镜像校验/跳转        │  │  · Qi UART 驱动    │
@@ -71,8 +71,8 @@
 
 | 工程       | 目录                        | 大小  | 职责                                                                             |
 | ---------- | --------------------------- | ----- | -------------------------------------------------------------------------------- |
-| Bootloader | `qi_wireless_bootloader/` | 16 KB | 上电引导、槽位选择、镜像校验、跳转 APP、Safe Mode（UDS OTA 下载）                |
-| APP        | `qi_wireless_code/`       | 48 KB | 充电业务、CAN UDS 响应、OTA 触发（写 metadata + 复位）、Qi UART 通信、Trial 确认 |
+| Bootloader | `qi_wireless_bootloader/` | 20 KB | 上电引导、槽位选择、镜像校验、跳转 APP、Safe Mode（UDS OTA 下载）                |
+| APP        | `qi_wireless_code/`       | 46 KB | 充电业务、CAN UDS 响应、OTA 触发（写 metadata + 复位）、Qi UART 通信、Trial 确认 |
 
 ---
 
@@ -84,19 +84,19 @@
 
 | 区域            | 起始地址       | 大小               | 用途                                                 |
 | --------------- | -------------- | ------------------ | ---------------------------------------------------- |
-| Bootloader      | `0x08000000` | `0x4000` (16 KB) | 启动引导 + Safe Mode + UDS 下载                      |
-| APP_A           | `0x08004000` | `0xC000` (48 KB) | 应用槽位 A（OTA 下载目标）                           |
-| APP_B           | `0x08010000` | `0xC000` (48 KB) | 应用槽位 B（回退槽位）                               |
+| Bootloader      | `0x08000000` | `0x5000` (20 KB) | 启动引导 + Safe Mode + UDS 下载                      |
+| APP_A           | `0x08005000` | `0xB800` (46 KB) | 应用槽位 A（OTA 下载目标）                           |
+| APP_B           | `0x08010800` | `0xB800` (46 KB) | 应用槽位 B（回退槽位）                               |
 | Metadata 主区   | `0x0801C000` | `0x2000` (8 KB)  | OTA Metadata（512 B 结构体 + 冗余）                  |
 | Metadata 备份区 | `0x0801E000` | `0x2000` (8 KB)  | 元数据备份 /**NVM 配置区（共享，写保护约定）** |
 
 ```
 0x08000000 ┌──────────────────────┐
-           │  Bootloader (16KB)   │  0x08000000 ~ 0x08003FFF
-0x08004000 ├──────────────────────┤
-           │  APP_A (48KB)        │  Image Header(256B) + 应用代码
-0x08010000 ├──────────────────────┤
-           │  APP_B (48KB)        │  Image Header(256B) + 应用代码
+           │  Bootloader (20KB)   │  0x08000000 ~ 0x08004FFF
+0x08005000 ├──────────────────────┤
+           │  APP_A (46KB)        │  Image Header(256B) + 应用代码
+0x08010800 ├──────────────────────┤
+           │  APP_B (46KB)        │  Image Header(256B) + 应用代码
 0x0801C000 ├──────────────────────┤
            │  Metadata 主区 (8KB) │  ota_metadata_t (512B) @ 0x0801C000
 0x0801E000 ├──────────────────────┤
@@ -1286,11 +1286,13 @@ CAN1_RX  (1,0)  >  CAN1_ERR (2,0)  >  USART2 (3,0)
 
 ```c
 #define BOOT_BASE_ADDR          0x08000000U   /*!< bootloader start address */
-#define BOOT_SIZE               0x4000U       /*!< 16KB */
-#define APP_A_BASE_ADDR         0x08004000U   /*!< 48KB */
-#define APP_A_SIZE              0xC000U
-#define APP_B_BASE_ADDR         0x08010000U   /*!< 48KB */
-#define APP_B_SIZE              0xC000U
+#define BOOT_SIZE               0x5000U       /*!< 20KB */
+#define APP_A_BASE_ADDR         0x08005000U   /*!< slot A base (incl. image_header) */
+#define APP_A_SIZE              0xB800U       /*!< 46KB */
+#define APP_A_ENTRY_ADDR        0x08005100U   /*!< slot A app entry (after 256B header) */
+#define APP_B_BASE_ADDR         0x08010800U   /*!< slot B base (incl. image_header) */
+#define APP_B_SIZE              0xB800U       /*!< 46KB */
+#define APP_B_ENTRY_ADDR        0x08010900U   /*!< slot B app entry (after 256B header) */
 #define META_PRIMARY_ADDR       0x0801C000U   /*!< primary metadata */
 #define META_BACKUP_ADDR        0x0801E000U   /*!< backup metadata / NVM 区 */
 #define META_PAGE_SIZE          0x2000U       /*!< 8KB */
