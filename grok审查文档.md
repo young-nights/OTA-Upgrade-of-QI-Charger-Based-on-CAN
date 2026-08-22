@@ -1,26 +1,42 @@
 # Qi 无线充电 CAN-UDS OTA 代码审查文档
 
-> **审查日期**: 2026-08-22  
+> **初审日期**: 2026-08-22  
+> **复审日期**: 2026-08-22（第二轮，对照当前源码 + `bootloader.map` / `bootloader.htm`）  
 > **审查对象**: `qi_wireless_bootloader/`（Bootloader）+ `qi_wireless_code/`（APP）  
 > **审查范围**: CAN-UDS OTA 升级路径（ISO 14229 + ISO 15765-2 ISO-TP）  
-> **审查依据**: 当前源码、scatter/map、`docs/flash.md`、`docs/MCU-OTA详细实施方案.md`、`docs/通用CAN协议规范.md`  
+> **审查依据**: 当前源码、scatter/map、Keil 栈深度报告、`docs/flash.md`、`docs/MCU-OTA详细实施方案.md`、`docs/通用CAN协议规范.md`  
 > **说明**: 仓库内 `code_review_report.md`（2026-08-19）已过时。当时的 SecurityAccess 后门、CAN FIFO 竞态、0x37 无回读等问题，当前代码中大多已修复。本文以 **2026-08-22 源码** 为准。
 
 ---
 
-## 一、审查结论
+## 一、复审结论
 
-**按当前源码，CAN-UDS OTA 还不能在真机上可靠跑通。**
+**代码相对初审没有改动。初审五项阻塞全部成立，且 C1 / C5 比原先更严重。**
+
+复审用 `bootloader.map` 和 Keil `bootloader.htm` 把「擦 Boot 尾部」「栈可能不够」从推断落成地址和数字：
+
+| 项 | 初审判断 | 复审证据 |
+|----|----------|----------|
+| C1 擦到 Bootloader | 16.46KB 跨过 `0x08004000` | `0x31` 擦 `0x08004000` 会毁掉 SHA256 `K`、曲线 `N/P`、`Region$$Table`、`.data` LMA。**第一次擦除后再复位，Boot 自身初始化/验签路径损坏，后续无法再解锁 OTA。** |
+| C5 栈溢出 | 估算 ECDSA > 1KB | Keil：**`uECC_verify` 调用链 Max Depth = 2192～2424 字节**，栈只有 **1024**。启动验签和 `0x27 0x02` 都会 HardFault。 |
+| 其余 C2/C3/C4、H1–H11 | 仍成立 | 源码未改 |
+
+复审新增：
+
+- **H12** CAN 发送只在 `TSTAT==IDLE` 时用 PTB，后续帧挤 STB，满则静默丢应答
+- **H13** `0x36` 的 `uint8_t i` 在 `data_len` 为 253–255 时死循环
+- **M10** `0x38` 不检查编程会话
+- **M11** Boot `0x22` 版本无 `'\0'`（刚好塞进 8 字节）；APP 带 `'\0'` 变成 9 字节发不出去
+
+**按当前源码，CAN-UDS OTA 不能在真机上可靠跑通。不修 C1–C5，上板联调没有意义。**
 
 必须先修的阻塞项：
 
-1. Flash 布局三套互相打架（头文件 / scatter / 文档）
+1. Flash 布局三套互相打架（头文件 / scatter / 文档）——第一次 `0x31` 可能变砖 Boot
 2. APP 的 UDS 应答没有走 ISO-TP
-3. 下载永远覆盖 APP_A，且会擦到 Bootloader 尾部
+3. 下载永远覆盖 APP_A
 4. Bootloader 写 metadata 未 `flash_unlock()`
-5. ECDSA 验签会撑爆 1KB 栈
-
-不修这五项，硬件上测 OTA 没有意义。
+5. ECDSA 验签栈深 2KB+，栈只有 1KB
 
 ---
 
@@ -93,6 +109,8 @@ Host                              APP                         Bootloader Safe Mo
 | 高 | H9 | `0x38` 正响应 SID `0x78` 与 NRC `0x78` 撞车 | `boot_safe_mode.c` |
 | 高 | H10 | `try_boot_slot` 把跳转失败当成成功 | `boot_trial.c` |
 | 高 | H11 | `0x11` 复位不等 CAN TX 完成 | APP / Boot `0x11` 处理 |
+| 高 | H12 | CAN TX 仅 `TSTAT==IDLE` 才用 PTB，后续帧挤 STB 并可能静默失败 | `can_driver.c` |
+| 高 | H13 | `0x36` 循环变量 `uint8_t i`，`data_len` 为 253–255 时死循环 | `boot_safe_mode.c` |
 | 中 | M1 | `0x34` 不解析请求、不要求先擦除 | `boot_safe_mode.c` |
 | 中 | M2 | 缺 `0x31 0x01 0xFF01` 依赖检查 | Safe Mode |
 | 中 | M3 | Bootloader 无 S3 会话超时 | `boot_safe_mode.c` |
@@ -102,6 +120,8 @@ Host                              APP                         Bootloader Safe Mo
 | 中 | M7 | 仓库内有私钥 `docs/keys/private.pem` | `docs/keys/` |
 | 中 | M8 | Qi 芯片 UART IAP 未实现 | `qi_uart.c` |
 | 中 | M9 | 测试工程 / ZCANPRO 脚本无法完成 OTA | `can_uds_ota_test/` |
+| 中 | M10 | `0x38` 只检查安全解锁，不检查编程会话 | `boot_safe_mode.c` |
+| 中 | M11 | Boot `0x22` 版本无空终止；APP 带空终止却 DLC>8 | `boot_safe_mode.c` / `can_protocol.c` |
 | 低 | L1 | 错误 NRC（过长用 `0x14`、序号用 `0x71` 而非 `0x73`） | `boot_safe_mode.c` |
 | 低 | L2 | 旧设计文档（0x100/0x101、500kbps）与代码矛盾 | `*/docs/can-ota-design.md` |
 | 低 | L3 | HardFault 空转，靠 IWDG 复位 | `at32f422_426_int.c` |
@@ -120,16 +140,26 @@ Host                              APP                         Bootloader Safe Mo
 | `boot_metadata.h`、`ota_trigger.h` | **16KB** | **`@0x08004000` / 48KB** | **`@0x08004100`** |
 | APP `.uvprojx` 的 Cpu IROM | — | 仍写着 `0x08004100` | scatter 实际是 `0x08005100` |
 
-已编译结果：
+已编译结果（`bootloader.map`）：
 
 - Bootloader `ER_IROM1` 实际占用 **`0x41CC`（16.46KB）**，已经跨过 `0x08004000`
 - APP 链接在 **`0x08005100`**
 
+`0x31` 擦除从 `0x08004000` 起的 2KB 扇区（`0x08004000`–`0x080047FF`），会当场毁掉仍在运行的 Boot 镜像尾部：
+
+| 符号 | 地址 | 后果 |
+|------|------|------|
+| `G_bytes`（P-256 生成元） | `0x08003fd8`，65B，跨到 `0x08004019` | 后 25 字节被擦掉 |
+| SHA256 常量 `K` | `0x0800401c`，256B | **整表擦掉** |
+| 曲线 `N` / `P` / `Rn` / `Rp` | `0x0800411c` 起 | 整表擦掉 |
+| `Region$$Table`（scatter 加载表） | `0x080041ac` | 下次启动无法正确拷贝 `.data` |
+| `.data` LMA | `0x080041d0` | `system_core_clock`、LFSR 初值等初始化源被毁 |
+
 因此：
 
 1. 工厂烧录的 APP（无 `XATO` 头、代码在 `0x08005100`）会被 `boot_verify_image()` 判无效，**永远进 Safe Mode**。
-2. Safe Mode 的 `0x31` 擦除从 `APP_A_BASE_ADDR = 0x08004000` 开始，会擦掉 Bootloader 最后约 460 字节（含曲线参数 `G` 可能跨过该边界）。
-3. 下载写到 `0x08004100`，复位后跳到错误地址；验签使用被截断的 G 点后失败，再次落入 Safe Mode。
+2. 第一次 `0x31` 擦除发生在 **当前会话仍在运行** 时。本会话里 `0x36/0x37` 可能还能跑（RAM 里已解锁、CRC 不依赖被擦常量）。**复位之后**：scatter 从被擦 Flash 拷 `.data`，SHA256/ECDSA 常量已是 `0xFF` 或 APP 垃圾。下一次 `0x27 0x02` 无法解锁，**后续 OTA 全部失败**。这不是「进不了 APP」，是 **Boot 自毁**。
+3. 下载写到 `0x08004100`，复位后跳到错误地址。
 
 **修复建议**：两套头文件改成与 scatter / `flash.md` 一致：
 
@@ -188,7 +218,7 @@ static void proto_send_response(uint8_t *data, uint8_t len)
 
 ### C4. Bootloader 写 metadata 没有 `flash_unlock()`
 
-APP 的 `ota_metadata_save()` 会 `flash_unlock()`。Boot 的 `boot_metadata_save()` / `meta_write_to_flash()` **全程不加解锁**。复位后 Flash 是锁住的，擦写会被硬件丢掉。
+APP 的 `ota_metadata_save()` 会 `flash_unlock()`。Boot 的 `boot_metadata_save()` / `meta_write_to_flash()` **全程不加解锁**。复位后 Flash 是锁住的。AT32 在 `OPLK` 置位时写 `FLASH_CTRL` 无效：擦写要么失败，要么忙标志根本不置位、函数把 `FLASH_OPERATE_DONE` 当成成功（空操作）。`boot_metadata_save()` 可能 **返回 0 但 Flash 没变**。
 
 后果：
 
@@ -203,7 +233,7 @@ APP 的 `ota_metadata_save()` 会 `flash_unlock()`。Boot 的 `boot_metadata_sav
 
 ---
 
-### C5. ECDSA 验签会撑爆 1KB 栈
+### C5. ECDSA 验签会撑爆 1KB 栈（Keil 已量化）
 
 两边启动文件：
 
@@ -211,16 +241,21 @@ APP 的 `ota_metadata_save()` 会 `flash_unlock()`。Boot 的 `boot_metadata_sav
 Stack_Size      EQU     0x00000400   /* 1KB */
 ```
 
-`uECC_verify()` 局部变量大约 900B，再往下 `point_mul` → `jp_add` → `modmul` 远超 1KB。
+`bootloader.map`：`Stack_Mem` 在 `0x20001650`，大小 1024。
 
-命中路径：
+Keil `bootloader.htm` 调用链栈深（不含 ISR）：
 
-- 启动时 `boot_verify_image()`
-- UDS `0x27 0x02` 解锁
+| 路径 | Max Depth |
+|------|-----------|
+| `main` → `try_boot_slot` → `boot_verify_image` → `uECC_verify` → `point_mul` → `jp_add` → `jp_double` → `modmul` | **2192 B** |
+| `isotp_message_received` → `uECC_verify` → …（`0x27 0x02`） | **2424 B** |
+| `uECC_verify` 自身 | 776 B 帧 + 深度 2120 B |
 
-表现是 HardFault，然后 IWDG 复位，看起来像「验签必失败 / 无法解锁」。SRAM 有 20KB。
+`CAN1_RX_IRQHandler` 另需 144 B。验签期间来一帧 CAN，栈需求再加一截。
 
-**修复建议**：栈至少改到 **4–8KB**，并用水位标记在 `uECC_verify` 期间实测。
+结论不是「可能不够」，是 **编译器已经算出深度是栈的 2 倍以上**。启动验签和安全解锁都会 HardFault，然后 IWDG 复位。现象像「镜像永远无效 / 无法解锁」。SRAM 有 20KB。
+
+**修复建议**：栈至少改到 **4–8KB**（建议 8KB），并用水位标记在 `uECC_verify` 期间实测。`point_mul` 里 `r0/r1/sum` 三个 `jpoint_t`（各 96B）占大量栈，也可改为 `static`（非重入）。
 
 ---
 
@@ -300,7 +335,7 @@ uint8_t i;
 for (i = 0; i < data_len; i += 4U) { ... }
 ```
 
-ISO-TP 最大 4095。载荷 >257 时静默截断却回正响应。`i` 也是 `uint8_t`，`data_len` 接近 255 时 `i += 4` 可能回绕成死循环。
+ISO-TP 最大 4095。载荷 >257 时静默截断却回正响应。`i` 也是 `uint8_t`：`data_len` 为 253–255 时 **确定死循环**（见 H13）。
 
 块序号错误回的是 NRC `0x71`，规范是 **`0x73`**。过长用了 `0x14`（ResponseTooLong），也不对。
 
@@ -397,6 +432,41 @@ return 0;  /* 若 jump 返回（向量非法），main 以为启动成功 */
 
 ---
 
+### H12. CAN TX：只有 `TSTAT==IDLE` 才用 PTB，后续帧会挤爆 STB
+
+```c
+/* can_driver.c */
+if (tx_status.current_tstat == 0)  /* CAN_TSTAT_IDLE */
+    txbuf_sel = CAN_TXBUF_PTB;
+else
+    /* TSTAT==TRANSMITTED(3) 也会走到这里 */
+    txbuf_sel = CAN_TXBUF_STB;
+```
+
+第一帧发出后状态是 `CAN_TSTAT_TRANSMITTED = 3`，不是 0。之后所有发送都走 STB。STB 满则 `can_driver_send()` 返回 -1。`isotp_tx_send()` / `safe_mode_send_response()` **忽略返回值**。
+
+后果：ISO-TP 多帧（DID 版本 8 字节、NRC 0x78 后的正响应）可能只发出 FF、CF 被丢，主机超时。APP 生命周期 1Hz 广播与 UDS 应答也会抢 STB。
+
+**修复建议**：PTB 空闲条件改为 `IDLE` 或 `TRANSMITTED`（且 PTB 可写）；发送失败要重试或上报；`isotp_tx_send` 检查返回值。
+
+---
+
+### H13. `0x36` 在 `data_len` 为 253–255 时死循环
+
+```c
+uint8_t data_len = (uint8_t)(len - 2U);
+uint8_t i;
+for (i = 0; i < data_len; i += 4U) { ... }
+```
+
+`i` 是 `uint8_t`。`data_len` 为 253/254/255 时，`i` 走到 252 仍满足 `i < data_len`，`i += 4` 回绕成 0，循环永不结束，IWDG 约 1s 后复位，Flash 停在半写状态。
+
+若主机按错误的 LFI 把整槽当一块、或 ISO-TP 打到接近 256 字节，就会踩中。即使按「191 字节块」碰巧避开死循环，H4 的 `uint8_t` 截断仍然在。
+
+**修复建议**：`data_len` 和循环变量都用 `uint16_t`/`uint32_t`。
+
+---
+
 ## 六、中低优先级
 
 ### M1. `0x34` 忽略请求内容
@@ -452,6 +522,14 @@ OTA 前也未停止线圈驱动 / 未发 `LIFECYCLE_SHUTDOWN`。
 
 `docs/测试用例表.md` 只有 Timer/IWDG，没有 UDS/OTA 用例。
 
+### M10. `0x38` 不检查编程会话
+
+`0x36` / `0x37` / `0x31` 都要求 `SESSION_PROGRAMMING`。`0x38` 只检查 `g_security_unlocked`。`0x27` 本身也不要求编程会话，因此可在默认会话解锁后直接传签名。应与下载路径同一套会话门闩。
+
+### M11. 版本 DID 空终止不一致
+
+规范：版本字符串含 `'\0'`，总长 ≤16。Boot `0x22 F189` 拷贝 `"1.0.0"` 共 5 字符、应答 8 字节，刚好单帧，但无空终止。APP `str_copy_to_resp` 带 `'\0'`，变成 9 字节，再叠加 C2（无 ISO-TP）被 `can_driver_send` 拒绝。同一 DID 两边行为不同。
+
 ### L2. 不要用旧设计文档当协议
 
 `qi_wireless_*/docs/can-ota-design.md`、`can-ota-modification-guide.md` 仍是 `0x100/0x101/0x102`、500kbps、4 字节载荷。与当前固件无关。
@@ -490,7 +568,7 @@ OTA 前也未停止线圈驱动 / 未发 `LIFECYCLE_SHUTDOWN`。
 | 🟡-4 | APP 0x34 maxBlockLength 误导 | **已修**：APP 对 0x34 回 NRC 0x11 |
 | 🟡-5 | 0x37 header 无回读 | **已修** |
 
-本次相对旧审查的**新增**阻塞项：C1 布局分裂、C2 APP 无 ISO-TP TX、C4 metadata 未 unlock、C5 1KB 栈、H1 trial 失效、H4/H5 块长度与对齐、H6 TX 不等 FC。
+本次相对 8-19 旧审查的**新增**阻塞项：C1 布局分裂（复审证实会擦掉 `K`/`N`/`P`/`Region$$Table`）、C2 APP 无 ISO-TP TX、C4 metadata 未 unlock、C5 栈深 2.1KB+ vs 1KB、H1 trial 失效、H4/H5/H13 块长度与对齐、H6 TX 不等 FC、H12 PTB 判断错误。
 
 ---
 
@@ -518,15 +596,15 @@ OTA 前也未停止线圈驱动 / 未发 `LIFECYCLE_SHUTDOWN`。
 
 ## 十、建议修复顺序
 
-1. **统一 Flash 地图**（头文件 + scatter + uvprojx + 文档），并加 APP 镜像头打包脚本  
-2. **Bootloader `boot_metadata_save()` 加 `flash_unlock()`**，检查返回值  
-3. **栈改为 ≥4KB**  
+1. **统一 Flash 地图**（头文件 + scatter + uvprojx + 文档），并加 APP 镜像头打包脚本。确认 Boot 镜像结束地址 **严格 < `0x08005000`**，且 `.data` LMA / `Region$$Table` 不落在 APP 擦除区。  
+2. **栈改为 8KB**（Keil 测得验签链 2.1–2.4KB，加上 ISR 余量）。  
+3. **Bootloader `boot_metadata_save()` 加 `flash_unlock()`**，检查返回值；必要时读回校验。  
 4. **APP 应答改走 `isotp_tx_send`**  
 5. **下载改非 active 槽（真正的 A/B）**；擦写循环喂狗  
 6. **修好 trial：复位计数 + 推迟 CONFIRMED**  
 7. **`0x11` 加会话/子功能门闩；`0x27 0x02` 接受 ISO-TP 整包 64B 签名**  
-8. **修 `0x34` LFI、`0x36` 用 `uint16_t` 长度、NRC `0x73`、去掉自定义 `0x38`**  
-9. ISO-TP TX 等待 FC / STmin；`0x37` 先验签再标有效  
+8. **修 `0x34` LFI、`0x36` 用 `uint16_t` 长度与循环变量、NRC `0x73`、去掉自定义 `0x38`**  
+9. ISO-TP TX 等待 FC / STmin；CAN `can_driver_send` 正确判断 PTB 空闲；`0x37` 先验签再标有效  
 10. 最后再对接上位机（ISO-TP、seed 签名 ≠ 镜像签名、块序号 `0xFF→0x01`、4 字节对齐）
 
 ---
@@ -534,16 +612,22 @@ OTA 前也未停止线圈驱动 / 未发 `LIFECYCLE_SHUTDOWN`。
 ## 十一、未在硬件上验证的点
 
 - AT32 扇区擦除最长时间 vs 1s IWDG（需对照 `DS_AT32F422_426`）
-- Flash 上锁时 `FLASH->ctrl` 写入是否被硬件丢弃（C4 依此判断，未上板确认）
+- Flash 上锁时写 `FLASH_CTRL` 是报错还是空操作成功（C4；两种都会导致 metadata 不落盘）
 - 量产公钥是否等于 `g_ecdsa_public_key` / `docs/keys/public.pem`
-- `uECC` 对已知 ECDSA 测试向量是否通过（实现看起来合理，但 1KB 栈会先炸）
-- 连续 TX 时 CAN STB 深度是否够 ISO-TP 多帧
+- `uECC` 对已知 ECDSA 测试向量是否通过（栈先修，否则测不到算法）
+- AT32 CAN STB 深度；H12 在连续多帧下是否必现
 - Keil 实际烧录用的是 `.uvprojx` Cpu IROM（`0x08004100`）还是 scatter（`0x08005100`）
 
 ---
 
 ## 十二、底线
 
-UDS 状态机已经搭起来了，但 **Flash 地图与 20KB Boot / APP@`0x08005100` 不一致**，再叠加 **1KB 栈 vs ECDSA**、**Boot 写 metadata 未解锁**、**APP 应答无 ISO-TP**、**擦除不喂狗**、**`0x37` 成功但不验签**。真实 CAN-UDS OTA 几乎不可能启动新镜像，第一次擦除还可能破坏 Bootloader 尾部。
+UDS 状态机已经搭起来了，但复审用 map/htm 确认：
+
+1. **`0x31` 按错误基址擦除会毁掉 Boot 的 SHA256/ECDSA 常量和 C 运行时加载表**，不是只「写错 APP」
+2. **验签调用链栈深 2192–2424B，栈只有 1024B**，启动和 `0x27` 都会先 HardFault
+3. 再加上 metadata 未 unlock、APP 无 ISO-TP TX、只写 APP_A、trial 回滚是死代码
+
+真实 CAN-UDS OTA 几乎不可能启动新镜像；第一次擦除后再复位，Boot 可能再也无法完成安全解锁。
 
 先修布局、栈、unlock、ISO-TP TX、喂狗和「验签后再激活」，再谈联调。
