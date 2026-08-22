@@ -32,12 +32,12 @@
 | Safe Mode UDS | `boot_safe_mode.c` | ✅ | 0x10/0x27/0x34/0x36/0x37/0x11 全部实现 |
 | Flash 驱动 | Bootloader + APP | ✅ | 4 字节 word 编程、扇区擦除 |
 | CRC32 校验 | `boot_crc32` / `ota_crc32` | ✅ | IEEE 802.3 多项式 0xEDB88320 |
-| Image 验证 | `boot_verify.c` | ✅ 完成 | Magic + Length + CRC32 + Reset Handler 校验 + ECDSA P-256 签名验证（5 项检查） |
+| Image 验证 | `boot_verify.c` | ✅ CRC32 | Magic + Length + CRC32；ECDSA P-256 为占位（TODO） |
 | 元数据管理 | `boot_metadata.c` / `ota_trigger.c` | ✅ | 主备双份、CRC32 校验、三级回退 |
-| 跳转 APP | `boot_jump.c` | ✅ | 关中断→清 NVIC→CAN 复位→校验 MSP→校验 Reset_Handler→跳转（不开中断） |
-| APP UDS 响应 | `can_protocol.c` | ✅ 基础 | 0x10/0x11/0x27(NRC 0x11)/0x34/0x38(NRC 0x11)/0x3E；SecurityAccess 由 Bootloader 处理 |
+| 跳转 APP | `boot_jump.c` | ✅ | 关中断→清 NVIC→设 VTOR→读 MSP→跳转 |
+| APP UDS 响应 | `can_protocol.c` | ✅ 基础 | 0x10/0x11/0x34/0x3E |
 | OTA 触发 | `ota_trigger.c` | ✅ 框架 | 写 metadata + NVIC_SystemReset |
-| 生命周期广播 | `lifecycle.c` | ✅ | 0x18FF260D, lifecycle_init/lifecycle_poll (1000ms) |
+| 生命周期广播 | `main.c` | ✅ | 0x18FF260D, 100ms |
 | CAN 驱动 | `can_driver.c` | ✅ | 250kbps 扩展帧、中断收发、软件 FIFO |
 | Timer/WDG 驱动 | `timer_drv.c` / `wdg_drv.c` | ✅ | 16 个软件定时器 + IWDG 1s |
 | NVM 驱动 | `nvm_drv.c` | ✅ | 内部 Flash 读写 |
@@ -47,11 +47,11 @@
 
 | 任务 | 优先级 | 说明 |
 |------|--------|------|
-| Trial PENDING 置位触发链路 | P0 | 0x37 处理中已写入 trial_state=PENDING + trial_slot |
-| ECDSA P-256 签名验证 | ✅ 已完成 | micro-ecc 库已集成，SHA256 + uECC_verify 验签 |
-| APP 链接地址对齐 | P0 | scatter 配置需改为 0x08005100（跳过 256B header） |
-| 0x37 已写回 active_slot | ✅ 已完成 | 下载完成后切换 active_slot 到新固件槽位 |
-| ISO-TP 多帧支持 | P1 | 当前仅单帧 UDS，46KB 固件需 ~7800 帧 |
+| Trial PENDING 置位触发链路 | P0 | 0x37 处理中需写入 trial_state=PENDING + trial_slot |
+| ECDSA P-256 签名验证 | P0 | 当前为占位（TODO），需集成 micro-ecc 库 |
+| APP 链接地址对齐 | P0 | scatter 配置需改为 0x08004100（跳过 256B header） |
+| 0x37 未写回 active_slot | P0 | 下载完成后需切换 active_slot 到新固件槽位 |
+| ISO-TP 多帧支持 | P1 | 当前仅单帧 UDS，48KB 固件需 ~8192 帧 |
 | Qi 芯片串口协议解析层 | P1 | UART 底层已通，命令/响应协议未实现 |
 | GPIO 控制模块 | P1 | 夹臂电机/霍尔传感器/LED |
 | 充电状态机 | P1 | 模式管理（正常/服务/制造/运输） |
@@ -151,23 +151,23 @@
 | 序号 | 任务 | 状态 | 产出物 |
 |------|------|------|--------|
 | 3.1 | UDS 服务框架 (0x10/0x11/0x3E) | ✅ | Bootloader Safe Mode + APP 端 |
-| 3.2 | 会话管理 (Default/Extended/Programming + S3 超时) | 🔄 仅 Safe Mode | 会话管理器 |
+| 3.2 | 会话管理 (Default/Extended/Programming + S3 超时) | ⬜ 仅 Safe Mode 简化版 | 会话管理器 |
 | 3.3 | DID 注册与管理框架 | ⬜ | DID 管理模块 |
-| 3.4 | SecurityAccess (ECDSA P-256) | ✅ 已完成 | 安全访问模块（三步验签 + 60s 锁定） |
-| 3.5 | 生命周期广播实现 (0x18FF260D, lifecycle_poll) | ✅ | lifecycle_init/lifecycle_poll 模块 |
+| 3.4 | SecurityAccess (ECDSA P-256) | ⬜ 当前简化版（直接放行） | 安全访问模块 |
+| 3.5 | 生命周期广播实现 (0x18FF260D, 100ms) | ✅ | 广播模块 |
 | 3.6 | RoutineControl 框架 (0x31) | ⬜ | 例程控制模块 |
 | 3.7 | NRC 处理完善 | 🔄 基础 | NRC 响应模块 |
 | 3.8 | UDS 诊断规范文档 (D-05) | ⬜ | ODX/CDD 文件 |
 
 **里程碑 M3** 🔄: Bootloader Safe Mode UDS 已验证（0x10/0x27/0x34/0x36/0x37/0x11）；APP 端基础 UDS 已验证（0x10/0x11/0x34/0x3E）。
 
-> **实际产出**：`boot_safe_mode.c` — Safe Mode 下完整 UDS 服务处理（会话控制、安全访问 ECDSA P-256 三步验签、请求下载、传输数据、传输签名、传输结束、ECU 复位）；`can_protocol.c` — APP 端 CAN UDS 回调（0x10/0x11/0x27/0x34/0x38/0x3E）。
+> **实际产出**：`boot_safe_mode.c` — Safe Mode 下完整 UDS 服务处理（会话控制、安全访问简化版、请求下载、传输数据、传输结束、ECU 复位）；`can_protocol.c` — APP 端 CAN UDS 回调（0x10/0x11/0x34/0x3E）。
 >
 > **与需求差异**：
-> - `0x27 SecurityAccess` — 已实现 ECDSA P-256 三步验签
-> - `0x2E WriteDataByIdentifier` — APP 端支持 DID 0x2010（固件类型选择）
-> - `0x31 RoutineControl` — APP 端返回 NRC 0x11（由 Bootloader 处理）
-> - `0x22 ReadDataByIdentifier` — Bootloader 支持 DID 0xF189/0xF18D/0x2112~0x2116
+> - `0x27 SecurityAccess` — 需求要求 ECDSA P-256，实际为简化版（接受任意 seed/key）
+> - `0x2E WriteDataByIdentifier` — 未实现
+> - `0x31 RoutineControl` — 未实现
+> - `0x22 ReadDataByIdentifier` — 未实现（仅 DID 0xF189 在 APP 端预留）
 > - ISO-TP 多帧 — 未实现，当前仅支持单帧 UDS（每帧 8 字节 CAN 数据）
 
 ---
@@ -208,7 +208,7 @@
 | 5.3 | CAN MCU UDS 下载流程 (0x34/0x36/0x37) | ✅ | 下载模块 |
 | 5.4 | CAN MCU Flash 擦除/写入驱动 | ✅ | Flash 驱动 |
 | 5.5 | CRC32 校验实现 | ✅ | CRC 模块 |
-| 5.6 | ECDSA P-256 固件签名验证 | ✅ 已完成 | 签名验证模块（micro-ecc + SHA256） |
+| 5.6 | ECDSA P-256 固件签名验证 | ⬜ 占位（TODO） | 签名验证模块 |
 | 5.7 | 试启动机制 (确认超时 + 回滚) | 🔄 框架完成 | 试启动模块 |
 | 5.8 | 掉电恢复测试 | ⬜ | 掉电恢复报告 |
 | 5.9 | OTA 状态 DID 实现 (0x2112~0x2116) | ⬜ | OTA DID 模块 |
@@ -225,11 +225,11 @@
 > - APP 侧确认：`ota_confirm_if_needed()` 在初始化时自动确认
 >
 > **已知限制**（详见 `workflow-detail.md` 第 9 节）：
-> 1. Trial PENDING 置位触发链路已修复（0x37 处理中已写入 trial_state=PENDING）
+> 1. Trial PENDING 置位触发链路未接通（0x37 处理中未写入 trial_state）
 > 2. Trial 超时计数未消费（g_trial_elapsed_sec 未被使用）
-> 3. 0x37 已写回 active_slot
-> 4. ECDSA 签名验证已完成（micro-ecc + SHA256）
-> 5. 单帧 UDS 限制（46KB 固件约需 ~7800 帧）
+> 3. 0x37 未写回 active_slot（下载后未切换活跃槽位）
+> 4. ECDSA 签名验证为占位（TODO）
+> 5. 单帧 UDS 限制（48KB 固件约需 ~8192 帧）
 > 6. APP 链接地址与 VTOR 需核对（scatter 配置待修改）
 
 ---
@@ -297,8 +297,8 @@
 
 > **说明**：
 > - ✅ = 已完成  🔄 = 进行中/部分完成  ⬜ = 未开始
-> - 阶段一/二已完成；阶段三核心完成（UDS+ECDSA）；阶段四部分完成；阶段五核心完成（Bootloader+Flash+Trial+ECDSA）；阶段六/七待启动
-> - 关键路径：阶段四补全（GPIO/串口协议）→ 阶段六（测试）→ 阶段七（交付）
+> - 阶段一/二已完成；阶段三/四/五有部分产出但未全部完成；阶段六/七待启动
+> - 关键路径：阶段五（OTA 核心）→ 阶段三补全（ECDSA/UDS）→ 阶段四补全（GPIO/串口协议）→ 阶段六（测试）→ 阶段七（交付）
 
 ---
 
@@ -310,7 +310,7 @@
 | M2 BSP 验证 | 第 2 周末 | ✅ 已达成 | CAN 收发 + Timer/WDG + NVM 通过 | 🟢 低 |
 | M3 UDS 通信 | 第 4 周末 | 🔄 部分达成 | Bootloader Safe Mode UDS 已验证；APP 端基础 UDS 已验证 | 🟡 中 |
 | M4 CAN MCU 功能 | 第 6 周末 | 🔄 部分达成 | CAN↔Timer↔WDG 联动通过；GPIO/串口协议/状态机待完成 | 🟡 中 |
-| M5 OTA 验证 | 第 8 周末 | ✅ 核心达成 | Bootloader+Flash+Trial+ECDSA 已验证；Trigger 链路已修复；ISO-TP 待完成 | 🟡 中 |
+| M5 OTA 验证 | 第 8 周末 | 🔄 核心达成 | Bootloader+Flash+Trial 框架已验证；ECDSA/Trigger 链路待完成 | 🔴 高 |
 | M6 测试通过 | 第 11 周末 | ⬜ 待启动 | 全部测试用例通过 | 🟡 中 |
 | M7 交付验收 | 第 12 周末 | ⬜ 待启动 | 19 项交付物归档 | 🟢 低 |
 
@@ -322,9 +322,9 @@
 |------|------|----------|------------|----------|------|
 | 阶段一 | ✅ 完成 | 40h | ~40h | 0h | 架构确认、协议定义 |
 | 阶段二 | ✅ 完成 | 40h | ~40h | 0h | 工程搭建、基础驱动 |
-| 阶段三 | ✅ 核心完成 | 80h | ~60h | ~20h | Safe Mode UDS 已完成；SecurityAccess ECDSA 已完成；DID/会话管理待完善 |
+| 阶段三 | 🔄 部分 | 80h | ~40h | ~40h | Safe Mode UDS 已完成；会话管理/DID/ECDSA/RoutineControl 待完成 |
 | 阶段四 | 🔄 部分 | 80h | ~20h | ~60h | Timer/WDG/NVM 已完成；GPIO/串口协议/状态机/加密/故障管理待完成 |
-| 阶段五 | ✅ 核心完成 | 80h | ~65h | ~15h | Bootloader+Flash+Trial+ECDSA 已完成；ISO-TP/工具待完成 |
+| 阶段五 | 🔄 核心 | 80h | ~55h | ~25h | Bootloader+Flash+Trial 框架已完成；ECDSA/Trigger 链路/ISO-TP/工具待完成 |
 | 阶段六 | ⬜ 待启动 | 148h | 0h | 148h | 依赖阶段三/四/五完成 |
 | 阶段七 | ⬜ 待启动 | 40h | 0h | 40h | 依赖阶段六完成 |
 | **合计** | — | **508h** | **~155h** | **~353h** | 完成度约 30%（基于核心功能） |
@@ -337,12 +337,12 @@
 
 | 风险 | 概率 | 影响 | 应对措施 | 状态 |
 |------|------|------|----------|------|
-| Trial Boot 触发链路未接通（PENDING 未置位） | 已发生 | 高 | 在 0x37 处理中补充 trial_state=PENDING 置位 + active_slot 切换 | ✅ 已修复 |
-| ECDSA P-256 验签未实现（当前为占位） | 已确认 | 高 | 集成 micro-ecc 库；NRC 0x78 延迟响应 + P2*=5000ms | ✅ 已完成 |
-| APP 链接地址与 VTOR 不一致 | 已确认 | 高 | 修改 scatter 配置，APP 链接地址改为 0x08005100（跳过 256B header） | 🔴 待修复 |
-| 0x37 未写回 active_slot | 已确认 | 高 | 下载完成后将 active_slot 切换到新固件槽位 | ✅ 已修复 |
-| 单帧 UDS 限制（46KB 固件需 ~7800 帧） | 已确认 | 中 | 实现 ISO-TP 多帧支持；或优化载荷大小 | 🟡 待优化 |
-| 128KB Flash 不足双槽布局 | 低 | 高 | 当前布局已验证（20+46+46+4+4+8=128KB）；若空间不足可压缩 Bootloader | 🟢 已验证 |
+| Trial Boot 触发链路未接通（PENDING 未置位） | 已发生 | 高 | 在 0x37 处理中补充 trial_state=PENDING 置位 + active_slot 切换 | 🔴 待修复 |
+| ECDSA P-256 验签未实现（当前为占位） | 已确认 | 高 | 集成 micro-ecc 库；NRC 0x78 延迟响应 + P2*=5000ms | 🔴 待开发 |
+| APP 链接地址与 VTOR 不一致 | 已确认 | 高 | 修改 scatter 配置，APP 链接地址改为 0x08004100（跳过 256B header） | 🔴 待修复 |
+| 0x37 未写回 active_slot | 已确认 | 高 | 下载完成后将 active_slot 切换到新固件槽位 | 🔴 待修复 |
+| 单帧 UDS 限制（48KB 固件需 ~8192 帧） | 已确认 | 中 | 实现 ISO-TP 多帧支持；或优化载荷大小 | 🟡 待优化 |
+| 128KB Flash 不足双槽布局 | 低 | 高 | 当前布局已验证（16+48+48+8+8=128KB）；若空间不足可压缩 Bootloader | 🟢 已验证 |
 | CAN MCU ↔ Qi 芯片串口通信协议复杂度 | 中 | 中 | UART 底层已通（9600 8N1）；协议解析层需按《数据通信协议表-IAP.xlsx》实现 | 🟡 待开发 |
 | CAN 总线稳定性问题 | 低 | 高 | CAN 驱动已有 bus-off 恢复机制；待 24h 稳定性测试验证 | 🟡 待验证 |
 | OTA 掉电恢复边界情况 | 中 | 高 | 元数据主备双份 + CRC32 已实现；每个 OTA 阶段单独掉电测试待执行 | 🟡 待测试 |

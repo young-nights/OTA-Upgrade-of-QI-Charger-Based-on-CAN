@@ -151,7 +151,7 @@ NVM 目前只有 `nvm_drv_init()`，没有业务读写，冲突是布局问题�
 | 环节 | 代码实际行为 |
 |------|----------------|
 | Boot 里 `timer_create(1000, trial_timer_callback)` | 在 `try_boot_slot()` **之前**启动，一跳进 APP，SysTick/软件定时器全部被 APP 重建，**10 s 回调不会再跑** |
-| APP `ota_trial_init()` + `ota_trial_poll()` | 100ms 健康延迟后自动确认 `trial_state` 为 CONFIRMED |
+| APP `ota_confirm_if_needed()` | 初始化 CAN/UART 后立刻把 `trial_state` 写成 CONFIRMED，**不等 CCU，也没有 10 s 窗** |
 | APP `HardFault_Handler` | `while(1) { wdg_drv_refresh(); }` —— 死机也 **不复位**，Boot 的 retry/rollback 进不去 |
 | `process_trial_state(ACTIVE)` | 只在 `last_boot_reason == WDG` 时加 retry；正常跑着的坏 APP 永远 ACTIVE 或已被自动确认 |
 
@@ -255,7 +255,7 @@ ISO 14229 的 0x38 是 RequestFileTransfer。CCU / CANoe / 标准 UDS 上位机�
 
 | 项目 | 规范 / 需求文档 | 代码 |
 |------|-----------------|------|
-| 软件版本 DID | 实施方案写 0xF195（已修正）；通用规范是 **0xF189** | 0xF189（与通用规范一致） |
+| 软件版本 DID | 实施方案写 0xF195；通用规范是 **0xF189** | 0xF189（与通用规范一致，实施方案过时） |
 | 0x2010 取值 | 部分文档写 0=app, 1=bootloader | 通用规范 0x01=APP, 0x03=Bootloader；Boot 只接受 0x01 |
 | OTA DID 0x2112–0x2116 | APP/Boot 都应可读 | APP 有 2112/2113/2115/2116；**无 0x2114 pending**；Boot 0x22 **全部没有** |
 | 0x22 多 DID | 规范 SHALL | 只解析第一个 DID |
@@ -298,7 +298,7 @@ Boot 的 `g_firmware_type`、APP 的 `security_unlocked` 在 APP 里永远是 0�
 | 主题 | 不一致 |
 |------|--------|
 | Flash 布局 | `flash.md` / 代码：Boot 20 KB + APP 46 KB；PRD §1.4 仍写 16 KB + 48 KB；子项目 `docs/can-ota-design.md` 还是旧 16 KB 布局 + CAN ID 0x100 私有协议 |
-| 元数据大小 | 实施方案已修正为 272 B；代码 `padding[232]` → **272 B** |
+| 元数据大小 | 实施方案 512 B；代码 `padding[232]` → **272 B**；APP 头注释还写 276 B |
 | `image_header_t.reserved` | 文档 156 B + 额外 reserved u32；代码 `reserved[160]`，合计仍 256 B，偏移不同 |
 | 擦除扇区数 | 文档“24×2 KB”；46 KB 槽实际 **23** 个扇区 |
 | 波特率 | 子项目 design 写 500 kbps；代码 250 kbps（与整车规范一致） |
@@ -387,7 +387,7 @@ APB1=180 MHz，`div=10`，BTS1=54，BTS2=17 → 250 kbps，采样点 55/72 ≈ *
 | OTA-11 | P1 | Boot 0x27 | 4 B 伪随机 seed；0x03 占用标准子功能；Default 清失败计数 |
 | OTA-12 | P1 | 元数据 | `pending_slot` 不更新 |
 | OTA-13 | P1 | 产线 | 无打包/签名工具，工厂 APP 无 header 则无法启动 |
-| OTA-14 | P2 | 文档 | 16/20 KB、500/250 kbps、Ed25519/ECDSA、元数据大小已修正为 272 B |
+| OTA-14 | P2 | 文档 | 16/20 KB、500/250 kbps、Ed25519/ECDSA、512/272 B 多处冲突 |
 | OTA-15 | P2 | APP | HardFault 喂狗；广播 1 Hz 空载荷；UART IAP 未做 |
 
 ---

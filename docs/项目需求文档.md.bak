@@ -163,7 +163,7 @@
 **主循环 (Super Loop)** — 实际代码入口 `qi_wireless_code/mdk_user/Src/main.c`：
 ```c
 int main(void) {
-    SCB->VTOR = (uint32_t)&__Vectors;  // 设置向量表偏移 (使用链接器符号)
+    SCB->VTOR = APP_BASE_ADDR;    // 设置向量表偏移 (0x08004000)
     system_clock_config();         // 180MHz
     nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
     timer_drv_init();              // 软件定时器 + SysTick 1ms
@@ -171,17 +171,17 @@ int main(void) {
     nvm_drv_init();                // NVM 配置驱动
     can_driver_init();             // CAN1 250kbps 扩展帧
     qi_uart_init();                // USART2 9600 8N1
-    lifecycle_init();              // 发送 BOOTUP 广播
-    ota_trial_init();              // Trial 确认 (100ms 健康延迟)
+    ota_confirm_if_needed();       // Trial 确认
     can_protocol_init();           // 注册 UDS 回调
+    timer_create(100, broadcast_timer_callback, 1);  // 100ms 广播
+    send_broadcast();              // 上电即发 BOOTUP 广播
 
     while (1) {
         timer_poll();              // 软件定时器轮询
         can_driver_poll();         // CAN 帧分发
-        lifecycle_poll();          // 1000ms 周期广播
-        ota_trial_poll();          // Trial 状态轮询
         qi_uart_poll();            // Qi UART 数据轮询
         wdg_drv_refresh();         // 喂狗
+        if (g_broadcast_flag) { g_broadcast_flag = 0; send_broadcast(); }
     }
 }
 ```
@@ -309,7 +309,7 @@ int main(void) {
 |-----|------|------|------|------|------|
 | 0x10 | DiagnosticSessionControl | 全部 | 无 | ✅ 已实现 | Bootloader Safe Mode + APP 端 |
 | 0x11 | ECUReset | Ext/Prog | Level 1 | ✅ 已实现 | Bootloader: 等待 IWDG 复位；APP: 触发 OTA |
-| 0x22 | ReadDataByIdentifier | Extended | 无 | ✅ 已实现 | DID 0xF189 软件版本（无需安全解锁） |
+| 0x22 | ReadDataByIdentifier | Extended | 无 | ✅ 已实现 | DID 0xF195 软件版本（无需安全解锁） |
 | 0x27 | SecurityAccess | Ext/Prog | — | ✅ 已实现 | ECDSA P-256 分帧验签（0x27 0x01/0x03/0x02） |
 | 0x2E | WriteDataByIdentifier | Extended | Level 1 | ✅ 已实现 | DID 0x2010 固件类型选择（0=app, 1=bootloader） |
 | 0x31 | RoutineControl | Ext/Prog | 视例程 | ✅ 已实现 | 0xFF00 擦除 APP_A 全部 24 个 2KB 扇区 |
@@ -644,7 +644,7 @@ CAN MCU (AT32F426) 支持通过 CAN/UDS 协议的自身固件远程升级，采�
     │                                  │ ⑮ 上电广播 0x18FF260D          │
     │                                  │ ⑯ 若 Trial ACTIVE → CONFIRMED  │
     │ ⑰ 0x22 ReadDataByIdentifier     │                                │
-    │    DID 0xF189 → "1.0.0"         │                                │
+    │    DID 0xF195 → "1.0.0"         │                                │
 ```
 
 **与 SRS v1.1 对齐说明**：
@@ -848,7 +848,7 @@ CCU (Host)                MCU (AT32F426)              Qi 芯片
 | 编号 | 事项 | 影响范围 | 优先级 | 状态 |
 |------|------|----------|--------|------|
 | OI-01 | MCU OTA 双槽 A/B 布局已确认：Bootloader(16KB) + APP_A(48KB) + APP_B(48KB) + 元数据(16KB) | OTA 架构 | P0 | ✅ 已确认并实现 |
-| OI-02 | ECDSA P-256 签名验证实现 | 安全访问 | P0 | ✅ 已实现 |
+| OI-02 | ECDSA P-256 签名验证实现（当前为占位 TODO） | 安全访问 | P0 | ✅ 已实现 |
 | OI-03 | Qi 芯片型号确认 | 硬件接口 | P0 | ⬜ 待确认 |
 | OI-04 | ~~CAN MCU ↔ Qi 芯片串口通信协议详细定义~~ → 已基于《数据通信协议表-IAP.xlsx》完成定义，见第四章 | 串口通信 | P0 | ✅ 已关闭 |
 | OI-05 | ECDSA 公钥注入方式 (OTP/产线/预烧录) | 安全 | P0 | ⬜ 待确认 |

@@ -57,7 +57,7 @@ ZCANPRO 是周立功（ZLG）公司开发的 CAN 总线分析与调试工具，�
 
 | 方式 | 适用场景 | 优点 | 缺点 |
 |------|---------|------|------|
-| **手动发送** | 单步调试、验证单个 UDS 服务、排查问题 | 无需编程环境，直观可控 | 46KB 固件需 ~7800 帧，手动操作不现实 |
+| **手动发送** | 单步调试、验证单个 UDS 服务、排查问题 | 无需编程环境，直观可控 | 48KB 固件需 8192 帧，手动操作不现实 |
 | **Python 脚本** | 完整 OTA 刷写、批量生产、自动化测试 | 一键完成全流程，可重复执行 | 需要 Python 环境和 ZLG 驱动 |
 
 **建议**：先用手动发送方式验证前 4 步（编程会话 → 请求种子 → 传输签名 → 验签），确认 Safe Mode 和 SecurityAccess 正常后，再使用 Python 脚本完成完整刷写。
@@ -292,7 +292,8 @@ ZCANPRO 的数据发送分为 4 种模式：
 
 | 值 | 类型 | 说明 |
 |----|------|------|
-| `0x01` | APP | 应用程序固件（常规 OTA） |
+| `0x00` | APP | 应用程序固件（常规 OTA） |
+| `0x01` | Bootloader | Bootloader 固件（升级引导程序） |
 
 #### Step 7：擦除内存 — RoutineControl Erase Memory
 
@@ -305,7 +306,7 @@ ZCANPRO 的数据发送分为 4 种模式：
 | 发送数据 | `31 01 FF 00` |
 | 期望响应 | `71 01 FF 00` |
 | 超时 | 10000 ms |
-| 说明 | 擦除 APP_A 全部 23 个 2KB 扇区（共 46KB） |
+| 说明 | 擦除 APP_A 全部 24 个 2KB 扇区（共 48KB） |
 
 > **注意**：Flash 擦除可能需要较长时间，P2 超时应设置足够大（≥10s）。
 
@@ -327,7 +328,7 @@ ZCANPRO 的数据发送分为 4 种模式：
 00        - dataFormatIdentifier (无压缩、无加密)
 44        - addressAndLengthFormatIdentifier (4字节地址 + 4字节长度)
 00 00     - memoryAddress (高 2 字节)
-B8 00     - memorySize (低 2 字节 = 0xB800 = 47104 = 46KB)
+C0 00     - memorySize (低 2 字节 = 0xC000 = 49152 = 48KB)
 ```
 
 #### Step 9：数据传输 — TransferData
@@ -346,7 +347,7 @@ B8 00     - memorySize (低 2 字节 = 0xB800 = 47104 = 46KB)
 | 参数 | 值 |
 |------|-----|
 | 每帧有效载荷 | 6 字节 |
-| 总帧数（46KB 固件） | ~7800 帧 |
+| 总帧数（48KB 固件） | ~8192 帧 |
 | blockSeq 起始值 | `0x01` |
 | blockSeq 递增方式 | +1 每帧 |
 | blockSeq 回绕规则 | `0xFF` → `0x00` → `0x01` |
@@ -402,13 +403,13 @@ B8 00     - memorySize (低 2 字节 = 0xB800 = 47104 = 46KB)
 |------|------|
 | 服务名称 | ReadDataByIdentifier |
 | 服务 ID | `0x22` |
-| 数据标识符 | `0xF189` |
-| 发送数据 | `22 F1 89` |
-| 期望响应 | `62 F1 89 [版本字符串]` |
+| 数据标识符 | `0xF195` |
+| 发送数据 | `22 F1 95` |
+| 期望响应 | `62 F1 95 [版本字符串]` |
 | 超时 | 5000 ms |
 | 说明 | 等待复位完成（~2 秒）后回读版本号 |
 
-**示例**：如果固件版本为 `1.0.0`，则响应为 `62 F1 89 31 2E 30 2E 30`（ASCII 编码）。
+**示例**：如果固件版本为 `1.0.0`，则响应为 `62 F1 95 31 2E 30 2E 30`（ASCII 编码）。
 
 ### 4.3 SecurityAccess ECDSA P-256 特殊处理
 
@@ -528,7 +529,7 @@ ZCANPRO 的数据字段以十六进制字节填写，字节之间用空格分隔
 - 步骤③的 blockSeq 从 0x01 开始，每帧递增，最后一帧不足 6B 时补 0x00
 - 步骤④验签需要 200-800ms，超时设 5s
 - 步骤⑥擦除 24 个 2KB 扇区，约 1-2 秒
-- 步骤⑧ 46KB 固件需要 ~7800 帧，手动不现实，建议用 Python 脚本（见第七章）
+- 步骤⑧ 48KB 固件需要 8192 帧，手动不现实，建议用 Python 脚本（见第七章）
 - 步骤⑨固件签名也需要预先用私钥对固件 bin 文件计算 ECDSA 签名
 
 ### 5.4 单步测试建议
@@ -551,7 +552,7 @@ ZCANPRO 的数据字段以十六进制字节填写，字节之间用空格分隔
 ### 6.1 固件格式
 
 - 文件格式：纯二进制（`.bin`）
-- 大小限制：≤ 46848 字节（46KB - 256 字节 image_header = 46848 字节有效载荷）
+- 大小限制：≤ 48640 字节（48KB - 256 字节 image_header = 48384 字节有效载荷）
 - 字节序：Little-Endian（与 AT32F426 一致）
 
 ### 6.2 签名文件生成
@@ -842,7 +843,7 @@ def step6_write_firmware_type(bus, fw_type: int = 0x00):
 def step7_erase_memory(bus):
     """Step 7: RoutineControl - Erase Flash memory."""
     print("[Step  7] RoutineControl EraseMemory (0x31 0x01 0xFF00)...")
-    print("  Erasing 23 sectors (46KB)... this may take a few seconds.")
+    print("  Erasing 24 sectors (48KB)... this may take a few seconds.")
     resp = send_uds(bus, bytes([0x31, 0x01, 0xFF, 0x00]), timeout=15.0)
     assert resp[0] == 0x71, f"Unexpected: {resp.hex()}"
     print(f"  Response: {resp.hex()} - Erase complete!")
@@ -855,7 +856,7 @@ def step8_request_download(bus):
     # 00 = no compression/encryption
     # 44 = 4-byte addr + 4-byte length format
     # 00 00 = address (high bytes, set by linker)
-    # B8 00 = 46KB size (0xB800)
+    # C0 00 = 48KB size (0xC000)
     resp = send_uds(bus, bytes([0x34, 0x00, 0x44, 0x00, 0x00, 0xC0, 0x00]))
     assert resp[0] == 0x74, f"Unexpected: {resp.hex()}"
     print(f"  Response: {resp.hex()} - Download initialized!")
@@ -937,10 +938,10 @@ def step12_ecu_reset(bus):
 
 def step13_read_version(bus):
     """Step 13: ReadDataByIdentifier - Verify firmware version."""
-    print("[Step 13] ReadDataByIdentifier (0x22 0xF189) - Version check...")
-    resp = send_uds(bus, bytes([0x22, 0xF1, 0x89]))
+    print("[Step 13] ReadDataByIdentifier (0x22 0xF195) - Version check...")
+    resp = send_uds(bus, bytes([0x22, 0xF1, 0x95]))
     assert resp[0] == 0x62, f"Unexpected: {resp.hex()}"
-    version_bytes = resp[3:]  # Skip 62 F1 89
+    version_bytes = resp[3:]  # Skip 62 F1 95
     version = version_bytes.decode('ascii', errors='replace').rstrip('\x00')
     print(f"  Response: {resp.hex()}")
     print(f"  Firmware version: {version}")
@@ -993,7 +994,7 @@ def main():
 
     # Load firmware
     firmware = Path(FIRMWARE_PATH).read_bytes()
-    max_size = 46 * 1024 - 256  # 46KB - 256B header = 46848 bytes
+    max_size = 48 * 1024 - 256  # 48KB - 256B header = 48384 bytes
     assert len(firmware) <= max_size, \
         f"Firmware too large: {len(firmware)} > {max_size} bytes"
     print(f"Firmware: {FIRMWARE_PATH} ({len(firmware)} bytes)")
@@ -1022,7 +1023,7 @@ def main():
         seed = step3_request_seed(bus)
         step4_transfer_signature(bus, signature)
         step5_verify_signature(bus)
-        step6_write_firmware_type(bus, fw_type=0x01)  # APP firmware
+        step6_write_firmware_type(bus, fw_type=0x00)  # APP firmware
         step7_erase_memory(bus)
         step8_request_download(bus)
         step9_transfer_data(bus, firmware)
@@ -1126,7 +1127,7 @@ dev = can.OpenDevice(zlgcan.ZCAN_USBCAN2, 0, 0)
 
 1. 检查 `Step 13` 是否在复位后等待了足够时间（≥2 秒）
 2. 确认固件签名正确（使用正确的私钥签名）
-3. 检查固件是否超过 `46848` 字节（46KB - 256B header）
+3. 检查固件是否超过 `48384` 字节（48KB - 256B header）
 4. 查看 MCU 串口日志（如有调试接口）
 
 ---

@@ -34,6 +34,7 @@
 #include "ota_trigger.h"
 #include "nvm_drv.h"
 #include "qi_uart.h"
+#include "debug_uart.h"
 
 extern uint32_t __Vectors;
 
@@ -51,6 +52,7 @@ int main(void)
 
   /* initialize drivers */
   timer_drv_init();
+  debug_uart_init("APP");
   wdg_drv_init();
   nvm_drv_init();
   can_driver_init();
@@ -77,6 +79,7 @@ int main(void)
     qi_uart_poll();
     lifecycle_poll();
     ota_trial_poll();
+    debug_uart_poll();
     wdg_drv_refresh();
   }
 }
