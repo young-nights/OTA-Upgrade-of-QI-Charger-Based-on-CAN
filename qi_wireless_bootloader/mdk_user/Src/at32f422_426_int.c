@@ -27,7 +27,6 @@
 #include "at32f422_426_int.h"
 #include "timer_drv.h"
 #include "can_driver.h"
-#include "debug_uart.h"
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -53,7 +52,6 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  debug_uart_puts("BOOT FAULT\r\n");
   while(1)
   {
   }
@@ -133,37 +131,6 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   timer_tick_inc();
-}
-
-/**
-  * @brief  USART1 interrupt handler
-  * @param  none
-  * @retval none
-  */
-void USART1_IRQHandler(void)
-{
-  /* debug UART uses polling TX only; clear any spurious RX/error flags */
-  if (usart_flag_get(USART1, USART_RDBF_FLAG) != RESET)
-  {
-    usart_data_receive(USART1);
-  }
-  /* clear error flags to prevent repeated interrupt firing */
-  if (usart_flag_get(USART1, USART_ROERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_ROERR_FLAG);
-  }
-  if (usart_flag_get(USART1, USART_NERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_NERR_FLAG);
-  }
-  if (usart_flag_get(USART1, USART_PERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_PERR_FLAG);
-  }
-  if (usart_flag_get(USART1, USART_FERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_FERR_FLAG);
-  }
 }
 
 /**

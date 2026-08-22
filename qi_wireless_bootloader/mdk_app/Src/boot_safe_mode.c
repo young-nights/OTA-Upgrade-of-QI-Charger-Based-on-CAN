@@ -37,7 +37,6 @@
 #include "wdg_drv.h"
 #include "uECC.h"
 #include "sha256.h"
-#include "debug_uart.h"
 #include <string.h>
 
 /** @brief  Software version string for DID 0xF189 */
@@ -1372,7 +1371,6 @@ void enter_safe_mode(void)
       }
     }
 
-    debug_uart_poll();
     wdg_drv_refresh();
   }
 }

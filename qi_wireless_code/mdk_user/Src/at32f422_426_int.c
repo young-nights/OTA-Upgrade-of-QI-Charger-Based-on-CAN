@@ -28,7 +28,6 @@
 #include "timer_drv.h"
 #include "can_driver.h"
 #include "qi_uart.h"
-#include "debug_uart.h"
 
 
 /** @addtogroup AT32F426_periph_examples
@@ -56,7 +55,6 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-  debug_uart_puts("APP FAULT\r\n");
   /* do not feed IWDG: trial/rollback needs a reset if APP dies */
   while(1)
   {
@@ -169,38 +167,7 @@ void USART2_IRQHandler(void)
   qi_uart_rx_irq_handler();
 }
 
-/**
- * @brief  USART1 interrupt handler (debug UART RX stub)
- * @note   debug_uart uses polling TX only; this stub clears any
- *         spurious RX/error flags to prevent unhandled IRQ HardFault.
- * @param  none
- * @retval none
- */
-void USART1_IRQHandler(void)
-{
-  /* clear RXNE if set */
-  if (usart_flag_get(USART1, USART_RDBF_FLAG) != RESET)
-  {
-    usart_data_receive(USART1);
-  }
-  /* clear error flags to prevent repeated interrupt */
-  if (usart_flag_get(USART1, USART_ROERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_ROERR_FLAG);
-  }
-  if (usart_flag_get(USART1, USART_NERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_NERR_FLAG);
-  }
-  if (usart_flag_get(USART1, USART_PERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_PERR_FLAG);
-  }
-  if (usart_flag_get(USART1, USART_FERR_FLAG) != RESET)
-  {
-    usart_flag_clear(USART1, USART_FERR_FLAG);
-  }
-}
+
 
 /**
   * @}

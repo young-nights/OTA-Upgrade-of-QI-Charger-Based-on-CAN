@@ -31,7 +31,6 @@
 #include "boot_metadata.h"
 #include "boot_safe_mode.h"
 #include "boot_trial.h"
-#include "debug_uart.h"
 
 /* exported functions --------------------------------------------------------*/
 
@@ -60,7 +59,6 @@ int main(void)
 
   /* step 2: initialize drivers */
   timer_drv_init();
-  debug_uart_init("BOOT");
   wdg_drv_init();
 
   /* step 3: load and validate OTA metadata */
@@ -117,7 +115,6 @@ int main(void)
   /* should never reach here (boot_jump_to_app does not return) */
   while (1)
   {
-    debug_uart_poll();
     wdg_drv_refresh();
   }
 }
