@@ -367,7 +367,7 @@
             <noStLib>0</noStLib>
             <RepFail>1</RepFail>
             <useFile>0</useFile>
-            <TextAddressRange>0x08004100</TextAddressRange>
+            <TextAddressRange>0x08005100</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
             <ScatterFile>.\Objects\qi_wireless.sct</ScatterFile>
@@ -523,10 +523,15 @@
               <FileType>1</FileType>
               <FilePath>..\mdk_user\Src\main.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>mdk_app</GroupName>
+          <Files>
             <File>
-              <FileName>qi_uart.c</FileName>
+              <FileName>can_protocol.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\qi_uart.c</FilePath>
+              <FilePath>..\mdk_app\Src\can_protocol.c</FilePath>
             </File>
             <File>
               <FileName>ota_trigger.c</FileName>
@@ -534,15 +539,10 @@
               <FilePath>..\mdk_app\Src\ota_trigger.c</FilePath>
             </File>
             <File>
-              <FileName>can_protocol.c</FileName>
+              <FileName>qi_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\can_protocol.c</FilePath>
+              <FilePath>..\mdk_app\Src\qi_uart.c</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>mdk_app</GroupName>
-          <Files>
             <File>
               <FileName>timer_drv.c</FileName>
               <FileType>1</FileType>
@@ -557,6 +557,16 @@
               <FileName>nvm_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\nvm_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>isotp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\isotp.c</FilePath>
+            </File>
+            <File>
+              <FileName>lifecycle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\lifecycle.c</FilePath>
             </File>
           </Files>
         </Group>

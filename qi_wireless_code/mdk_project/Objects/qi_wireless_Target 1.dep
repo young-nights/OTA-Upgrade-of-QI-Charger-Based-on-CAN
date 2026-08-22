@@ -782,71 +782,6 @@ I (..\mdk_app\Inc\ota_trigger.h)(0x6A871267)
 I (..\mdk_app\Inc\nvm_drv.h)(0x6A82B84C)
 I (..\mdk_app\Inc\qi_uart.h)(0x6A82ADBE)
 I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
-F (..\mdk_app\Src\qi_uart.c)(0x6A8556D0)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/qi_uart.o -MD)
-I (..\mdk_app\Inc\qi_uart.h)(0x6A82ADBE)
-I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
-I (..\libraries\cmsis\core_support\core_cm4.h)(0x690C8913)
-I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
-I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
-I (..\libraries\cmsis\core_support\cmsis_compiler.h)(0x690C8913)
-I (..\libraries\cmsis\core_support\cmsis_armclang.h)(0x690C8913)
-I (..\libraries\cmsis\core_support\mpu_armv7.h)(0x690C8913)
-I (..\libraries\cmsis\device_support\system_at32f422_426.h)(0x690C8914)
-I (..\libraries\drivers\inc\at32f422_426_def.h)(0x690C891D)
-I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x690C8914)
-I (..\libraries\drivers\inc\at32f422_426_adc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_cmp.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_crc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_crm.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_debug.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_dma.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_ertc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_exint.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_flash.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_gpio.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_i2c.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_misc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
-I (..\libraries\drivers\inc\at32f422_426_scfg.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_spi.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
-F (..\mdk_app\Src\ota_trigger.c)(0x6A82B84C)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/ota_trigger.o -MD)
-I (..\mdk_app\Inc\ota_trigger.h)(0x6A871267)
-I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
-I (..\libraries\cmsis\core_support\core_cm4.h)(0x690C8913)
-I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
-I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
-I (..\libraries\cmsis\core_support\cmsis_compiler.h)(0x690C8913)
-I (..\libraries\cmsis\core_support\cmsis_armclang.h)(0x690C8913)
-I (..\libraries\cmsis\core_support\mpu_armv7.h)(0x690C8913)
-I (..\libraries\cmsis\device_support\system_at32f422_426.h)(0x690C8914)
-I (..\libraries\drivers\inc\at32f422_426_def.h)(0x690C891D)
-I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x690C8914)
-I (..\libraries\drivers\inc\at32f422_426_adc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_cmp.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_crc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_crm.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_debug.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_dma.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_ertc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_exint.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_flash.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_gpio.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_i2c.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_misc.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
-I (..\libraries\drivers\inc\at32f422_426_scfg.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_spi.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
-I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
 F (..\mdk_app\Src\can_protocol.c)(0x6A881964)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/can_protocol.o -MD)
 I (..\mdk_app\Inc\can_protocol.h)(0x6A881964)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
@@ -883,6 +818,71 @@ I (..\mdk_can\Inc\can_driver.h)(0x6A881964)
 I (..\mdk_app\Inc\ota_trigger.h)(0x6A871267)
 I (..\mdk_app\Inc\isotp.h)(0x6A881964)
 I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
+F (..\mdk_app\Src\ota_trigger.c)(0x6A82B84C)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/ota_trigger.o -MD)
+I (..\mdk_app\Inc\ota_trigger.h)(0x6A871267)
+I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
+I (..\libraries\cmsis\core_support\core_cm4.h)(0x690C8913)
+I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
+I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_compiler.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_armclang.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\mpu_armv7.h)(0x690C8913)
+I (..\libraries\cmsis\device_support\system_at32f422_426.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_def.h)(0x690C891D)
+I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_adc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_cmp.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crm.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_debug.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_dma.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_ertc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_exint.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_flash.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_gpio.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_i2c.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_misc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
+I (..\libraries\drivers\inc\at32f422_426_scfg.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_spi.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
+I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
+F (..\mdk_app\Src\qi_uart.c)(0x6A8556D0)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/qi_uart.o -MD)
+I (..\mdk_app\Inc\qi_uart.h)(0x6A82ADBE)
+I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
+I (..\libraries\cmsis\core_support\core_cm4.h)(0x690C8913)
+I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
+I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_compiler.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_armclang.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\mpu_armv7.h)(0x690C8913)
+I (..\libraries\cmsis\device_support\system_at32f422_426.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_def.h)(0x690C891D)
+I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_adc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_cmp.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crm.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_debug.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_dma.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_ertc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_exint.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_flash.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_gpio.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_i2c.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_misc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
+I (..\libraries\drivers\inc\at32f422_426_scfg.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_spi.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
 F (..\mdk_app\Src\timer_drv.c)(0x6A82B84C)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/timer_drv.o -MD)
 I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
@@ -980,6 +980,75 @@ I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
+I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
+F (..\mdk_app\Src\isotp.c)(0x6A881964)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/isotp.o -MD)
+I (..\mdk_app\Inc\isotp.h)(0x6A881964)
+I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
+I (..\libraries\cmsis\core_support\core_cm4.h)(0x690C8913)
+I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
+I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_compiler.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_armclang.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\mpu_armv7.h)(0x690C8913)
+I (..\libraries\cmsis\device_support\system_at32f422_426.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_def.h)(0x690C891D)
+I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_adc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_cmp.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crm.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_debug.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_dma.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_ertc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_exint.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_flash.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_gpio.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_i2c.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_misc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
+I (..\libraries\drivers\inc\at32f422_426_scfg.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_spi.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
+I (..\mdk_can\Inc\can_driver.h)(0x6A881964)
+F (..\mdk_app\Src\lifecycle.c)(0x6A881964)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/lifecycle.o -MD)
+I (..\mdk_app\Inc\lifecycle.h)(0x6A881964)
+I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
+I (..\libraries\cmsis\core_support\core_cm4.h)(0x690C8913)
+I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
+I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_compiler.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\cmsis_armclang.h)(0x690C8913)
+I (..\libraries\cmsis\core_support\mpu_armv7.h)(0x690C8913)
+I (..\libraries\cmsis\device_support\system_at32f422_426.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_def.h)(0x690C891D)
+I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x690C8914)
+I (..\libraries\drivers\inc\at32f422_426_adc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_cmp.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_crm.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_debug.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_dma.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_ertc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_exint.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_flash.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_gpio.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_i2c.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_misc.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
+I (..\libraries\drivers\inc\at32f422_426_scfg.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_spi.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
+I (..\libraries\drivers\inc\at32f422_426_wwdt.h)(0x690C891D)
+I (..\mdk_app\Inc\can_protocol.h)(0x6A881964)
+I (..\mdk_can\Inc\can_driver.h)(0x6A881964)
+I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
 I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
 F (..\mdk_can\Src\can_driver.c)(0x6A891228)(-xc -std=c11 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Weverything -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_user/Inc -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support/startup -I ../libraries/cmsis/device_support -I ../mdk_can/Inc -Wno-padded -Wno-sign-conversion -Wno-covered-switch-default -Wno-missing-noreturn -Wno-bitfield-enum-conversion -Wno-cast-qual -Wno-extra-semi-stmt -Wno-invalid-utf8 -Wno-implicit-int-conversion-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/can_driver.o -MD)
 I (..\mdk_can\Inc\can_driver.h)(0x6A881964)

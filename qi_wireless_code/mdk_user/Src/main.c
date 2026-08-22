@@ -39,7 +39,7 @@
 /* private define ------------------------------------------------------------*/
 
 /** @brief  APP base address (start of slot A region in flash) */
-#define APP_BASE_ADDR           0x08004000U
+#define APP_BASE_ADDR           0x08005000U
 
 /** @brief  Image header size written by bootloader before firmware data.
  *          The actual APP code starts at APP_BASE_ADDR + IMAGE_HEADER_SIZE,
