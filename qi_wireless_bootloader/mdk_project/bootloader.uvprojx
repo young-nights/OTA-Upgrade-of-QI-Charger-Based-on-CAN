@@ -277,7 +277,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x4000</Size>
+                <Size>0x5000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -573,6 +573,11 @@
               <FileName>wdg_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>isotp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\isotp.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -34,6 +34,7 @@
 ".\objects\timer_drv.o"
 ".\objects\uecc.o"
 ".\objects\wdg_drv.o"
+".\objects\isotp.o"
 ".\objects\startup_at32f422_426.o"
 --strict --scatter ".\Objects\bootloader.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
