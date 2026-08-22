@@ -30,7 +30,6 @@
 |--------|------|------|
 | Bootloader | `qi_wireless_bootloader/` | 启动选择、验签、Safe Mode UDS 下载、试启动状态机 |
 | APP | `qi_wireless_code/` | 运行时 UDS、Programming Session 触发复位进 Boot、试启动确认、生命周期广播 |
-| 测试工程（附带） | `can_uds_ota_test/` | EcuBus-Pro 空壳，无用例脚本 |
 
 未把厂商库 `libraries/`、原理图和 Qi 芯片 UART IAP 当作本次主路径。Qi 芯片中继 OTA（Host → CAN → UART → Qi）**代码中不存在**。
 
@@ -209,8 +208,6 @@ ISO 14229 的 0x38 是 RequestFileTransfer。CCU / CANoe / 标准 UDS 上位机�
 - 顺序是先 `0x11` 再 `0x10`。APP 在 Default 下 `0x11` 只复位、**不置 DOWNLOADING**。
 - 只有 3 步，没有 0x27 验签、0x31、0x34、0x36、0x37。
 
-`can_uds_ota_test/` 只有 EcuBus-Pro 的 `package.json` + `Config.ecb`，没有可运行的 UDS 序列。
-
 没有对齐 ISO-TP + ECDSA 的主机脚本，板上代码无法在现有工具链上闭环。
 
 ---
@@ -343,7 +340,7 @@ APB1=180 MHz，`div=10`，BTS1=54，BTS2=17 → 250 kbps，采样点 55/72 ≈ *
 1. 冻结内存地图：以代码宏 + `flash.md` 为准，改掉 PRD / 子项目 design 的旧 16 KB 布局。
 2. 明确双槽策略（4.1 三选一）。在真双链接落地前，主机只升级 Slot A，或 Boot 强制 `select_inactive_slot()` 但跳转前拷回 A。
 3. 改 0x36/0x37：镜像自带 256 B 头，去掉对私有 0x38 的硬依赖（可暂时兼容）。
-4. 写一套 **Classical CAN + ISO-TP** 的主机脚本（EcuBus-Pro 或 Python-can）：`10 02 → 11 01 →（Boot）27 01 → 27 02(64B) → 2E 2010 01 → 31 01 FF00 → 34 → 36×N → 37 → 11 → 22 F189`。
+4. 写一套 **Classical CAN + ISO-TP** 的主机脚本（Python-can 或 ZCANPRO）：`10 02 → 11 01 →（Boot）27 01 → 27 02(64B) → 2E 2010 01 → 31 01 FF00 → 34 → 36×N → 37 → 11 → 22 F189`。
 5. 修 ZCANPRO 列表：关 CAN FD、加 PCI、改正顺序。
 6. 提供 `pack_image.py`：补 header、CRC32、ECDSA 签名。
 
@@ -379,7 +376,7 @@ APB1=180 MHz，`div=10`，BTS1=54，BTS2=17 → 250 kbps，采样点 55/72 ≈ *
 | OTA-03 | P0 | Boot trial + APP | 10 s 超时死代码；APP 自动确认；Fault 喂狗导致无法回滚 |
 | OTA-04 | P0 | Boot main | 进 Safe Mode 立即清 DOWNLOADING，中途复位丢失会话 |
 | OTA-05 | P0 | Boot UDS + 主机 | 私有 0x38 + MCU 生成 header，与标准 UDS 下载不兼容 |
-| OTA-06 | P0 | 测试工程 | ZCANPRO/EcuBus 脚本未按 ISO-TP 与现行流程编写 |
+| OTA-06 | P0 | 测试工程 | ZCANPRO 脚本未按 ISO-TP 与现行流程编写 |
 | OTA-07 | P1 | 两端 CAN | 过滤器 mask 注释与数值不符，功能寻址收不到 |
 | OTA-08 | P1 | 两端 ISO-TP | 无 N_Cr、不遵守 BS、wait_cts 丢帧、无发送重试 |
 | OTA-09 | P1 | Boot 0x34 | 不解析地址/长度，跳过擦除会写脏 Flash |
