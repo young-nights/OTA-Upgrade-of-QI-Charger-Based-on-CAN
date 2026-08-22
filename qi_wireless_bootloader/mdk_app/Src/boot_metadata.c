@@ -86,7 +86,6 @@ static int8_t meta_write_to_flash(uint32_t addr, const ota_metadata_t *meta)
 
   flash_unlock();
 
-  /* erase the first 2KB sector (metadata is 272 bytes) */
   if (meta_flash_erase_page(addr) != 0)
   {
     flash_lock();
@@ -254,18 +253,20 @@ int8_t boot_metadata_init(ota_metadata_t *meta)
 }
 
 /**
- * @brief  save metadata to primary Flash area
- * @note   only writes to META_PRIMARY_ADDR to avoid overwriting NVM config
- *         at META_BACKUP_ADDR (0x0801E000). Consistent with APP ota_metadata_save().
+ * @brief  save metadata to backup then primary Flash
+ * @note   backup is a dedicated 2KB sector (0x0801C800), NVM stays at 0x0801E000.
  * @param  meta: pointer to metadata structure to save
  * @retval 0 on success, -1 on Flash write error
  */
 int8_t boot_metadata_save(ota_metadata_t *meta)
 {
-  /* compute CRC32 before saving */
   meta->crc32 = boot_crc32((const void *)meta, META_CRC32_OFFSET);
 
-  /* write to primary only (skip backup to preserve NVM config area) */
+  /* write backup first so a torn primary write can still be recovered */
+  if (meta_write_to_flash(META_BACKUP_ADDR, meta) != 0)
+  {
+    return -1;
+  }
   if (meta_write_to_flash(META_PRIMARY_ADDR, meta) != 0)
   {
     return -1;

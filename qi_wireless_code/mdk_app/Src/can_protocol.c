@@ -319,6 +319,21 @@ static void handle_read_data_by_id(uint8_t *data, uint16_t len)
         break;
       }
 
+      case DID_PENDING_SLOT:
+      {
+        ota_metadata_t meta;
+        if (ota_metadata_read(&meta) == 0)
+        {
+          resp[pos] = meta.pending_slot;
+        }
+        else
+        {
+          resp[pos] = 0xFEU;
+        }
+        proto_send_response(resp, (uint8_t)(pos + 1U));
+        break;
+      }
+
       case DID_LAST_BOOT_REASON:
       {
         ota_metadata_t meta;
@@ -597,8 +612,9 @@ static void isotp_message_received(uint8_t *data, uint16_t len)
  */
 static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 {
-  /* only accept UDS request ID */
-  if (id != CAN_PROTO_UDS_REQUEST)
+  /* physical request or functional broadcast */
+  if ((id != CAN_PROTO_UDS_REQUEST) &&
+      ((id & 0x1FFFFF00U) != 0x18DB3300U))
   {
     return;
   }
@@ -629,6 +645,22 @@ void can_protocol_init(void)
 
   isotp_init(isotp_message_received);
   can_driver_register_rx_callback(can_protocol_rx_handler);
+}
+
+void can_protocol_poll(void)
+{
+  uint32_t now;
+
+  isotp_poll();
+
+  if (current_session != SESSION_DEFAULT)
+  {
+    now = timer_get_tick();
+    if ((now - last_tester_present_tick) >= SESSION_TIMEOUT_MS)
+    {
+      session_reset_to_default();
+    }
+  }
 }
 
 /**

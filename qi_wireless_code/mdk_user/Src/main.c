@@ -34,63 +34,16 @@
 #include "ota_trigger.h"
 #include "nvm_drv.h"
 #include "qi_uart.h"
-#include <string.h>
+
+extern uint32_t __Vectors;
 
 /* private define ------------------------------------------------------------*/
 
-/** @brief  APP base address (start of slot A region in flash) */
-#define APP_BASE_ADDR           0x08005000U
-
-/** @brief  Image header size written by bootloader before firmware data.
- *          The actual APP code starts at APP_BASE_ADDR + IMAGE_HEADER_SIZE,
- *          which is also where the bootloader sets the jump target.
- *          VTOR must point to the real vector table at that offset. */
-#define IMAGE_HEADER_SIZE       256U
-
-/** @brief  OTA metadata trial states */
-#define TRIAL_STATE_ACTIVE      2U
-#define TRIAL_STATE_CONFIRMED   3U
-
-/* private functions ---------------------------------------------------------*/
-
-/**
- * @brief  confirm new image after trial boot
- * @note   if the bootloader started this APP in trial mode (trial_state=ACTIVE),
- *         this function confirms the image by setting trial_state=CONFIRMED.
- *         must be called after core initialization is complete.
- * @param  none
- * @retval none
- */
-static void ota_confirm_if_needed(void)
-{
-  ota_metadata_t meta;
-
-  /* read metadata from flash */
-  if (ota_metadata_read(&meta) != 0)
-  {
-    return;  /* invalid metadata, nothing to confirm */
-  }
-
-  /* check if we are in active trial */
-  if (meta.trial_state == TRIAL_STATE_ACTIVE)
-  {
-    /* confirm the image */
-    meta.trial_state = TRIAL_STATE_CONFIRMED;
-
-    /* save to primary flash */
-    ota_metadata_save(&meta);
-  }
-}
-
-/**
- * @brief  main function.
- * @param  none
- * @retval none
- */
 int main(void)
 {
-  /* vector table is at slot base + 256B image header (IROM 0x08005100). */
-  SCB->VTOR = APP_BASE_ADDR + IMAGE_HEADER_SIZE;
+  /* VTOR follows the linked vector table so Slot A and Slot B builds both work. */
+  SCB->VTOR = (uint32_t)&__Vectors;
+  __enable_irq();
 
   /* configure system clock to 180MHz */
   system_clock_config();
@@ -112,26 +65,19 @@ int main(void)
   /* report OPERATIONAL after core init is complete */
   lifecycle_set_state(LIFECYCLE_OPERATIONAL);
 
-  /* confirm trial only after CAN/Qi/lifecycle are up */
-  ota_confirm_if_needed();
+  /* start 10s trial window; confirm is deferred until ota_trial_poll */
+  ota_trial_init();
 
   /* main loop */
   while (1)
   {
-    /* poll software timers */
     timer_poll();
-
-    /* poll CAN for received frames (triggers protocol handler callbacks) */
     can_driver_poll();
-
-    /* poll Qi UART for chip data */
+    can_protocol_poll();
     qi_uart_poll();
-
-    /* feed watchdog */
-    wdg_drv_refresh();
-
-    /* poll lifecycle for periodic broadcast (1 Hz in OPERATIONAL/DEGRADED) */
     lifecycle_poll();
+    ota_trial_poll();
+    wdg_drv_refresh();
   }
 }
 

@@ -25,6 +25,8 @@
 
 /* includes ------------------------------------------------------------------*/
 #include "ota_trigger.h"
+#include "timer_drv.h"
+#include "at32f422_426_conf.h"
 #include <string.h>
 
 /* private define ------------------------------------------------------------*/
@@ -157,49 +159,55 @@ int8_t ota_metadata_read(ota_metadata_t *meta)
   return -1;
 }
 
-/**
- * @brief  save metadata to primary flash location only
- * @note   writes only to OTA_META_PRIMARY_ADDR to avoid destroying NVM config
- *         at OTA_META_BACKUP_ADDR (shared area).
- * @param  meta: pointer to metadata structure to save
- * @retval 0 on success, -1 on flash write error
- */
-int8_t ota_metadata_save(const ota_metadata_t *meta)
+static int8_t meta_write_to_flash(uint32_t addr, const ota_metadata_t *meta)
 {
   const uint32_t *src;
   uint32_t words;
   uint32_t i;
   flash_status_type status;
-  ota_metadata_t meta_copy;
 
-  /* make a mutable copy to compute CRC */
-  memcpy((void *)&meta_copy, (const void *)meta, sizeof(ota_metadata_t));
-  meta_copy.crc32 = ota_crc32((const void *)&meta_copy, META_CRC32_OFFSET);
-
-  /* erase first 2KB sector (metadata is 272 bytes) */
   flash_unlock();
-  status = flash_sector_erase(OTA_META_PRIMARY_ADDR);
+  status = flash_sector_erase(addr);
   if (status != FLASH_OPERATE_DONE)
   {
     flash_lock();
     return -1;
   }
 
-  /* write metadata word by word */
-  src   = (const uint32_t *)&meta_copy;
+  src   = (const uint32_t *)meta;
   words = sizeof(ota_metadata_t) / sizeof(uint32_t);
-
   for (i = 0; i < words; i++)
   {
-    status = flash_word_program(OTA_META_PRIMARY_ADDR + (i * 4U), src[i]);
+    status = flash_word_program(addr + (i * 4U), src[i]);
     if (status != FLASH_OPERATE_DONE)
     {
       flash_lock();
       return -1;
     }
   }
-
   flash_lock();
+  return 0;
+}
+
+/**
+ * @brief  save metadata to backup then primary Flash
+ */
+int8_t ota_metadata_save(const ota_metadata_t *meta)
+{
+  ota_metadata_t meta_copy;
+
+  memcpy((void *)&meta_copy, (const void *)meta, sizeof(ota_metadata_t));
+  meta_copy.crc32 = ota_crc32((const void *)&meta_copy, META_CRC32_OFFSET);
+
+  if (meta_write_to_flash(OTA_META_BACKUP_ADDR, &meta_copy) != 0)
+  {
+    return -1;
+  }
+  if (meta_write_to_flash(OTA_META_PRIMARY_ADDR, &meta_copy) != 0)
+  {
+    return -1;
+  }
+
   return 0;
 }
 
@@ -231,4 +239,88 @@ void ota_trigger_request(void)
 {
   (void)ota_trigger_prepare();
   NVIC_SystemReset();
+}
+
+#define TRIAL_STATE_ACTIVE      2U
+#define TRIAL_STATE_CONFIRMED   3U
+#define TRIAL_HEALTH_DELAY_MS   100U
+
+static uint8_t  g_trial_pending = 0;
+static uint32_t g_trial_start_ms = 0;
+static uint32_t g_trial_deadline_ms = 0;
+
+static int8_t ota_confirm_trial(void)
+{
+  ota_metadata_t meta;
+
+  if (ota_metadata_read(&meta) != 0)
+  {
+    return -1;
+  }
+  if (meta.trial_state != TRIAL_STATE_ACTIVE)
+  {
+    return 0;
+  }
+
+  meta.active_slot  = meta.trial_slot;
+  meta.pending_slot = OTA_SLOT_NONE;
+  meta.trial_state  = TRIAL_STATE_CONFIRMED;
+  meta.trial_retry_count = 0;
+  meta.ota_state    = OTA_STATE_IDLE;
+
+  return ota_metadata_save(&meta);
+}
+
+void ota_trial_init(void)
+{
+  ota_metadata_t meta;
+  uint32_t timeout_ms;
+
+  g_trial_pending = 0;
+  if (ota_metadata_read(&meta) != 0)
+  {
+    return;
+  }
+  if (meta.trial_state != TRIAL_STATE_ACTIVE)
+  {
+    return;
+  }
+
+  timeout_ms = (uint32_t)meta.trial_timeout_sec * 1000U;
+  if (timeout_ms == 0U)
+  {
+    timeout_ms = 10000U;
+  }
+
+  g_trial_pending     = 1;
+  g_trial_start_ms    = timer_get_tick();
+  g_trial_deadline_ms = g_trial_start_ms + timeout_ms;
+}
+
+void ota_trial_poll(void)
+{
+  uint32_t now;
+
+  if (g_trial_pending == 0U)
+  {
+    return;
+  }
+
+  now = timer_get_tick();
+  if ((int32_t)(now - g_trial_deadline_ms) >= 0)
+  {
+    /* trial timed out: stop feeding IWDG so bootloader can roll back */
+    while (1)
+    {
+    }
+  }
+
+  /* confirm only after core init has been up for a short health window */
+  if ((now - g_trial_start_ms) >= TRIAL_HEALTH_DELAY_MS)
+  {
+    if (ota_confirm_trial() == 0)
+    {
+      g_trial_pending = 0;
+    }
+  }
 }

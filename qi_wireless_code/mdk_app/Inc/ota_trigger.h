@@ -41,9 +41,9 @@ extern "C" {
 #define OTA_APP_A_SIZE          0xB800U       /*!< application A size: 46KB */
 #define OTA_APP_B_BASE_ADDR     0x08010800U   /*!< application B start address */
 #define OTA_APP_B_SIZE          0xB800U       /*!< application B size: 46KB */
-#define OTA_META_PRIMARY_ADDR   0x0801C000U   /*!< primary metadata address */
-#define OTA_META_BACKUP_ADDR    0x0801E000U   /*!< backup metadata address */
-#define OTA_META_PAGE_SIZE      0x2000U       /*!< metadata page size: 8KB */
+#define OTA_META_PRIMARY_ADDR   0x0801C000U   /*!< primary metadata (2KB sector) */
+#define OTA_META_BACKUP_ADDR    0x0801C800U   /*!< backup metadata (next 2KB sector) */
+#define OTA_META_PAGE_SIZE      0x800U        /*!< metadata erase size: 1 sector */
 #define OTA_IMAGE_HEADER_SIZE   256U          /*!< image header size in bytes */
 
 /** @brief  OTA metadata magic and version */
@@ -119,13 +119,23 @@ int8_t ota_trigger_prepare(void);
 int8_t ota_metadata_read(ota_metadata_t *meta);
 
 /**
- * @brief  save metadata to primary flash location only
- * @note   writes only to OTA_META_PRIMARY_ADDR to avoid destroying NVM config
- *         at OTA_META_BACKUP_ADDR (shared area).
+ * @brief  save metadata to backup then primary (power-loss safe)
  * @param  meta: pointer to metadata structure to save
  * @retval 0 on success, -1 on flash write error
  */
 int8_t ota_metadata_save(const ota_metadata_t *meta);
+
+/**
+ * @brief  start trial-boot watchdog window after APP init
+ * @note   if metadata trial_state is ACTIVE, APP must confirm within
+ *         trial_timeout_sec or it stops feeding IWDG so bootloader can roll back.
+ */
+void ota_trial_init(void);
+
+/**
+ * @brief  poll trial confirm / timeout (call from main loop)
+ */
+void ota_trial_poll(void);
 
 /**
  * @brief  compute CRC32 (IEEE 802.3, polynomial 0xEDB88320)

@@ -34,14 +34,14 @@
  * @brief  CAN bit timing calculation
  * @note   APB1 clock = 180 MHz
  *         bittime_div = 10, CAN clock = 180MHz / 10 = 18 MHz
- *         bit_time = 1 + BTS1 + BTS2 = 1 + 54 + 17 = 72 Tq
+ *         bit_time = 1 + BTS1 + BTS2 = 1 + 56 + 15 = 72 Tq
  *         bitrate = 18MHz / 72 = 250 kbps
- *         SJW = 1 Tq (minimal for stable communication)
+ *         sample point = 57/72 ≈ 79.2%, SJW = 4 Tq
  */
 #define CAN_BITTIME_DIV                 10U
-#define CAN_BITTIME_SJW                 1U
-#define CAN_BITTIME_BTS1                54U
-#define CAN_BITTIME_BTS2                17U
+#define CAN_BITTIME_SJW                 4U
+#define CAN_BITTIME_BTS1                56U
+#define CAN_BITTIME_BTS2                15U
 
 /* private variables ---------------------------------------------------------*/
 
@@ -125,26 +125,31 @@ void can_driver_init(void)
   can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
   can_bittime_set(CAN1, &can_bittime_struct);
 
-  /* Single filter: match both physical (0x18DAxxxx) and functional (0x18DBxxxx)
-   * diagnostic requests by comparing only Priority+PF fields.
-   *
-   * AT32 mask semantics: bit=1 must match code, bit=0 don't care.
-   *   code = 0x18DA0000  (Priority+PF = 0x18DA, PF covers both 0xDA and 0xDB)
-   *   mask = 0x1FFC0000  (compare bits [28:18] = Priority+PF, ignore TA+SA)
-   *   PF 0xDA = 0b1101_1010, PF 0xDB = 0b1101_1011 => differ only in bit[18],
-   *   mask bit[18]=0 => don't care => both 0xDA and 0xDB pass.
-   */
+  /* Filter 0: physical UDS request 0x18DA0D03 (exact 29-bit ID) */
   can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = 0x18DA0000U;
+  can_filter_struct.code_para.id         = CAN_ID_UDS_REQUEST;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFC0000U;  /* compare Priority+PF only */
-  can_filter_struct.mask_para.id_type    = TRUE;         /* care: extended */
-  can_filter_struct.mask_para.frame_type = TRUE;         /* care: data frame */
-  can_filter_struct.mask_para.data_length = 0U;          /* don't care DLC */
-  can_filter_struct.mask_para.recv_frame = FALSE;        /* don't care RX mode */
+  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0U;
+  can_filter_struct.mask_para.recv_frame = FALSE;
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
+
+  /* Filter 1: functional UDS request 0x18DB33D0 */
+  can_filter_default_para_init(&can_filter_struct);
+  can_filter_struct.code_para.id         = CAN_ID_FUNCTIONAL_REQUEST;
+  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
+  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
+  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0U;
+  can_filter_struct.mask_para.recv_frame = FALSE;
+  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
+  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
 
   /* enable RX interrupt and error interrupt */
   can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);

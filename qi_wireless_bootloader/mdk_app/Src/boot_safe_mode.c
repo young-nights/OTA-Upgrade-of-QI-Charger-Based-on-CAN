@@ -107,9 +107,14 @@ static uint32_t g_dl_slot_base     = APP_A_BASE_ADDR;
 static uint32_t g_dl_slot_size     = APP_A_SIZE;
 static uint8_t  g_dl_pad[4];
 static uint8_t  g_dl_pad_len       = 0;
+static uint8_t  g_dl_erased        = 0;
+static uint32_t g_dl_expected_size = 0;
 
 /** @brief  maxNumberOfBlockLength advertised in 0x34 (SID+BSC+data) */
 #define UDS_MAX_BLOCK_LEN     256U
+#define UDS_S3_TIMEOUT_MS     5000U
+
+static uint32_t g_s3_last_ms = 0;
 
 
 
@@ -226,11 +231,31 @@ static void dl_bind_slot(uint8_t slot)
 
 static void dl_reset_state(void)
 {
-  g_dl_write_addr    = g_dl_slot_base + IMAGE_HEADER_SIZE;
+  /* write from slot base: host sends image_header_t (256B) + firmware */
+  g_dl_write_addr    = g_dl_slot_base;
   g_dl_bytes_written = 0;
   g_dl_block_seq     = 0;
   g_dl_pad_len       = 0;
   g_dl_active        = 1;
+}
+
+static void dl_abort(void)
+{
+  g_dl_active        = 0;
+  g_sig_active       = 0;
+  g_dl_erased        = 0;
+  g_dl_expected_size = 0;
+}
+
+static uint32_t uds_parse_be(const uint8_t *p, uint8_t n)
+{
+  uint32_t v = 0;
+  uint8_t i;
+  for (i = 0; i < n; i++)
+  {
+    v = (v << 8) | (uint32_t)p[i];
+  }
+  return v;
 }
 
 /**
@@ -267,7 +292,7 @@ static uint8_t program_image_bytes(const uint8_t *src, uint16_t src_len)
   uint16_t n = src_len;
   uint16_t idx = 0;
   flash_status_type flash_status;
-  uint32_t max_len = g_dl_slot_size - IMAGE_HEADER_SIZE;
+  uint32_t max_len = g_dl_slot_size;
 
   while (n > 0U)
   {
@@ -396,6 +421,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     return;
   }
 
+  g_s3_last_ms = timer_get_tick();
   service_id = data[0];
 
   switch (service_id)
@@ -423,13 +449,17 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      /* switching to default session clears security state */
+      /* switching to default session clears security unlock and aborts transfer.
+       * fail-count is kept so lockout cannot be reset by 0x10 0x01. */
       if (sub_func == SESSION_DEFAULT)
       {
         g_security_unlocked = 0;
-        g_security_fail_count = 0;
-        g_dl_active = 0;
-        g_sig_active = 0;
+        dl_abort();
+        if ((g_meta.slot_a_valid != 0U) || (g_meta.slot_b_valid != 0U))
+        {
+          g_meta.ota_state = OTA_STATE_IDLE;
+          (void)boot_metadata_save(&g_meta);
+        }
       }
 
       /* switching between non-default sessions clears security state */
@@ -763,6 +793,46 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         resp[3U + ver_len] = 0U;
         safe_mode_send_response(resp, 4U + ver_len);
       }
+      else if (did == 0x2112U)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = g_meta.ota_state;
+        safe_mode_send_response(resp, 4);
+      }
+      else if (did == 0x2113U)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = g_meta.active_slot;
+        safe_mode_send_response(resp, 4);
+      }
+      else if (did == 0x2114U)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = (g_dl_erased != 0U) ? g_dl_slot : g_meta.pending_slot;
+        safe_mode_send_response(resp, 4);
+      }
+      else if (did == 0x2115U)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = g_meta.last_boot_reason;
+        safe_mode_send_response(resp, 4);
+      }
+      else if (did == 0x2116U)
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        resp[3] = (uint8_t)(g_meta.rollback_count & 0xFFU);
+        safe_mode_send_response(resp, 4);
+      }
       else
       {
         safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
@@ -856,6 +926,11 @@ static void uds_process_message(uint8_t *data, uint16_t len)
           break;
         }
 
+        g_dl_erased = 1;
+        g_meta.ota_state    = OTA_STATE_DOWNLOADING;
+        g_meta.pending_slot = g_dl_slot;
+        (void)boot_metadata_save(&g_meta);
+
         dl_reset_state();
 
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
@@ -903,11 +978,41 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      /* 0x34 initializes download pointer; erase must already have been done by 0x31 */
-      if (g_dl_slot_base == 0U)
+      if (g_dl_erased == 0U)
       {
-        dl_bind_slot(select_inactive_slot());
+        safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_SEQUENCE_ERROR);
+        break;
       }
+
+      /* parse dataFormatIdentifier + addressAndLengthFormatIdentifier */
+      if (len >= 3U)
+      {
+        uint8_t alfid  = data[2];
+        uint8_t addr_n = (uint8_t)((alfid >> 4) & 0x0FU);
+        uint8_t size_n = (uint8_t)(alfid & 0x0FU);
+        uint32_t mem_size;
+
+        if ((addr_n == 0U) || (size_n == 0U) ||
+            (addr_n > 4U) || (size_n > 4U) ||
+            (len < (uint16_t)(3U + addr_n + size_n)))
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
+          break;
+        }
+
+        mem_size = uds_parse_be(&data[3U + addr_n], size_n);
+        if ((mem_size == 0U) || (mem_size > g_dl_slot_size))
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
+          break;
+        }
+        g_dl_expected_size = mem_size;
+      }
+      else
+      {
+        g_dl_expected_size = 0;
+      }
+
       dl_reset_state();
 
       /* LFI 0x20 = 2-byte maxNumberOfBlockLength (one TransferData request) */
@@ -964,7 +1069,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       data_len = (uint16_t)(len - 2U);
 
       if ((g_dl_bytes_written + g_dl_pad_len + (uint32_t)data_len) >
-          (g_dl_slot_size - IMAGE_HEADER_SIZE))
+          g_dl_slot_size)
       {
         g_dl_active = 0;
         safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
@@ -1066,10 +1171,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     case UDS_REQUEST_TRANSFER_EXIT:
     {
       uint32_t computed_crc;
-      uint32_t image_data_addr;
-      image_header_t header;
-      const uint32_t *hdr_words;
-      uint32_t hdr_word_count;
       uint32_t w;
 
       /* programming session check */
@@ -1103,54 +1204,53 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
       flash_lock();
 
-      if (g_dl_bytes_written == 0U)
+      if (g_dl_bytes_written < IMAGE_HEADER_SIZE)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
         break;
       }
 
-      if (g_sig_bytes_received != 64U)
+      if ((g_dl_expected_size != 0U) && (g_dl_bytes_written != g_dl_expected_size))
       {
         safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
         break;
       }
 
-      image_data_addr = g_dl_slot_base + IMAGE_HEADER_SIZE;
-      computed_crc = boot_crc32((const void *)image_data_addr, g_dl_bytes_written);
-
-      memset((void *)&header, 0xFF, sizeof(image_header_t));
-      header.magic        = IMAGE_MAGIC;
-      header.image_length = g_dl_bytes_written;
-      header.crc32        = computed_crc;
-      memcpy(header.signature, g_sig_buf, 64U);
+      /* optional 0x38: patch signature only if the header field is still erased */
+      if (g_sig_bytes_received == 64U)
+      {
+        const uint8_t *flash_sig = (const uint8_t *)(g_dl_slot_base + 12U);
+        uint8_t erased = 1U;
+        for (w = 0; w < 64U; w++)
+        {
+          if (flash_sig[w] != 0xFFU)
+          {
+            erased = 0U;
+            break;
+          }
+        }
+        if (erased != 0U)
+        {
+          uint32_t sig_words[16];
+          memcpy((void *)sig_words, g_sig_buf, 64U);
+          flash_unlock();
+          for (w = 0; w < 16U; w++)
+          {
+            if (flash_word_program(g_dl_slot_base + 12U + (w * 4U), sig_words[w]) != FLASH_OPERATE_DONE)
+            {
+              flash_lock();
+              safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+              return;
+            }
+          }
+          flash_lock();
+        }
+      }
 
       g_sig_bytes_received = 0;
       g_sig_active = 0;
       g_sig_block_seq = 0;
-
-      flash_unlock();
-      hdr_words      = (const uint32_t *)&header;
-      hdr_word_count = sizeof(image_header_t) / sizeof(uint32_t);
-      for (w = 0; w < hdr_word_count; w++)
-      {
-        if (flash_word_program(g_dl_slot_base + (w * 4U), hdr_words[w]) != FLASH_OPERATE_DONE)
-        {
-          flash_lock();
-          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-          return;
-        }
-      }
-      flash_lock();
-
-      for (w = 0; w < hdr_word_count; w++)
-      {
-        uint32_t readback = *(volatile uint32_t *)(g_dl_slot_base + (w * 4U));
-        if (readback != hdr_words[w])
-        {
-          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-          return;
-        }
-      }
+      g_dl_erased = 0;
 
       safe_mode_send_pending(service_id);
       wdg_drv_refresh();
@@ -1158,6 +1258,11 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
         break;
+      }
+
+      {
+        const image_header_t *hdr = boot_verify_get_header(g_dl_slot_base);
+        computed_crc = hdr->crc32;
       }
 
       if (g_dl_slot == SLOT_A)
@@ -1170,10 +1275,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         g_meta.slot_b_valid = 1;
         g_meta.slot_b_crc32 = computed_crc;
       }
-      g_meta.ota_state   = OTA_STATE_IDLE;
-      g_meta.active_slot = g_dl_slot;
-      g_meta.trial_state = TRIAL_STATE_PENDING;
-      g_meta.trial_slot  = g_dl_slot;
+      /* keep active_slot as last confirmed image; trial boots pending_slot */
+      g_meta.ota_state      = OTA_STATE_IDLE;
+      g_meta.pending_slot   = g_dl_slot;
+      g_meta.trial_state    = TRIAL_STATE_PENDING;
+      g_meta.trial_slot     = g_dl_slot;
+      g_meta.trial_retry_count = 0;
 
       if (boot_metadata_save(&g_meta) != 0)
       {
@@ -1242,12 +1349,28 @@ void enter_safe_mode(void)
 
   /* initialize ISO-TP receiver with UDS message callback */
   isotp_init(isotp_message_received);
+  g_s3_last_ms = timer_get_tick();
 
   /* safe mode event loop */
   while (1)
   {
     timer_poll();
     can_driver_poll();
+    isotp_poll();
+
+    if ((g_current_session != SESSION_DEFAULT) &&
+        ((timer_get_tick() - g_s3_last_ms) >= UDS_S3_TIMEOUT_MS))
+    {
+      g_current_session = SESSION_DEFAULT;
+      g_security_unlocked = 0;
+      dl_abort();
+      if ((g_meta.slot_a_valid != 0U) || (g_meta.slot_b_valid != 0U))
+      {
+        g_meta.ota_state = OTA_STATE_IDLE;
+        (void)boot_metadata_save(&g_meta);
+      }
+    }
+
     wdg_drv_refresh();
   }
 }

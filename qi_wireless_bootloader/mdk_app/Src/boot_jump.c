@@ -112,12 +112,7 @@ void boot_jump_to_app(uint32_t app_addr)
   /* set main stack pointer to application's initial MSP */
   __set_MSP(app_msp);
 
-  /* cast to function pointer and jump (ensure thumb bit is set) */
+  /* keep IRQ disabled; APP Reset_Handler / SystemInit re-enables them */
   app_reset_handler = (app_reset_handler_t)(app_reset_addr | 1U);
-
-  /* re-enable interrupts before jumping to application */
-  __enable_irq();
-
-  /* jump to application reset handler - does not return */
   app_reset_handler();
 }

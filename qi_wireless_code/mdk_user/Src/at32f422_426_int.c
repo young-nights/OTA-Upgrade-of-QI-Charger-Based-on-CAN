@@ -28,7 +28,7 @@
 #include "timer_drv.h"
 #include "can_driver.h"
 #include "qi_uart.h"
-#include "wdg_drv.h"
+
 
 /** @addtogroup AT32F426_periph_examples
   * @{
@@ -54,14 +54,10 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  /* record fault info for post-mortem analysis at fixed SRAM location */
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-
-  /* go to infinite loop when hard fault exception occurs, keep feeding
-     watchdog to allow debug attach and prevent immediate reset */
+  /* do not feed IWDG: trial/rollback needs a reset if APP dies */
   while(1)
   {
-    wdg_drv_refresh();
   }
 }
 
@@ -73,11 +69,8 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-
-  /* go to infinite loop when memory manage exception occurs */
   while(1)
   {
-    wdg_drv_refresh();
   }
 }
 
@@ -89,11 +82,8 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-
-  /* go to infinite loop when bus fault exception occurs */
   while(1)
   {
-    wdg_drv_refresh();
   }
 }
 
@@ -105,11 +95,8 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-
-  /* go to infinite loop when usage fault exception occurs */
   while(1)
   {
-    wdg_drv_refresh();
   }
 }
 

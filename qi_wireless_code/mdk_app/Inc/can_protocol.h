@@ -109,6 +109,7 @@ extern "C" {
 /** @brief  Device-specific DIDs (defined in peripheral SRS) */
 #define DID_OTA_STATE               0x2112U   /*!< OTA state from metadata */
 #define DID_ACTIVE_SLOT             0x2113U   /*!< active firmware slot */
+#define DID_PENDING_SLOT            0x2114U   /*!< pending firmware slot */
 #define DID_LAST_BOOT_REASON        0x2115U   /*!< last boot reason */
 #define DID_ROLLBACK_COUNT          0x2116U   /*!< rollback counter */
 
@@ -152,6 +153,12 @@ extern "C" {
  * @retval none
  */
 void can_protocol_init(void);
+
+/**
+ * @brief  poll session timeout (S3) and ISO-TP N_Cr
+ * @note   call from the main loop.
+ */
+void can_protocol_poll(void);
 
 /**
  * @brief  get current diagnostic session

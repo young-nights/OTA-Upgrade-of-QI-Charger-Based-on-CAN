@@ -65,6 +65,12 @@ extern "C" {
 /** @brief  N_Bs timeout waiting for Flow Control after First Frame (ms) */
 #define ISOTP_N_BS_TIMEOUT_MS           1000U
 
+/** @brief  N_Cr timeout waiting for next Consecutive Frame (ms) */
+#define ISOTP_N_CR_TIMEOUT_MS           1000U
+
+/** @brief  N_As timeout for a single CAN frame transmit (ms) */
+#define ISOTP_N_AS_TIMEOUT_MS           1000U
+
 /* exported types ------------------------------------------------------------*/
 
 /**
@@ -88,6 +94,7 @@ typedef struct
   uint16_t total_len;                   /*!< total expected payload length */
   uint16_t received_len;                /*!< bytes received so far */
   uint8_t  expected_sn;                 /*!< expected next sequence number */
+  uint32_t last_cf_ms;                  /*!< tick of last CF / FF (N_Cr) */
 } isotp_rx_ctx_t;
 
 /**
@@ -121,6 +128,12 @@ void isotp_init(isotp_complete_cb_t cb);
  * @retval none
  */
 void isotp_rx_process(uint8_t *data, uint8_t len);
+
+/**
+ * @brief  poll ISO-TP receiver timeouts (N_Cr)
+ * @note   call from the main loop.
+ */
+void isotp_poll(void);
 
 /**
  * @brief  send a UDS payload via ISO-TP segmentation

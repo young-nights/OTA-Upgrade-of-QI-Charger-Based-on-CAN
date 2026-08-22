@@ -44,10 +44,12 @@ extern "C" {
 #define APP_A_SIZE              0xB800U       /*!< application A size: 46KB */
 #define APP_B_BASE_ADDR         0x08010800U   /*!< application B start address */
 #define APP_B_SIZE              0xB800U       /*!< application B size: 46KB */
-#define META_PRIMARY_ADDR       0x0801C000U   /*!< primary metadata address */
-#define META_BACKUP_ADDR        0x0801E000U   /*!< backup metadata address */
-#define META_PAGE_SIZE          0x2000U       /*!< metadata page size: 8KB */
 #define IMAGE_HEADER_SIZE       256U          /*!< image header size in bytes */
+#define META_PRIMARY_ADDR       0x0801C000U   /*!< primary metadata (2KB sector) */
+#define META_BACKUP_ADDR        0x0801C800U   /*!< backup metadata (next 2KB sector) */
+#define META_PAGE_SIZE          0x800U        /*!< metadata erase size: 1 sector */
+#define APP_A_ENTRY_ADDR        (APP_A_BASE_ADDR + IMAGE_HEADER_SIZE)
+#define APP_B_ENTRY_ADDR        (APP_B_BASE_ADDR + IMAGE_HEADER_SIZE)
 #define FLASH_SECTOR_SIZE       0x800U        /*!< AT32F426 sector size: 2KB */
 #define SRAM_BASE_ADDR          0x20000000U
 #define SRAM_SIZE               0x5000U       /*!< 20KB SRAM */
@@ -122,7 +124,7 @@ typedef struct
 int8_t boot_metadata_init(ota_metadata_t *meta);
 
 /**
- * @brief  save metadata to both primary and backup Flash areas
+ * @brief  save metadata to backup then primary (power-loss safe)
  * @param  meta: pointer to metadata structure to save
  * @retval 0 on success, -1 on Flash write error
  */

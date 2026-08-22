@@ -127,6 +127,18 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
     return -1;
   }
 
+  /* check 3b: reset handler must live inside this slot (rejects A-linked image in B) */
+  {
+    const uint32_t *vec = (const uint32_t *)(base_addr + IMAGE_HEADER_SIZE);
+    uint32_t reset = vec[1] & 0xFFFFFFFEU;
+    uint32_t entry = base_addr + IMAGE_HEADER_SIZE;
+    uint32_t end   = base_addr + slot_size;
+    if ((reset < entry) || (reset >= end))
+    {
+      return -1;
+    }
+  }
+
   /* check 4: ECDSA P-256 signature verification */
   {
     const uint8_t *public_key;

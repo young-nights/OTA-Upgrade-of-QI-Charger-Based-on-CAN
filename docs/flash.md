@@ -14,8 +14,10 @@
 | Bootloader | `0x08000000` | `0x08004FFF` | 20KB (0x5000) | 引导程序，含 OTA 逻辑 |
 | Application Slot A | `0x08005000` | `0x080107FF` | 46KB (0xB800) | 应用固件 A |
 | Application Slot B | `0x08010800` | `0x0801BFFF` | 46KB (0xB800) | 应用固件 B |
-| Metadata Primary | `0x0801C000` | `0x0801DFFF` | 8KB (0x2000) | OTA 元数据主副本 |
-| Metadata Backup | `0x0801E000` | `0x0801FFFF` | 8KB (0x2000) | OTA 元数据备份 / NVM 配置区 |
+| Metadata Primary | `0x0801C000` | `0x0801C7FF` | 2KB (0x800) | OTA 元数据主副本 |
+| Metadata Backup | `0x0801C800` | `0x0801CFFF` | 2KB (0x800) | OTA 元数据备份（先写备后写主） |
+| Reserved | `0x0801D000` | `0x0801DFFF` | 4KB (0x1000) | 保留 |
+| NVM Config | `0x0801E000` | `0x0801FFFF` | 8KB (0x2000) | APP NVM 配置区 |
 
 ```text
 0x08000000 ┌─────────────────────────────┐
@@ -29,9 +31,13 @@
            │  image_header (256B) + app  │  header @ 0x08010800, app @ 0x08010900
            │                             │
 0x0801C000 ├─────────────────────────────┤
-           │  Metadata Primary (8KB)     │  0x2000 bytes, ota_metadata_t (512B)
+           │  Metadata Primary (2KB)     │  ota_metadata_t (272B)
+0x0801C800 ├─────────────────────────────┤
+           │  Metadata Backup (2KB)      │  power-loss copy
+0x0801D000 ├─────────────────────────────┤
+           │  Reserved (4KB)             │
 0x0801E000 ├─────────────────────────────┤
-           │  Metadata Backup (8KB)      │  0x2000 bytes, ota_metadata_t backup / NVM
+           │  NVM Config (8KB)           │
 0x0801FFFF └─────────────────────────────┘
 ```
 
@@ -101,8 +107,9 @@ Flash 地址 0x0801C000 开始:
 
 **双副本冗余机制**:
 
-- Primary: `0x0801C000` — 每次启动优先读取
-- Backup: `0x0801E000` — Primary 校验失败时回退读取
+- Primary: `0x0801C000` — 每次启动优先读取（2KB sector）
+- Backup: `0x0801C800` — Primary 校验失败时回退读取（独立 2KB sector，不再与 NVM 重叠）
+- NVM: `0x0801E000` — APP 配置区，与元数据分离
 - 保存顺序: 先写 Backup，再写 Primary (确保写 Primary 失败时 Backup 仍有效)
 
 ---
@@ -160,32 +167,34 @@ Flash 地址 0x0801C000 开始:
 1. 检查 `magic == 0x4F544158`
 2. 检查 `image_length` 在合法范围内 (0 < length ≤ slot_size - 256)
 3. 对 header 之后的 `image_length` 字节计算 CRC32，与 `header->crc32` 比对
-4. ECDSA P-256 签名验证（SHA256(image_data) + uECC_verify 公钥验签）
+4. Reset Handler 必须落在本槽 `[base+256, base+slot_size)`（拒绝 Slot A 链接镜像写入 Slot B）
+5. ECDSA P-256 签名验证（SHA256(image_data) + uECC_verify 公钥验签）
 
 ---
 
 ## 四、Metadata 区域细节
 
-### Metadata Primary (`0x0801C000` ~ `0x0801DFFF`, 8KB)
+### Metadata Primary (`0x0801C000` ~ `0x0801C7FF`, 2KB)
 
 ```text
 0x0801C000 ┌─────────────────────────────┐
-           │  ota_metadata_t (512字节)    │ ← 元数据主副本
-0x0801C200 ├─────────────────────────────┤
-           │  未使用 (7680字节)           │ ← 一个 8KB sector 剩余空间
-           │                             │
-0x0801DFFF └─────────────────────────────┘
+           │  ota_metadata_t (272字节)    │ ← 元数据主副本
+0x0801C110 ├─────────────────────────────┤
+           │  未使用 (剩余 sector)        │
+0x0801C7FF └─────────────────────────────┘
 ```
 
-- 擦写粒度: 整个 8KB page (`flash_sector_erase`)
+- 擦写粒度: 2KB sector (`flash_sector_erase`)
 - 写入方式: 按 uint32_t 逐字编程 (`flash_word_program`)
 
-### Metadata Backup / NVM Config (`0x0801E000` ~ `0x0801FFFF`, 8KB)
+### Metadata Backup (`0x0801C800` ~ `0x0801CFFF`, 2KB)
+
+与 Primary 相同结构。`boot_metadata_save()` / `ota_metadata_save()` 先写 Backup 再写 Primary。
+
+### NVM Config (`0x0801E000` ~ `0x0801FFFF`, 8KB)
 
 ```text
 0x0801E000 ┌─────────────────────────────┐
-           │  ota_metadata_t 备份 (512B)  │ ← boot_metadata_save() 写入
-           │  ── 或 ──                    │
            │  NVM Config Area (8KB)       │ ← nvm_drv 读写 (sector 粒度)
            │  ┌───────────────────────┐  │
            │  │ NVM Validity Magic    │  │ ← offset 0x00, "NVM1" (0x4E564D31)
@@ -194,7 +203,7 @@ Flash 地址 0x0801C000 开始:
 0x0801FFFF └─────────────────────────────┘
 ```
 
-**注意**: 此区域被两个模块共用 — `boot_metadata.c` 将其用作元数据备份，`nvm_drv.c` 将其用作 NVM 配置存储。两者不会同时使用（bootloader 阶段写元数据备份，应用阶段用 NVM 配置）。
+NVM 与元数据备份已分离，不再共用同一扇区。
 
 NVM 驱动参数:
 - Sector 大小: 2KB (`NVM_SECTOR_SIZE = 0x800`)
@@ -235,7 +244,7 @@ NVM 驱动参数:
     │
     ├─ magic/version/CRC32 校验通过 → 使用 Primary
     │
-    ├─ 校验失败 → 读取 Backup Metadata (0x0801E000)
+    ├─ 校验失败 → 读取 Backup Metadata (0x0801C800)
     │   │
     │   ├─ Backup 有效 → 恢复 Primary，使用 Backup 数据
     │   │
@@ -277,8 +286,8 @@ NVM 驱动参数:
 | `APP_B_SIZE` | `0xB800` (46KB) | Slot B 大小 |
 | `APP_B_ENTRY_ADDR` | `0x08010900` | Slot B 应用入口 (header 后 256B) |
 | `META_PRIMARY_ADDR` | `0x0801C000` | 元数据主副本地址 |
-| `META_BACKUP_ADDR` | `0x0801E000` | 元数据备份地址 |
-| `META_PAGE_SIZE` | `0x2000` (8KB) | 元数据 page 大小 |
+| `META_BACKUP_ADDR` | `0x0801C800` | 元数据备份地址 |
+| `META_PAGE_SIZE` | `0x800` (2KB) | 元数据擦除粒度 |
 | `IMAGE_HEADER_SIZE` | `256` | 镜像头大小 |
 | `META_MAGIC` | `0x4F54414D` | 元数据魔数 "MATO" |
 | `IMAGE_MAGIC` | `0x4F544158` | 镜像头魔数 "XATO" |
