@@ -152,9 +152,9 @@ void USART1_IRQHandler(void)
   {
     usart_flag_clear(USART1, USART_ROERR_FLAG);
   }
-  if (usart_flag_get(USART1, USART_NE_FLAG) != RESET)
+  if (usart_flag_get(USART1, USART_NERR_FLAG) != RESET)
   {
-    usart_flag_clear(USART1, USART_NE_FLAG);
+    usart_flag_clear(USART1, USART_NERR_FLAG);
   }
   if (usart_flag_get(USART1, USART_PERR_FLAG) != RESET)
   {
