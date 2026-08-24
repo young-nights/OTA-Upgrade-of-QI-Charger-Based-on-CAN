@@ -26,6 +26,7 @@
 /* includes ------------------------------------------------------------------*/
 #include "can_driver.h"
 #include "timer_drv.h"
+#include "sit1145.h"
 
 /* private define ------------------------------------------------------------*/
 
@@ -103,6 +104,9 @@ void can_driver_init(void)
   gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
   gpio_init(GPIOA, &gpio_init_struct);
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE12, GPIO_MUX_4);
+
+  /* initialize SIT1145 CAN transceiver (must be before CAN controller init) */
+  sit1145_init();
 
   /* reset CAN peripheral */
   can_reset(CAN1);
