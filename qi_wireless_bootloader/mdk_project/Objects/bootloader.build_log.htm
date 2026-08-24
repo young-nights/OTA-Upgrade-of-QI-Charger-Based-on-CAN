@@ -5,7 +5,7 @@
 <h2>Tool Versions:</h2>
 IDE-Version: ¦ÌVision V5.38.0.0
 Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Nights Administrator, Nights, LIC=9WSKC-7SQU2-TG47T-RRDUG-SP41I-GMZ5I
+License Information: white honor, null, LIC=X96CK-ZA05H-RAHDM-X4EJ1-8MH3S-249Y0
  
 Tool Versions:
 Toolchain:       MDK-ARM Plus  Version: 5.38.0.0
@@ -21,52 +21,92 @@ Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.1.0.0
 Dialog DLL:      TCM.DLL V1.56.4.0
  
 <h2>Project:</h2>
-I:\GitHub-young-nights\OTA-Upgrade-of-QI-Charger-Based-on-CAN\qi_wireless_bootloader\mdk_project\bootloader.uvprojx
-Project File Date:  08/23/2026
+C:\Users\18452\Documents\Github-young-nights\OTA-Upgrade-of-QI-Charger-Based-on-CAN\qi_wireless_bootloader\mdk_project\bootloader.uvprojx
+Project File Date:  08/24/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V6.19', folder: 'D:\Keil_v5\ARM\ARMCLANG\Bin'
-Rebuild target 'Target 1'
-compiling at32f422_426_cmp.c...
-compiling at32f422_426_adc.c...
-compiling at32f422_426_ertc.c...
-compiling at32f422_426_i2c.c...
-compiling at32f422_426_pwc.c...
-compiling at32f422_426_crm.c...
-compiling can_driver.c...
-compiling at32f422_426_can.c...
-compiling at32f422_426_debug.c...
-compiling at32f422_426_crc.c...
-compiling at32f422_426_exint.c...
-compiling at32f422_426_misc.c...
-compiling at32f422_426_dma.c...
-compiling at32f422_426_spi.c...
-compiling at32f422_426_usart.c...
-compiling at32f422_426_scfg.c...
-compiling at32f422_426_gpio.c...
-compiling at32f422_426_tmr.c...
-compiling at32f422_426_flash.c...
-compiling at32f422_426_wwdt.c...
-compiling at32f422_426_wdt.c...
-compiling system_at32f422_426.c...
-compiling at32f422_426_int.c...
-compiling at32f422_426_clock.c...
-compiling main.c...
-compiling boot_jump.c...
-compiling boot_metadata.c...
-compiling boot_trial.c...
-compiling timer_drv.c...
-compiling nvm_drv.c...
-compiling wdg_drv.c...
-compiling uECC.c...
-compiling boot_verify.c...
-compiling sha256.c...
-compiling isotp.c...
-compiling boot_safe_mode.c...
-assembling startup_at32f422_426.s...
-linking...
-Program Size: Code=18094 RO-data=786 RW-data=20 ZI-data=13924  
-".\Objects\bootloader.axf" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+../mdk_app/Src/sit1145.c(78): error: call to undeclared function 'spi_i2s_flag_get'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  while (spi_i2s_flag_get(SPI1, SPI_I2S_TDBE_FLAG) == RESET)
+         ^
+../mdk_app/Src/sit1145.c(78): error: use of undeclared identifier 'SPI1'
+  while (spi_i2s_flag_get(SPI1, SPI_I2S_TDBE_FLAG) == RESET)
+                          ^
+../mdk_app/Src/sit1145.c(78): error: use of undeclared identifier 'SPI_I2S_TDBE_FLAG'
+  while (spi_i2s_flag_get(SPI1, SPI_I2S_TDBE_FLAG) == RESET)
+                                ^
+../mdk_app/Src/sit1145.c(82): error: call to undeclared function 'spi_i2s_data_transmit'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  spi_i2s_data_transmit(SPI1, (uint16_t)tx_data);
+  ^
+../mdk_app/Src/sit1145.c(82): note: did you mean 'usart_data_transmit'?
+../libraries/drivers/inc\at32f422_426_usart.h(412): note: 'usart_data_transmit' declared here
+void usart_data_transmit(usart_type* usart_x, uint16_t data);
+     ^
+../mdk_app/Src/sit1145.c(82): error: use of undeclared identifier 'SPI1'
+  spi_i2s_data_transmit(SPI1, (uint16_t)tx_data);
+                        ^
+../mdk_app/Src/sit1145.c(85): error: use of undeclared identifier 'SPI1'
+  while (spi_i2s_flag_get(SPI1, SPI_I2S_RDBF_FLAG) == RESET)
+                          ^
+../mdk_app/Src/sit1145.c(85): error: use of undeclared identifier 'SPI_I2S_RDBF_FLAG'
+  while (spi_i2s_flag_get(SPI1, SPI_I2S_RDBF_FLAG) == RESET)
+                                ^
+../mdk_app/Src/sit1145.c(89): error: call to undeclared function 'spi_i2s_data_receive'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  return (uint8_t)spi_i2s_data_receive(SPI1);
+                  ^
+../mdk_app/Src/sit1145.c(89): error: use of undeclared identifier 'SPI1'
+  return (uint8_t)spi_i2s_data_receive(SPI1);
+                                       ^
+../mdk_app/Src/sit1145.c(173): error: unknown type name 'spi_init_type'; did you mean 'gpio_init_type'?
+  spi_init_type spi_init_struct;
+  ^~~~~~~~~~~~~
+  gpio_init_type
+../libraries/drivers/inc\at32f422_426_gpio.h(242): note: 'gpio_init_type' declared here
+} gpio_init_type;
+  ^
+../mdk_app/Src/sit1145.c(219): error: call to undeclared function 'spi_default_para_init'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  spi_default_para_init(&spi_init_struct);
+  ^
+../mdk_app/Src/sit1145.c(219): note: did you mean 'gpio_default_para_init'?
+../libraries/drivers/inc\at32f422_426_gpio.h(668): note: 'gpio_default_para_init' declared here
+void gpio_default_para_init(gpio_init_type *gpio_init_struct);
+     ^
+../mdk_app/Src/sit1145.c(220): error: no member named 'transmission_mode' in 'gpio_init_type'
+  spi_init_struct.transmission_mode     = SPI_TRANSMIT_FULL_DUPLEX;
+  ~~~~~~~~~~~~~~~ ^
+../mdk_app/Src/sit1145.c(220): error: use of undeclared identifier 'SPI_TRANSMIT_FULL_DUPLEX'
+  spi_init_struct.transmission_mode     = SPI_TRANSMIT_FULL_DUPLEX;
+                                          ^
+../mdk_app/Src/sit1145.c(221): error: no member named 'master_slave_mode' in 'gpio_init_type'
+  spi_init_struct.master_slave_mode     = SPI_MODE_MASTER;
+  ~~~~~~~~~~~~~~~ ^
+../mdk_app/Src/sit1145.c(221): error: use of undeclared identifier 'SPI_MODE_MASTER'
+  spi_init_struct.master_slave_mode     = SPI_MODE_MASTER;
+                                          ^
+../mdk_app/Src/sit1145.c(222): error: no member named 'mclk_freq_division' in 'gpio_init_type'
+  spi_init_struct.mclk_freq_division    = SIT1145_SPI_DIV;
+  ~~~~~~~~~~~~~~~ ^
+../mdk_app/Src/sit1145.c(222): error: use of undeclared identifier 'SPI_MCLK_DIV_128'; did you mean 'WDT_CLK_DIV_128'?
+  spi_init_struct.mclk_freq_division    = SIT1145_SPI_DIV;
+                                          ^~~~~~~~~~~~~~~
+                                          WDT_CLK_DIV_128
+../mdk_app/Src/sit1145.c(32): note: expanded from macro 'SIT1145_SPI_DIV'
+#define SIT1145_SPI_DIV             SPI_MCLK_DIV_128
+                                    ^
+../libraries/drivers/inc\at32f422_426_wdt.h(73): note: 'WDT_CLK_DIV_128' declared here
+  WDT_CLK_DIV_128                        = 0x05, /*!< wdt clock divider value is 128 */
+  ^
+../mdk_app/Src/sit1145.c(223): error: no member named 'first_bit_transmission' in 'gpio_init_type'
+  spi_init_struct.first_bit_transmission = SPI_FIRST_BIT_MSB;
+  ~~~~~~~~~~~~~~~ ^
+../mdk_app/Src/sit1145.c(223): error: use of undeclared identifier 'SPI_FIRST_BIT_MSB'
+  spi_init_struct.first_bit_transmission = SPI_FIRST_BIT_MSB;
+                                           ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+compiling sit1145.c...
+".\Objects\bootloader.axf" - 19 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -76,10 +116,11 @@ Package Vendor: ArteryTek
                 ArteryTek AT32F422_426 Series Device Support,Drivers
 
 <h2>Collection of Component include folders:</h2>
-  D:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include
+  D:/Users/teati/AppData/Local/Arm/Packs/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include
 
 <h2>Collection of Component Files used:</h2>
-Build Time Elapsed:  00:00:03
+Target not created.
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

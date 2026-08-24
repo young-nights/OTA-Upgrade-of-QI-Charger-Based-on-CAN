@@ -570,14 +570,14 @@
               <FilePath>..\mdk_app\Src\uECC.c</FilePath>
             </File>
             <File>
-              <FileName>wdg_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
-            </File>
-            <File>
               <FileName>isotp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\isotp.c</FilePath>
+            </File>
+            <File>
+              <FileName>sit1145.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\sit1145.c</FilePath>
             </File>
           </Files>
         </Group>
