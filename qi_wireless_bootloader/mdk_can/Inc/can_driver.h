@@ -41,7 +41,7 @@ extern "C" {
  */
 #define CAN_ID_UDS_REQUEST              0x18DA0D03U  /*!< UDS request  (CCU -> Qi) */
 #define CAN_ID_UDS_RESPONSE             0x18DA030DU  /*!< UDS response (Qi -> CCU) */
-#define CAN_ID_FUNCTIONAL_REQUEST       0x18DB33D0U  /*!< UDS functional broadcast */
+#define CAN_ID_FUNCTIONAL_REQUEST       0x18DB33F1U  /*!< UDS functional broadcast (ISO 14229) */
 #define CAN_ID_LIFECYCLE_BROADCAST      0x18FF260DU  /*!< Qi module status (100ms) */
 #define CAN_ID_CCU_CONTROL              0x18FF270DU  /*!< CCU control command */
 

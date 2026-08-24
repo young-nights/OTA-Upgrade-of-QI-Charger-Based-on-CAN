@@ -129,12 +129,7 @@ extern "C" {
 #ifdef USART_MODULE_ENABLED
 #include "at32f422_426_usart.h"
 #endif
-#ifdef WDT_MODULE_ENABLED
-#include "at32f422_426_wdt.h"
-#endif
-#ifdef WWDT_MODULE_ENABLED
-#include "at32f422_426_wwdt.h"
-#endif
+
 
 #ifdef __cplusplus
 }

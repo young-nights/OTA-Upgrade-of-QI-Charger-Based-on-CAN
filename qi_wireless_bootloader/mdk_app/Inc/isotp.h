@@ -45,7 +45,11 @@ extern "C" {
 /** @brief  ISO-TP PCI type mask (upper nibble) */
 #define ISOTP_PCI_TYPE_MASK             0xF0U
 
-/** @brief  ISO-TP maximum payload buffer size (12-bit FF length => 4095 max) */
+/** @brief  ISO-TP maximum payload buffer size (12-bit FF length => 4095 max)
+ * @note   This buffer is ~4KB which is significant on AT32F426 (32KB SRAM).
+ *         It is required for OTA firmware chunk transfer. If SRAM is tight,
+ *         this value can be reduced (e.g. 1024) at the cost of requiring
+ *         more ISO-TP messages per UDS request. */
 #define ISOTP_MAX_PAYLOAD               4095U
 
 /** @brief  CAN frame data field size (CAN 2.0B) */

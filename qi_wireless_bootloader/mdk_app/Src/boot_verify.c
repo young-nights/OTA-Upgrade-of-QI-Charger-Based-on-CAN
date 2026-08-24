@@ -57,6 +57,9 @@ const uint8_t g_ecdsa_public_key[65] = {
 __attribute__((section(".ecdsa_pubkey"), used))
 static const uint32_t g_pubkey_magic = ECDSA_PUBKEY_MAGIC;
 
+/** @brief  Last verification failure step (0=pass, 1=magic, 2=length, 3=CRC, 4=reset_handler, 5=pubkey, 6=ECDSA) */
+volatile uint8_t g_verify_fail_step = 0;
+
 /* exported functions --------------------------------------------------------*/
 
 /**
@@ -106,6 +109,7 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
   /* check 1: verify magic number */
   if (header->magic != IMAGE_MAGIC)
   {
+    g_verify_fail_step = 1;
     return -1;
   }
 
@@ -114,6 +118,7 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
   max_image_len = slot_size - IMAGE_HEADER_SIZE;
   if ((header->image_length == 0) || (header->image_length > max_image_len))
   {
+    g_verify_fail_step = 2;
     return -1;
   }
 
@@ -123,6 +128,7 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
 
   if (computed_crc != header->crc32)
   {
+    g_verify_fail_step = 3;
     return -1;
   }
 
@@ -134,6 +140,7 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
     uint32_t end   = base_addr + slot_size;
     if ((reset < entry) || (reset >= end))
     {
+      g_verify_fail_step = 4;
       return -1;
     }
   }
@@ -148,6 +155,7 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
     public_key = boot_verify_get_public_key();
     if (public_key == (const uint8_t *)0)
     {
+      g_verify_fail_step = 5;
       return -1;
     }
 
@@ -162,9 +170,11 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
 
     if (verify_result != 1)
     {
+      g_verify_fail_step = 6;
       return -1;
     }
   }
 
+  g_verify_fail_step = 0;
   return 0;
 }

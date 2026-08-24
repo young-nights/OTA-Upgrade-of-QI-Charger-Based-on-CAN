@@ -121,25 +121,15 @@ uint8_t sit1145_read_reg(uint8_t addr)
 }
 
 /**
- * @brief  set SIT1145 to Normal Mode
+ * @brief  switch SIT1145 to Normal Mode and verify
+ * @note   CAN Control and Data Rate registers must be configured before
+ *         calling this function (some transceivers ignore register writes
+ *         once in Normal Mode).
  * @retval 1 on success, 0 on failure
  */
 uint8_t sit1145_normal_mode_set(void)
 {
-  uint8_t can_ctrl_val;
   uint8_t mode_val;
-
-  /* configure CAN control register:
-   *   CFDC=1 (CAN FD tolerance enabled)
-   *   PNCOK=0 (partial networking config invalid)
-   *   CPNC=0 (selective wakeup disabled)
-   *   CMC=01 (normal mode with VCC undervoltage recovery)
-   */
-  can_ctrl_val = SIT1145_CAN_FD_TOLERANCE_EN
-               | SIT1145_CAN_NETW_INVALID
-               | SIT1145_SEL_WAKEUP_DIS
-               | SIT1145_CAN_MODE_NORMAL;
-  sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl_val);
 
   /* write Normal Mode to mode control register */
   sit1145_write_reg(SIT1145_REG_MODE_CONTROL, SIT1145_MC_NORMAL_MODE);
@@ -162,14 +152,16 @@ uint8_t sit1145_normal_mode_set(void)
  *         3. Configure PA4 as GPIO output (CS, default high)
  *         4. Configure PB3 as GPIO output low (floating pin)
  *         5. Initialize SPI1 in master mode
- *         6. Set SIT1145 to Normal Mode
- *         7. Configure data rate (250kbps)
+ *         6. Configure CAN Control register (in Standby/Init mode)
+ *         7. Configure Data Rate register (250kbps)
+ *         8. Switch to Normal Mode (must be last)
  * @retval 1 on success, 0 on failure
  */
 uint8_t sit1145_init(void)
 {
   gpio_init_type gpio_init_struct;
   spi_init_type spi_init_struct;
+  uint8_t can_ctrl_val;
   uint8_t mode_val;
 
   /* ---- Step 1: Enable peripheral clocks ---- */
@@ -229,7 +221,28 @@ uint8_t sit1145_init(void)
   /* enable SPI1 */
   spi_enable(SPI1, TRUE);
 
-  /* ---- Step 6: Set SIT1145 to Normal Mode ---- */
+  /* ---- Step 6: Configure CAN Control register ----
+   *   CFDC=1 (CAN FD tolerance enabled)
+   *   PNCOK=0 (partial networking config invalid)
+   *   CPNC=0 (selective wakeup disabled)
+   *   CMC=01 (normal mode with VCC undervoltage recovery)
+   * Must be done before switching to Normal Mode. */
+  can_ctrl_val = SIT1145_CAN_FD_TOLERANCE_EN
+               | SIT1145_CAN_NETW_INVALID
+               | SIT1145_SEL_WAKEUP_DIS
+               | SIT1145_CAN_MODE_NORMAL;
+  sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl_val);
+
+  /* ---- Step 7: Configure Data Rate (250kbps) ---- */
+  sit1145_write_reg(SIT1145_REG_DATA_RATE, SIT1145_DEFAULT_DRATE);
+
+  /* verify data rate */
+  if (sit1145_read_reg(SIT1145_REG_DATA_RATE) != SIT1145_DEFAULT_DRATE)
+  {
+    return 0;
+  }
+
+  /* ---- Step 8: Switch to Normal Mode (must be last) ---- */
   if (sit1145_normal_mode_set() == 0)
   {
     /* first attempt failed, retry once after a short delay */
@@ -243,15 +256,6 @@ uint8_t sit1145_init(void)
       (void)mode_val; /* suppress unused warning in release */
       return 0;
     }
-  }
-
-  /* ---- Step 7: Configure data rate ---- */
-  sit1145_write_reg(SIT1145_REG_DATA_RATE, SIT1145_DEFAULT_DRATE);
-
-  /* verify data rate */
-  if (sit1145_read_reg(SIT1145_REG_DATA_RATE) != SIT1145_DEFAULT_DRATE)
-  {
-    return 0;
   }
 
   return 1;

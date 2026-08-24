@@ -52,6 +52,9 @@ extern "C" {
  *          (65 bytes: 04 prefix + 32-byte X + 32-byte Y coordinate). */
 extern const uint8_t g_ecdsa_public_key[65];
 
+/** @brief  Last verification failure step (0=pass, 1=magic, 2=length, 3=CRC, 4=reset_handler, 5=pubkey, 6=ECDSA) */
+extern volatile uint8_t g_verify_fail_step;
+
 /** @brief  Get pointer to the ECDSA public key (symbol-based, no hard-coded addr) */
 const uint8_t *boot_verify_get_public_key(void);
 

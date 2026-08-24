@@ -93,7 +93,10 @@ void boot_jump_to_app(uint32_t app_addr)
   /* step 6: read reset handler address from application vector table [1] */
   app_reset_addr = *(volatile uint32_t *)(app_addr + 4U);
 
-  /* validate MSP is in SRAM and reset handler is in application flash */
+  /* Validate MSP is in SRAM and reset handler is in application flash.
+   * Note: this is a loose safety check. If the APP uses a custom SRAM layout
+   * (e.g. stack in a different region, MPU-based stack overflow protection),
+   * this range check may need adjustment. */
   if ((app_msp < SRAM_BASE_ADDR) ||
       (app_msp > (SRAM_BASE_ADDR + SRAM_SIZE)))
   {

@@ -86,7 +86,7 @@ extern "C" {
 /* exported types ------------------------------------------------------------*/
 
 /**
- * @brief  OTA metadata structure (512 bytes total)
+ * @brief  OTA metadata structure (272 bytes total)
  * @note   stored in Flash at META_PRIMARY_ADDR and META_BACKUP_ADDR.
  *         CRC32 covers all fields except the trailing crc32 field itself.
  */

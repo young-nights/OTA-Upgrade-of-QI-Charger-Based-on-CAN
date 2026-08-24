@@ -136,8 +136,8 @@ static uint8_t  g_firmware_type = 0;
 
 /** @brief  SecurityAccess ECDSA signature buffer */
 static uint8_t  g_sa_sig_buf[64];
-static uint8_t  g_sa_sig_bytes_received = 0;
-static uint8_t  g_sa_sig_block_seq = 0;
+static volatile uint8_t  g_sa_sig_bytes_received = 0;
+static volatile uint8_t  g_sa_sig_block_seq = 0;
 
 /** @brief  security access lockout: 60 seconds */
 #define SECURITY_LOCKOUT_MS  60000U
@@ -261,6 +261,9 @@ static uint32_t uds_parse_be(const uint8_t *p, uint8_t n)
  * @brief  erase all 2KB sectors of the target APP slot
  * @retval 0 on success, non-zero on error
  */
+/** @brief  AT32F426 Flash physical end address (256KB total) */
+#define FLASH_PHYSICAL_END_ADDR  0x08040000U
+
 static uint8_t erase_slot_flash(uint8_t slot)
 {
   uint32_t sector_addr;
@@ -268,6 +271,12 @@ static uint8_t erase_slot_flash(uint8_t slot)
   uint32_t size = boot_metadata_slot_size(slot);
 
   if ((base == 0U) || (base < APP_A_BASE_ADDR) || (size == 0U))
+  {
+    return 1U;
+  }
+
+  /* verify erase range does not exceed Flash physical boundary */
+  if ((base + size) > FLASH_PHYSICAL_END_ADDR)
   {
     return 1U;
   }
@@ -1119,7 +1128,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         g_sig_active = 1;
         g_sig_block_seq = 0;
         g_sig_bytes_received = 0;
-        memset(g_sig_buf, 0xFF, 64);
+        memset(g_sig_buf, 0, 64);
       }
 
       if (!g_sig_active)

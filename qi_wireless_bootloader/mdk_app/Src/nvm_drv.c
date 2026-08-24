@@ -2,6 +2,8 @@
   **************************************************************************
   * @file     nvm_drv.c
   * @brief    Non-volatile memory driver using internal Flash for config storage
+  *
+  * @note     Reserved for APP use. This module is NOT used by the bootloader.
   **************************************************************************
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.

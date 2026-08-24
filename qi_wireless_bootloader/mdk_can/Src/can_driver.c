@@ -135,7 +135,7 @@ void can_driver_init(void)
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
 
-  /* Filter 1: functional UDS request 0x18DB33D0 */
+  /* Filter 1: functional UDS request 0x18DB33F1 (ISO 14229) */
   can_filter_default_para_init(&can_filter_struct);
   can_filter_struct.code_para.id         = CAN_ID_FUNCTIONAL_REQUEST;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
