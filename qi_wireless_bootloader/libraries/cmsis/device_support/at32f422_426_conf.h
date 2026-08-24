@@ -70,7 +70,8 @@ extern "C" {
 #define SPI_MODULE_ENABLED
 #define TMR_MODULE_ENABLED
 #define USART_MODULE_ENABLED
-#define WDT_MODULE_ENABLED
+/* WDT/WWDT removed — watchdog is disabled in bootloader */
+/* #define WDT_MODULE_ENABLED */
 /* #define WWDT_MODULE_ENABLED */
 
 /* includes ------------------------------------------------------------------*/
