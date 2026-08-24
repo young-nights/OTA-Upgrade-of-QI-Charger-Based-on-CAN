@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/18452/Documents/Github-young-nights/OTA-Upgrade-of-QI-Charger-Based-on-CAN/qi_wireless_bootloader/mdk_app/Src",
-      "program": "c:/Users/18452/Documents/Github-young-nights/OTA-Upgrade-of-QI-Charger-Based-on-CAN/qi_wireless_bootloader/mdk_app/Src/build/Debug/outDebug",
+      "cwd": "c:/Users/18452/Documents/Github-young-nights/OTA-Upgrade-of-QI-Charger-Based-on-CAN/qi_wireless_bootloader/mdk_user/Src",
+      "program": "c:/Users/18452/Documents/Github-young-nights/OTA-Upgrade-of-QI-Charger-Based-on-CAN/qi_wireless_bootloader/mdk_user/Src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
