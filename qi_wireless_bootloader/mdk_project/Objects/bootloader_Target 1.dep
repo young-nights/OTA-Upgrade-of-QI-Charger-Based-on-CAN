@@ -1,7 +1,7 @@
 Dependencies for Project 'bootloader', Target 'Target 1': (DO NOT MODIFY !)
 CompilerVersion: 6190000::V6.19::ARMCLANG
-F (..\mdk_can\Src\can_driver.c)(0x6A891227)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/can_driver.o -MD)
-I (..\mdk_can\Inc\can_driver.h)(0x6A7EDA10)
+F (..\mdk_can\Src\can_driver.c)(0x6A894428)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/can_driver.o -MD)
+I (..\mdk_can\Inc\can_driver.h)(0x6A892940)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
 I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
@@ -22,6 +22,8 @@ I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
 I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
+I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
+I (..\mdk_app\Inc\wdg_drv.h)(0x6A7EB344)
 F (..\libraries\drivers\src\at32f422_426_adc.c)(0x690C891E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/at32f422_426_adc.o -MD)
 I (..\libraries\cmsis\device_support\at32f422_426_conf.h)(0x6A85F0F7)
 I (..\libraries\drivers\inc\at32f422_426_can.h)(0x690C891D)
@@ -485,7 +487,7 @@ I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
 I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-F (..\mdk_user\Src\at32f422_426_int.c)(0x6A801878)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/at32f422_426_int.o -MD)
+F (..\mdk_user\Src\at32f422_426_int.c)(0x6A899230)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/at32f422_426_int.o -MD)
 I (..\mdk_user\Inc\at32f422_426_int.h)(0x6A7EE84C)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
@@ -508,8 +510,8 @@ I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
 I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
-I (..\mdk_can\Inc\can_driver.h)(0x6A7EDA10)
-F (..\mdk_user\Src\main.c)(0x6A82B1D2)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/main.o -MD)
+I (..\mdk_can\Inc\can_driver.h)(0x6A892940)
+F (..\mdk_user\Src\main.c)(0x6A899230)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/main.o -MD)
 I (..\mdk_user\Inc\at32f422_426_clock.h)(0x690C8927)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
@@ -533,10 +535,10 @@ I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
 I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
 I (..\mdk_app\Inc\wdg_drv.h)(0x6A7EB344)
-I (..\mdk_app\Inc\boot_metadata.h)(0x6A871267)
+I (..\mdk_app\Inc\boot_metadata.h)(0x6A894428)
 I (..\mdk_app\Inc\boot_safe_mode.h)(0x6A8202D8)
 I (..\mdk_app\Inc\boot_trial.h)(0x6A820320)
-F (..\mdk_app\Src\boot_jump.c)(0x6A8556D0)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_jump.o -MD)
+F (..\mdk_app\Src\boot_jump.c)(0x6A894428)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_jump.o -MD)
 I (..\mdk_app\Inc\boot_jump.h)(0x6A7FE5F1)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
@@ -558,8 +560,9 @@ I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
 I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-F (..\mdk_app\Src\boot_metadata.c)(0x6A82ADBE)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_metadata.o -MD)
-I (..\mdk_app\Inc\boot_metadata.h)(0x6A871267)
+I (..\mdk_app\Inc\boot_metadata.h)(0x6A894428)
+F (..\mdk_app\Src\boot_metadata.c)(0x6A894428)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_metadata.o -MD)
+I (..\mdk_app\Inc\boot_metadata.h)(0x6A894428)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
 I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
@@ -581,10 +584,10 @@ I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
 I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
-F (..\mdk_app\Src\boot_safe_mode.c)(0x6A891227)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_safe_mode.o -MD)
+F (..\mdk_app\Src\boot_safe_mode.c)(0x6A899230)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_safe_mode.o -MD)
 I (..\mdk_app\Inc\boot_safe_mode.h)(0x6A8202D8)
 I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
-I (..\mdk_app\Inc\boot_metadata.h)(0x6A871267)
+I (..\mdk_app\Inc\boot_metadata.h)(0x6A894428)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
 I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
@@ -606,17 +609,17 @@ I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
 I (..\mdk_app\Inc\boot_verify.h)(0x6A871267)
 I (..\mdk_app\Inc\boot_trial.h)(0x6A820320)
-I (..\mdk_can\Inc\can_driver.h)(0x6A7EDA10)
-I (..\mdk_app\Inc\isotp.h)(0x6A881964)
+I (..\mdk_can\Inc\can_driver.h)(0x6A892940)
+I (..\mdk_app\Inc\isotp.h)(0x6A894428)
 I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
 I (..\mdk_app\Inc\wdg_drv.h)(0x6A7EB344)
 I (..\mdk_app\Inc\uECC.h)(0x6A85BFA6)
 I (..\mdk_app\Inc\sha256.h)(0x6A8556D0)
 I (D:\Keil_v5\ARM\ARMCLANG\include\string.h)(0x63884908)
-F (..\mdk_app\Src\boot_trial.c)(0x6A8556D0)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_trial.o -MD)
+F (..\mdk_app\Src\boot_trial.c)(0x6A8929DD)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_trial.o -MD)
 I (..\mdk_app\Inc\boot_trial.h)(0x6A820320)
 I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
-I (..\mdk_app\Inc\boot_metadata.h)(0x6A871267)
+I (..\mdk_app\Inc\boot_metadata.h)(0x6A894428)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
 I (..\libraries\cmsis\core_support\cmsis_version.h)(0x690C8913)
@@ -639,7 +642,7 @@ I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
 I (..\mdk_app\Inc\boot_verify.h)(0x6A871267)
 I (..\mdk_app\Inc\boot_jump.h)(0x6A7FE5F1)
 I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
-F (..\mdk_app\Src\boot_verify.c)(0x6A871267)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_verify.o -MD)
+F (..\mdk_app\Src\boot_verify.c)(0x6A894428)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/boot_verify.o -MD)
 I (..\mdk_app\Inc\boot_verify.h)(0x6A871267)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
@@ -661,11 +664,12 @@ I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
 I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-I (..\mdk_app\Inc\boot_metadata.h)(0x6A871267)
+I (..\mdk_app\Inc\boot_metadata.h)(0x6A894428)
 I (..\mdk_app\Inc\uECC.h)(0x6A85BFA6)
 I (..\mdk_app\Inc\sha256.h)(0x6A8556D0)
+I (..\mdk_app\Inc\wdg_drv.h)(0x6A7EB344)
 F (..\mdk_app\Src\nvm_drv.c)(0x6A7EDAC1)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/nvm_drv.o -MD)
-I (..\mdk_app\Inc\nvm_drv.h)(0x6A82B84C)
+I (..\mdk_app\Inc\nvm_drv.h)(0x6A894428)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
 I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
@@ -739,8 +743,8 @@ I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
 I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-F (..\mdk_app\Src\isotp.c)(0x6A881964)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/isotp.o -MD)
-I (..\mdk_app\Inc\isotp.h)(0x6A881964)
+F (..\mdk_app\Src\isotp.c)(0x6A894428)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char-gdwarf-4 -O1 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../libraries/cmsis/core_support -I ../libraries/cmsis/device_support -I ../libraries/drivers/inc -I ../mdk_app/Inc -I ../mdk_can/Inc -I ../mdk_user/Inc-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-D__UVISION_VERSION="538" -DAT32F426KBU7_4-o ./objects/isotp.o -MD)
+I (..\mdk_app\Inc\isotp.h)(0x6A894428)
 I (..\libraries\cmsis\device_support\at32f422_426.h)(0x690C8AB9)
 I (..\libraries\cmsis\core_support\core_cm4.h)(0x6A814079)
 I (D:\Keil_v5\ARM\ARMCLANG\include\stdint.h)(0x63884908)
@@ -761,5 +765,7 @@ I (..\libraries\drivers\inc\at32f422_426_pwc.h)(0x6A682564)
 I (..\libraries\drivers\inc\at32f422_426_tmr.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_usart.h)(0x690C891D)
 I (..\libraries\drivers\inc\at32f422_426_wdt.h)(0x690C891D)
-I (..\mdk_can\Inc\can_driver.h)(0x6A7EDA10)
-F (..\libraries\cmsis\device_support\startup\startup_at32f422_426.s)(0x690C8914)(--target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 538" -Wa,armasm,--pd,"AT32F426KBU7_4 SETA 1"-o ./objects/startup_at32f422_426.o)
+I (..\mdk_can\Inc\can_driver.h)(0x6A892940)
+I (..\mdk_app\Inc\timer_drv.h)(0x6A7EB344)
+I (..\mdk_app\Inc\wdg_drv.h)(0x6A7EB344)
+F (..\libraries\cmsis\device_support\startup\startup_at32f422_426.s)(0x6A892915)(--target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4-ID:/Keil_v5/ARM/PACK/ArteryTek/AT32F422_426_DFP/2.0.1/Device/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 538" -Wa,armasm,--pd,"AT32F426KBU7_4 SETA 1"-o ./objects/startup_at32f422_426.o)

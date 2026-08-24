@@ -250,8 +250,8 @@
               </IRAM>
               <IROM>
                 <Type>1</Type>
-                <StartAddress>0x8004100</StartAddress>
-                <Size>0xbf00</Size>
+                <StartAddress>0x8005100</StartAddress>
+                <Size>0xb700</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>

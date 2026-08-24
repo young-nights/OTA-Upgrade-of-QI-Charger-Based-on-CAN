@@ -29,6 +29,7 @@
 ".\objects\qi_uart.o"
 ".\objects\timer_drv.o"
 ".\objects\wdg_drv.o"
+".\objects\debug_uart.o"
 ".\objects\nvm_drv.o"
 ".\objects\isotp.o"
 ".\objects\lifecycle.o"
