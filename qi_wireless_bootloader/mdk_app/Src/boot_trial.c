@@ -63,11 +63,8 @@ void trial_timer_callback(void)
     g_meta.active_slot = (g_meta.trial_slot == SLOT_A) ? SLOT_B : SLOT_A;
     boot_metadata_save(&g_meta);
 
-    /* Force watchdog reset to apply rollback */
-    while (1)
-    {
-      /* wait for watchdog reset */
-    }
+    /* Force system reset to apply rollback */
+    NVIC_SystemReset();
   }
 }
 

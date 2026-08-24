@@ -75,7 +75,7 @@ extern "C" {
 
 /** @brief  Boot reason codes */
 #define BOOT_REASON_POWER_ON    0x00U         /*!< normal power-on reset */
-#define BOOT_REASON_WDG         0x02U         /*!< watchdog reset */
+#define BOOT_REASON_WDG         0x02U         /*!< watchdog reset (legacy, watchdog removed) */
 #define BOOT_REASON_OTA_ACT     0x03U         /*!< OTA activation */
 #define BOOT_REASON_ROLLBACK    0x04U         /*!< rollback from failed trial */
 

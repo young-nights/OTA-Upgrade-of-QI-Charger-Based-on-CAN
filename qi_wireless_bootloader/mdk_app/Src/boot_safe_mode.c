@@ -34,7 +34,6 @@
 #include "can_driver.h"
 #include "isotp.h"
 #include "timer_drv.h"
-#include "wdg_drv.h"
 #include "uECC.h"
 #include "sha256.h"
 #include <string.h>
@@ -276,7 +275,6 @@ static uint8_t erase_slot_flash(uint8_t slot)
   flash_unlock();
   for (sector_addr = base; sector_addr < (base + size); sector_addr += FLASH_SECTOR_SIZE)
   {
-    wdg_drv_refresh();
     if (flash_sector_erase(sector_addr) != FLASH_OPERATE_DONE)
     {
       flash_lock();
@@ -327,7 +325,6 @@ static uint8_t program_image_bytes(const uint8_t *src, uint16_t src_len)
     g_dl_write_addr    += 4U;
     g_dl_bytes_written += 4U;
     g_dl_pad_len        = 0;
-    wdg_drv_refresh();
   }
 
   return 0U;
@@ -701,7 +698,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
 
         safe_mode_send_pending(service_id);
-        wdg_drv_refresh();
 
         if (verify_security_ecdsa_signature())
         {
@@ -943,7 +939,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       {
         /* checkProgrammingDependencies: verify programmed slot */
         safe_mode_send_pending(service_id);
-        wdg_drv_refresh();
         if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
         {
           safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
@@ -1253,7 +1248,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       g_dl_erased = 0;
 
       safe_mode_send_pending(service_id);
-      wdg_drv_refresh();
       if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
@@ -1334,9 +1328,9 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 /**
  * @brief  enter safe mode: initialize CAN and wait for OTA download
  * @note   called when both application slots are invalid.
- *         runs a minimal event loop with CAN polling and watchdog refresh.
+ *         runs a minimal event loop with CAN polling.
  * @param  none
- * @retval none (does not return unless watchdog resets)
+ * @retval none (does not return)
  */
 void enter_safe_mode(void)
 {
@@ -1370,7 +1364,5 @@ void enter_safe_mode(void)
         (void)boot_metadata_save(&g_meta);
       }
     }
-
-    wdg_drv_refresh();
   }
 }

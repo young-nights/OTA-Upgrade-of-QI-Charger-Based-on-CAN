@@ -27,7 +27,6 @@
 #include "at32f422_426_clock.h"
 #include "at32f422_426_conf.h"
 #include "timer_drv.h"
-#include "wdg_drv.h"
 #include "boot_metadata.h"
 #include "boot_safe_mode.h"
 #include "boot_trial.h"
@@ -38,7 +37,7 @@
  * @brief  bootloader main entry point
  * @note   boot sequence:
  *         1. system clock configuration
- *         2. initialize timer and watchdog
+ *         2. initialize timer
  *         3. load OTA metadata
  *         4. detect boot reason
  *         5. process trial boot state machine
@@ -59,7 +58,6 @@ int main(void)
 
   /* step 2: initialize drivers */
   timer_drv_init();
-  wdg_drv_init();
 
   /* step 3: load and validate OTA metadata */
   boot_metadata_init(&g_meta);
@@ -86,7 +84,7 @@ int main(void)
   }
 
   /* trial 10s window is enforced in APP (ota_trial_poll). Boot only
-   * counts WDG resets while trial_state is ACTIVE. */
+   * counts resets while trial_state is ACTIVE. */
 
   /* step 7: try to boot from selected slot */
   boot_result = try_boot_slot(boot_slot, &g_meta);
@@ -115,6 +113,6 @@ int main(void)
   /* should never reach here (boot_jump_to_app does not return) */
   while (1)
   {
-    wdg_drv_refresh();
+    __NOP();
   }
 }

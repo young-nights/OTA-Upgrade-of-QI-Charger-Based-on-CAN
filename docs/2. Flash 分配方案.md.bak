@@ -226,6 +226,7 @@ NVM 驱动参数:
            │   - trial boot state machine│   试运行状态机
            │   - nvm_drv.c               │   NVM 驱动
            │   - timer_drv.c             │   定时器驱动
+           │   - wdg_drv.c               │   看门狗驱动
            │   - isotp.c                 │   ISO-TP 分帧传输
            │   - uECC.c                  │   ECDSA P-256 验签库
            │   - sha256.c                │   SHA-256 哈希库

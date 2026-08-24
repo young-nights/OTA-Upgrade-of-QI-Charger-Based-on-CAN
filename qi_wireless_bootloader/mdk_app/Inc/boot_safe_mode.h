@@ -13,9 +13,9 @@
 /**
  * @brief  enter safe mode: initialize CAN and wait for OTA download
  * @note   called when both application slots are invalid.
- *         runs a minimal event loop with CAN polling and watchdog refresh.
+ *         runs a minimal event loop with CAN polling.
  * @param  none
- * @retval none (does not return unless watchdog resets)
+ * @retval none (does not return)
  */
 void enter_safe_mode(void);
 

@@ -26,7 +26,6 @@
 /* includes ------------------------------------------------------------------*/
 #include "can_driver.h"
 #include "timer_drv.h"
-#include "wdg_drv.h"
 
 /* private define ------------------------------------------------------------*/
 
@@ -302,7 +301,6 @@ int8_t can_driver_wait_tx_idle(uint32_t timeout_ms)
     {
       return 0;
     }
-    wdg_drv_refresh();
   } while ((timer_get_tick() - start) < timeout_ms);
 
   return -1;

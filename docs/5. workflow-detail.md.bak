@@ -42,6 +42,7 @@
 | SRAM     | 20 KB（0x20000000 ~ 0x20004FFF）                                                                                                    |
 | 外设库   | 标准外设库 SPL（`at32f422_426_*`），**非 HAL**                                                                              |
 | 通信外设 | CAN1（PA11=RX / PA12=TX，扩展帧，250 kbps）、USART2（Qi 芯片通信，9600 8N1）、USART1（PB6=TX / PB7=RX，Debug 调试串口，预留未使用） |
+| 看门狗   | IWDG 独立看门狗（LSI ~40 kHz，~1 s 超时）                                                                                           |
 
 ### 1.3 软件架构
 
@@ -220,6 +221,7 @@ typedef struct
                                ▼
               ┌──────────────────────────────────┐
               │ ② timer_drv_init()              │  SysTick 1ms tick
+              │    wdg_drv_init()               │  IWDG ~1s 超时
               └──────────────────────────────────┘
                                ▼
               ┌──────────────────────────────────┐
@@ -227,8 +229,8 @@ typedef struct
               └──────────────────────────────────┘
                                ▼
               ┌──────────────────────────────────┐
-              │ ④ last_boot_reason=detect_boot_ │  检查 RCC 复位标志
-              │    reason()                      │  → WDG(遗留) / POWER_ON
+              │ ④ last_boot_reason=detect_boot_ │  检查 WDT 复位标志
+              │    reason()                      │  → WDG / POWER_ON
               └──────────────────────────────────┘
                                ▼
               ┌──────────────────────────────────┐
@@ -266,7 +268,8 @@ typedef struct
 
 1. **时钟配置**：`system_clock_config()` 将系统时钟配置为 180 MHz；
    `nvic_priority_group_config(NVIC_PRIORITY_GROUP_4)` 设置 4 位抢占优先级分组。
-2. **驱动初始化**：`timer_drv_init()`（SysTick 1 ms 时基 + 软件定时器池）。
+2. **驱动初始化**：`timer_drv_init()`（SysTick 1 ms 时基 + 软件定时器池）；
+   `wdg_drv_init()`（IWDG，约 998 ms 超时，一旦使能不可关闭）。
 3. **元数据加载**：`boot_metadata_init(&g_meta)` 依次尝试：
    - 主区 `0x0801C000` 校验通过 → 拷贝到 `g_meta`；
    - 主区无效 → 尝试备份区 `0x0801C800`，有效则恢复写回主区；
@@ -275,7 +278,7 @@ typedef struct
      CRC32 全字段校验通过。
 4. **启动原因检测**：`detect_boot_reason()` 检查 RCC 复位状态寄存器
    `crm_flag_get(CRM_WDT_RESET_FLAG)`：
-   - 看门狗复位 → 清除标志，返回 `BOOT_REASON_WDG (0x02)`（遗留兼容码）；
+   - 看门狗复位 → 清除标志，返回 `BOOT_REASON_WDG (0x02)`；
    - 其余情况 → `BOOT_REASON_POWER_ON (0x00)`。
 5. **Trial 状态机处理**：见 [3.2](#32-trial-boot-状态机)。
 6. **OTA 下载请求检查**：若 `g_meta.ota_state == OTA_STATE_DOWNLOADING`（APP 触发 OTA 时
@@ -293,7 +296,7 @@ typedef struct
 10. **回退到另一槽位**：首选槽失败 → 尝试 `other_slot`；若另一槽成功启动，则
     `g_meta.active_slot = other_slot` 并保存。
 11. **双槽均失败** → `enter_safe_mode()`（不返回）。
-12. 理论上不可达的兜底 `while(1) { __NOP(); }`。
+12. 理论上不可达的兜底 `while(1) { wdg_drv_refresh(); }`。
 
 ### 3.2 Trial Boot 状态机
 
@@ -368,13 +371,14 @@ void enter_safe_mode(void)
   {
     timer_poll();
     can_driver_poll();
+    wdg_drv_refresh();
   }
 }
 ```
 
 - CAN 使用与 APP 相同的 `can_driver_init()`（250 kbps 扩展帧，过滤全部扩展数据帧）；
-- 循环内轮询软件定时器、轮询 CAN RX FIFO 并派发 `safe_mode_can_rx_handler`；
-- **不返回**。
+- 循环内轮询软件定时器、轮询 CAN RX FIFO 并派发 `safe_mode_can_rx_handler`、喂狗；
+- **不返回**（除非 IWDG 复位）。
 
 **UDS 请求入口** `safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)`：
 
@@ -531,7 +535,8 @@ Safe Mode 下的 CAN ID：
 #### 0x11 — ECUReset（ECU 复位）
 
 - 请求：`[0x11, resetType]`
-- 处理：先发送正响应 `[0x51]`，然后 `NVIC_SystemReset()` 复位 MCU，使 Bootloader 重新走引导流程启动新镜像。
+- 处理：先发送正响应 `[0x51]`，然后 `while(1) { /* wait for watchdog reset */ }`，
+  **依靠 IWDG 在 ~1 s 后复位 MCU**，使 Bootloader 重新走引导流程启动新镜像。
 
 #### 其他服务
 
@@ -713,6 +718,7 @@ main()
   ├─ system_clock_config()               ← 180 MHz
   ├─ nvic_priority_group_config(NVIC_PRIORITY_GROUP_4)
   ├─ timer_drv_init()                    ← 软件定时器 + SysTick 1ms
+  ├─ wdg_drv_init()                      ← IWDG ~1s
   ├─ nvm_drv_init()                      ← NVM 配置驱动
   ├─ can_driver_init()                   ← CAN1 250kbps 扩展帧
   ├─ qi_uart_init()                      ← USART2 9600 8N1
@@ -725,7 +731,8 @@ main()
        ├─ can_driver_poll()   ← CAN 帧分发（触发 UDS 处理）
        ├─ lifecycle_poll()    ← 每 1000ms 发送周期广播
        ├─ ota_trial_poll()    ← Trial 状态轮询
-       └─ qi_uart_poll()      ← Qi UART 数据轮询
+       ├─ qi_uart_poll()      ← Qi UART 数据轮询
+       └─ wdg_drv_refresh()   ← 喂狗
 ```
 
 ```c
@@ -740,6 +747,7 @@ int main(void)
 
   /* initialize drivers */
   timer_drv_init();
+  wdg_drv_init();
   nvm_drv_init();
   can_driver_init();
   qi_uart_init();
@@ -761,6 +769,7 @@ int main(void)
     lifecycle_poll();     /* 1000ms periodic broadcast */
     ota_trial_poll();     /* trial state machine polling */
     qi_uart_poll();
+    wdg_drv_refresh();
   }
 }
 ```
@@ -1051,9 +1060,9 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
      ├────────────────────────────────────────────────────▶│  (含签名)、更新 metadata
      │◀────────────────────────────────────────────────────┤ ⑯ 0x77
      │ ⑰ 0x11 ECUReset            │                        │
-     ├────────────────────────────────────────────────────▶│ ⑱ 0x51，NVIC_SystemReset
+     ├────────────────────────────────────────────────────▶│ ⑱ 0x51，等待 IWDG
      │                            │                        │
-     │                            │──── 系统复位 ──────────▶│ ⑲ 重新引导：校验 APP_A
+     │                            │──── 看门狗复位(~1s) ───▶│ ⑲ 重新引导：校验 APP_A
      │                            │                        │  → 通过 → 跳转
      │                            │◀──── 跳转至 APP_A+256 ─┤
      │                            │ ⑳ 上电广播 0x18FF260D  │
@@ -1087,7 +1096,7 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
     （`slot_a_valid=1`、`slot_a_crc32`、`ota_state=IDLE`），回复 `[0x77]`。
 
 **阶段 4 — 复位与启动新镜像**：
-11. 主机发 `0x11` → Bootloader 回 `[0x51]` 后调用 `NVIC_SystemReset()` 复位；
+11. 主机发 `0x11` → Bootloader 回 `[0x51]` 后空转等待 IWDG（~1 s）复位；
 12. 复位后 Bootloader 重新引导：`select_boot_slot` → `try_boot_slot(active_slot)`
     → `boot_verify_image`（含 ECDSA 验签）通过 → 跳转 `0x08004100`；
 13. APP 启动，发 BOOTUP 广播，进入 100 ms 周期广播；若为试运行则确认。
@@ -1102,7 +1111,7 @@ void qi_uart_send(const uint8_t *data, uint8_t len)
 | Flash 擦除/编程失败              | `flash_sector_erase` / `flash_word_program` | 回 NRC`0x72`；下载状态复位                                      |
 | 未开始下载就发 0x36/0x37         | `g_dl_active == 0`                            | 回 NRC`0x71`                                                    |
 | 镜像校验失败（magic/length/CRC） | `boot_verify_image`                           | 尝试另一槽位；双槽失败 → Safe Mode                               |
-| 新镜像启动即崩溃/超时            | `detect_boot_reason()` = WDG (遗留兼容)      | Trial retry 计数，超过`trial_max_retries (3)` → 回滚到另一槽位 |
+| 新镜像启动即崩溃/超时            | IWDG 复位 →`detect_boot_reason()` = WDG      | Trial retry 计数，超过`trial_max_retries (3)` → 回滚到另一槽位 |
 | metadata 损坏                    | `meta_validate`（magic/version/CRC）          | 主区→备份区→默认值三级回退                                      |
 | 0x34 擦除中断/掉电               | 下次上电镜像校验失败                            | 走槽位回退逻辑，不会启动半成品镜像                                |
 
@@ -1217,7 +1226,7 @@ NRC   [0x7F, 0x37, 0x71]
 
 ```
 请求  [0x11, resetType]
-正响应 [0x51, resetType]   (APP: 随后触发 OTA；Bootloader: 随后 NVIC_SystemReset 复位)
+正响应 [0x51, resetType]   (APP: 随后触发 OTA；Bootloader: 随后等待 IWDG 复位)
 ```
 
 **0x3E TesterPresent（APP）**
@@ -1249,7 +1258,7 @@ NRC   [0x7F, 0x37, 0x71]
 | `USART2_IRQHandler`                                                                         | (3, 0)           | `qi_uart_rx_irq_handler()`     | Qi UART 接收字节入 FIFO                 |
 | `USART1_IRQn`                                                                               | —               | 当前未使用                       | Debug 调试串口（PB6=TX / PB7=RX），预留 |
 | `NMI_Handler` / `SVC_Handler` / `DebugMon_Handler` / `PendSV_Handler`                 | -                | 空实现                           | -                                       |
-| `HardFault_Handler` / `MemManage_Handler` / `BusFault_Handler` / `UsageFault_Handler` | -                | `while(1)`                     | 异常死循环（可配合调试器恢复）   |
+| `HardFault_Handler` / `MemManage_Handler` / `BusFault_Handler` / `UsageFault_Handler` | -                | `while(1)`                     | 异常死循环（可配合调试器/看门狗恢复）   |
 
 ### 7.1 CAN1_RX_IRQHandler
 
@@ -1379,7 +1388,27 @@ CAN1_RX  (1,0)  >  CAN1_ERR (2,0)  >  USART2 (3,0)
 | 发送策略     | 优先 PTB（主发送缓冲），满则 STB（次发送缓冲），双满返回 -1 |
 | 软件 RX FIFO | 16 帧（`CAN_DRIVER_RX_FIFO_SIZE`）                        |
 
-### 8.3 定时器配置（timer_drv.h / timer_drv.c）
+### 8.3 看门狗配置（wdg_drv.h）
+
+```c
+/* IWDG uses LSI clock (~40kHz). Once enabled, it cannot be disabled.
+   LSI = 40kHz, DIV_128 -> 312.5 Hz -> 3.2ms/tick
+   reload = 312 -> timeout ~ 998ms (~1000ms) */
+void wdg_drv_init(void);
+void wdg_drv_refresh(void);   /* 需在超时窗口内周期性调用 */
+```
+
+| 参数   | 值                                                    |
+| ------ | ----------------------------------------------------- |
+| 时钟源 | LSI（约 40 kHz）                                      |
+| 分频   | 128 → 312.5 Hz（3.2 ms/tick）                        |
+| 重装值 | 312                                                   |
+| 超时   | ≈ 998 ms（约 1 s）                                   |
+| 特性   | 一旦使能不可关闭；复位后`CRM_WDT_RESET_FLAG` 可检测 |
+
+喂狗点：Bootloader Safe Mode 循环、Bootloader 兜底循环、APP 主循环。
+
+### 8.4 定时器配置（timer_drv.h / timer_drv.c）
 
 | 参数           | 值                                                                                                                                                             |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1425,7 +1454,7 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
 2. **Trial 超时计数未消费**：`trial_timer_callback()` 每秒递增
    `g_trial_elapsed_sec` 并置 `g_trial_timer_flag`，但当前可见代码中没有逻辑
    依据 `trial_timeout_sec (10)` 执行超时回滚；实际回滚依赖
-   "复位 + `trial_retry_count > trial_max_retries (3)`" 路径
+   “看门狗复位 + `trial_retry_count > trial_max_retries (3)`” 路径
    （而 retry_count 仅在 PENDING→ACTIVE 时递增，若 PENDING 从未被置位，该路径
    同样不会触发）。**若需启用 Trial 回滚，需补充置 PENDING 及超时/重试消费逻辑。**
 3. **APP 链接地址与 VTOR 需核对**：Bootloader 跳转目标为
@@ -1459,8 +1488,8 @@ nvic_irq_enable(USART2_IRQn,   3, 0);
 9. **备份区写入约定**：`boot_metadata_save()` / `ota_metadata_save()` 均 **先写 Backup
    再写 Primary**（Backup 在 `0x0801C800`，Primary 在 `0x0801C000`）；
    NVM 配置区在 `0x0801E000`，与元数据分离。
-10. **0x11 ECUReset 使用 NVIC_SystemReset**：Bootloader 的 ECUReset 直接调用
-    `NVIC_SystemReset()` 复位 MCU。主机应在收到 `[0x51]` 后等待至少 1 s 再开始
+10. **0x11 复位依赖 IWDG**：Bootloader 的 ECUReset 通过空转等待看门狗复位
+    （~1 s），期间不喂狗属预期行为；主机应在收到 `[0x51]` 后等待至少 1 s 再开始
     下一阶段操作。
 
 ---

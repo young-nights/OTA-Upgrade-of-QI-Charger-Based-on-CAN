@@ -1,7 +1,7 @@
 /**
   **************************************************************************
   * @file     wdg_drv.c
-  * @brief    IWDG (Independent Watchdog) driver implementation
+  * @brief    IWDG (Independent Watchdog) driver — DISABLED (stub only)
   **************************************************************************
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
@@ -25,55 +25,25 @@
 
 /* includes ------------------------------------------------------------------*/
 #include "wdg_drv.h"
-#include "at32f422_426_conf.h"
-
-/* private define ------------------------------------------------------------*/
-/**
- * @brief  IWDG timeout calculation (LSI = 40kHz typical):
- *         - LSI clock = 40000 Hz
- *         - WDT_CLK_DIV_128 -> 40000 / 128 = 312.5 Hz -> 3.2 ms per tick
- *         - reload = 312 -> timeout = 312 * 3.2 ms = 998.4 ms ~ 1000 ms
- */
-#define WDG_DRV_DIVIDER               WDT_CLK_DIV_128
-#define WDG_DRV_RELOAD_VALUE          312
 
 /* exported functions --------------------------------------------------------*/
 
 /**
- * @brief  initialize IWDG with ~1000ms timeout
- * @note   IWDG uses LSI clock (~40kHz). Once enabled, it cannot be disabled.
- *         Initialization sequence: unlock -> set divider -> set reload -> enable -> lock
+ * @brief  IWDG init — no-op (watchdog removed from bootloader)
  * @param  none
  * @retval none
  */
 void wdg_drv_init(void)
 {
-  /* enable register write access (unlock) */
-  wdt_register_write_enable(TRUE);
-
-  /* set clock divider: LSI/128 = 312.5 Hz (3.2ms per tick) */
-  wdt_divider_set(WDG_DRV_DIVIDER);
-
-  /* set reload value: 312 -> timeout ~ 998ms */
-  wdt_reload_value_set(WDG_DRV_RELOAD_VALUE);
-
-  /* enable IWDG (once enabled, it cannot be disabled - hardware limitation) */
-  wdt_enable();
-
-  /* reload counter to start fresh */
-  wdt_counter_reload();
-
-  /* disable register write access (lock) */
-  wdt_register_write_enable(FALSE);
+  /* intentionally empty — watchdog is disabled */
 }
 
 /**
- * @brief  refresh (feed) the IWDG to prevent reset
- * @note   must be called periodically within the watchdog timeout window
+ * @brief  IWDG refresh — no-op (watchdog removed from bootloader)
  * @param  none
  * @retval none
  */
 void wdg_drv_refresh(void)
 {
-  wdt_counter_reload();
+  /* intentionally empty — watchdog is disabled */
 }

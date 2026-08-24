@@ -1,7 +1,7 @@
 /**
   **************************************************************************
   * @file     wdg_drv.h
-  * @brief    IWDG (Independent Watchdog) driver header
+  * @brief    IWDG (Independent Watchdog) driver — DISABLED (stub only)
   **************************************************************************
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
@@ -37,18 +37,18 @@ extern "C" {
 /* exported functions -------------------------------------------------------*/
 
 /**
- * @brief  initialize IWDG with ~1000ms timeout
- * @note   IWDG uses LSI clock (~40kHz). Once enabled, it cannot be disabled.
- *         LSI = 40kHz, DIV_128 -> 312.5 Hz -> 3.2ms/tick
- *         reload = 312 -> timeout ~ 998ms (~1000ms)
+ * @brief  IWDG init — no-op (watchdog removed from bootloader)
+ * @note   The IWDG is no longer used. This stub exists only for
+ *         backward compatibility with code that still calls it.
  * @param  none
  * @retval none
  */
 void wdg_drv_init(void);
 
 /**
- * @brief  refresh (feed) the IWDG to prevent reset
- * @note   must be called periodically within the watchdog timeout window
+ * @brief  IWDG refresh — no-op (watchdog removed from bootloader)
+ * @note   The IWDG is no longer used. This stub exists only for
+ *         backward compatibility with code that still calls it.
  * @param  none
  * @retval none
  */

@@ -153,7 +153,7 @@
 ├─────────────────────────────────────────────────────┤
 │  驱动层 (Driver Layer)                               │
 │  CAN 驱动 (CAN 2.0B + ISO-TP)、UART 驱动            │
-│  GPIO 驱动、NVM 驱动 (内部 Flash)、Timer 驱动          │
+│  GPIO 驱动、NVM 驱动 (内部 Flash)、Timer/WDG 驱动    │
 ├─────────────────────────────────────────────────────┤
 │  硬件层 (Hardware)                                   │
 │  AT32F426KBU7-4 (Cortex-M4F, 180MHz)               │
@@ -167,6 +167,7 @@ int main(void) {
     system_clock_config();         // 180MHz
     nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
     timer_drv_init();              // 软件定时器 + SysTick 1ms
+    wdg_drv_init();                // IWDG ~1s
     nvm_drv_init();                // NVM 配置驱动
     can_driver_init();             // CAN1 250kbps 扩展帧
     qi_uart_init();                // USART2 9600 8N1
@@ -180,6 +181,7 @@ int main(void) {
         lifecycle_poll();          // 1000ms 周期广播
         ota_trial_poll();          // Trial 状态轮询
         qi_uart_poll();            // Qi UART 数据轮询
+        wdg_drv_refresh();         // 喂狗
     }
 }
 ```
@@ -213,7 +215,7 @@ int main(void) {
 | | UART 驱动 | 与 Qi 芯片串口通信 | ✅ 已实现 |
 | | GPIO 驱动 | 霍尔传感器、LED、控制引脚 | ⬜ 待实现 |
 | | NVM 驱动 | 内部 Flash 读写 | ✅ 已实现 |
-| | Timer 驱动 | 定时器 | ✅ 已实现 |
+| | Timer/WDG 驱动 | 定时器、看门狗 | ✅ 已实现 |
 | **硬件层** | AT32F426KBU7-4 | Cortex-M4F, 180MHz, 128KB Flash, 20KB SRAM | — |
 
 ### 2.4 硬件接口清单 (CAN MCU)
@@ -226,7 +228,7 @@ int main(void) {
 | 夹臂电机 | GPIO | H桥驱动电路 | PWM/方向控制 |
 | NVM | 内部 Flash | AT32F426 内部 Flash | 按需读写 |
 | 状态 LED | GPIO | LED 驱动电路 | 推挽输出 |
-| 看门狗 | ~~IWDG~~ | — | 已从 Bootloader 移除 |
+| 看门狗 | IWDG | 内部 | 1000ms 超时 |
 
 ### 2.5 CAN MCU 引脚资源分配 (AT32F426KBU7-4)
 
@@ -306,7 +308,7 @@ int main(void) {
 | SID | 服务 | 会话 | 安全 | 状态 | 说明 |
 |-----|------|------|------|------|------|
 | 0x10 | DiagnosticSessionControl | 全部 | 无 | ✅ 已实现 | Bootloader Safe Mode + APP 端 |
-| 0x11 | ECUReset | Ext/Prog | Level 1 | ✅ 已实现 | Bootloader: NVIC_SystemReset 复位；APP: 触发 OTA |
+| 0x11 | ECUReset | Ext/Prog | Level 1 | ✅ 已实现 | Bootloader: 等待 IWDG 复位；APP: 触发 OTA |
 | 0x22 | ReadDataByIdentifier | Extended | 无 | ✅ 已实现 | DID 0xF189 软件版本（无需安全解锁） |
 | 0x27 | SecurityAccess | Ext/Prog | — | ✅ 已实现 | ECDSA P-256 分帧验签（0x27 0x01/0x03/0x02） |
 | 0x2E | WriteDataByIdentifier | Extended | Level 1 | ✅ 已实现 | DID 0x2010 固件类型选择（0=app, 1=bootloader） |
@@ -634,9 +636,9 @@ CAN MCU (AT32F426) 支持通过 CAN/UDS 协议的自身固件远程升级，采�
     │                                  │                                │ 更新 metadata
     │◀─────────────────────────────────────────────────────────────────┤ ⑪ 0x77
     │ ⑫ 0x11 ECUReset                 │                                │
-    ├─────────────────────────────────────────────────────────────────▶│ ⑬ 0x51，NVIC_SystemReset
+    ├─────────────────────────────────────────────────────────────────▶│ ⑬ 0x51，等待 IWDG
     │                                  │                                │
-    │                                  │──── 系统复位 ──────────────────▶│ ⑭ 重新引导：校验 APP_A
+    │                                  │──── 看门狗复位(~1s) ─────────▶│ ⑭ 重新引导：校验 APP_A
     │                                  │                                │  → 通过 → 跳转至 APP_A+256
     │                                  │◀──── 跳转 ─────────────────────┤
     │                                  │ ⑮ 上电广播 0x18FF260D          │
@@ -806,14 +808,12 @@ CCU (Host)                MCU (AT32F426)              Qi 芯片
 
 ### 8.4 看门狗
 
-> **注意**: IWDG 已从 Bootloader 中移除。以下为历史参考信息。
-
 | 参数 | 值 |
 |------|-----|
-| 类型 | ~~IWDG (独立看门狗)~~ — 已移除 |
-| 超时 | — |
-| 喂狗频率 | — |
-| 复位后行为 | — |
+| 类型 | IWDG (独立看门狗) |
+| 超时 | 500~2000 ms (推荐 1000ms) |
+| 喂狗频率 | ≤ 500 ms |
+| 复位后行为 | 充电禁用，进入 DISABLED |
 
 ---
 
@@ -855,7 +855,7 @@ CCU (Host)                MCU (AT32F426)              Qi 芯片
 | OI-06 | Trial Boot PENDING 置位触发链路接通（0x37 处理中需补充） | OTA | P0 | ⬜ 仍待实现（APP 侧确认机制未补） |
 | OI-07 | CCU 控制指令完整定义 | CAN 通信 | P1 | ⬜ 待定义 |
 | OI-08 | 运输模式唤醒/退出机制 | 低功耗 | P1 | ⬜ 待实现 |
-| OI-09 | ~~看门狗/重试/去抖参数推荐值~~ | 可靠性 | P1 | ✅ IWDG 已移除 |
+| OI-09 | 看门狗/重试/去抖参数推荐值 | 可靠性 | P1 | ⬜ 待确认 |
 | OI-10 | AT32F426 硬件加密引擎确认（有则用硬件加速，无则纯软件 micro-ecc） | 安全访问性能 | P0 | ⬜ 待确认 |
 | OI-11 | APP 链接地址与 VTOR 对齐（scatter 配置待修改） | OTA 启动 | P0 | ✅ 已修复（scatter 文件已修正） |
 | OI-12 | 0x37 未写回 active_slot（下载后需切换活跃槽位） | OTA 双槽 | P0 | ✅ 已修复（0x37 中 active_slot = SLOT_A） |

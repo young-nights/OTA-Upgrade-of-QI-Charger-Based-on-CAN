@@ -16,9 +16,9 @@
 | 阶段 | 状态 | 说明 |
 |------|------|------|
 | 阶段一：项目启动与技术评估 | ✅ 已完成 | 架构确认、Flash 布局、协议定义 |
-| 阶段二：架构设计与环境搭建 | ✅ 已完成 | 裸机工程、BSP、CAN 驱动、Timer |
+| 阶段二：架构设计与环境搭建 | ✅ 已完成 | 裸机工程、BSP、CAN 驱动、Timer/WDG |
 | 阶段三：UDS 诊断与通信层 | 🔄 部分完成 | Bootloader Safe Mode UDS 已实现；APP 端 UDS 仅有基础服务 |
-| 阶段四：CAN MCU 核心功能 | 🔄 部分完成 | CAN 驱动 + Timer + NVM 已完成；GPIO/串口协议解析/状态机未完成 |
+| 阶段四：CAN MCU 核心功能 | 🔄 部分完成 | CAN 驱动 + Timer/WDG + NVM 已完成；GPIO/串口协议解析/状态机未完成 |
 | 阶段五：OTA 远程升级 | 🔄 核心完成 | Bootloader + 元数据 + 下载流程 + CRC32 + Trial 框架已实现；ECDSA/Trigger 链路/ISO-TP 待完成 |
 | 阶段六：系统集成与测试 | ⬜ 未开始 | — |
 | 阶段七：交付与量产准备 | ⬜ 未开始 | — |
@@ -27,7 +27,7 @@
 
 | 模块 | 位置 | 状态 | 说明 |
 |------|------|------|------|
-| Bootloader 启动流程 | `qi_wireless_bootloader/mdk_user/Src/main.c` | ✅ | 时钟→Timer→元数据→启动原因→Trial→槽位选择→跳转 |
+| Bootloader 启动流程 | `qi_wireless_bootloader/mdk_user/Src/main.c` | ✅ | 时钟→WDG→元数据→启动原因→Trial→槽位选择→跳转 |
 | Trial Boot 状态机 | `boot_trial.c` | ✅ 框架完成 | IDLE/PENDING/ACTIVE/CONFIRMED/ROLLBACK 逻辑已实现；PENDING 置位触发链路未接通 |
 | Safe Mode UDS | `boot_safe_mode.c` | ✅ | 0x10/0x27/0x34/0x36/0x37/0x11 全部实现 |
 | Flash 驱动 | Bootloader + APP | ✅ | 4 字节 word 编程、扇区擦除 |
@@ -39,7 +39,7 @@
 | OTA 触发 | `ota_trigger.c` | ✅ 框架 | 写 metadata + NVIC_SystemReset |
 | 生命周期广播 | `lifecycle.c` | ✅ | 0x18FF260D, lifecycle_init/lifecycle_poll (1000ms) |
 | CAN 驱动 | `can_driver.c` | ✅ | 250kbps 扩展帧、中断收发、软件 FIFO |
-| Timer 驱动 | `timer_drv.c` | ✅ | 16 个软件定时器 + SysTick 1ms |
+| Timer/WDG 驱动 | `timer_drv.c` / `wdg_drv.c` | ✅ | 16 个软件定时器 + IWDG 1s |
 | NVM 驱动 | `nvm_drv.c` | ✅ | 内部 Flash 读写 |
 | Qi UART 驱动 | `qi_uart.c` | ✅ 底层 | USART2 收发 + FIFO；协议解析层未实现 |
 
@@ -130,7 +130,7 @@
 | 序号 | 任务 | 状态 | 产出物 |
 |------|------|------|--------|
 | 2.1 | 裸机工程搭建（GCC ARM / Makefile 或 CMake），BSP 移植 | ✅ | 可编译基础工程 |
-| 2.2 | AT32F426 官方库集成 (SPL: GPIO/SPI/UART/CAN/Timer) | ✅ | BSP 驱动库 |
+| 2.2 | AT32F426 官方库集成 (SPL: GPIO/SPI/UART/CAN/Timer/IWDG) | ✅ | BSP 驱动库 |
 | 2.3 | CAN 驱动开发 + ISO-TP 分帧实现 | ✅ 基础 | CAN 驱动（单帧 UDS） |
 | 2.4 | CAN MCU 软件架构设计文档编写 | ⬜ | 架构设计文档 (D-02) |
 | 2.5 | Flash 布局详细设计 (双槽/单槽方案) | ✅ | Flash 布局文档 (D-07) |
@@ -138,9 +138,9 @@
 | 2.7 | CAN MCU ↔ Qi 芯片串口驱动 + 通信协议栈 | ✅ 底层 | 串口通信模块（USART2 收发 + FIFO） |
 | 2.8 | DBC 文件初版 | ⬜ | CAN 通信数据库 (D-04) |
 
-**里程碑 M2** ✅: BSP 驱动全部验证通过，CAN 收发测试通过，Timer 正常工作。
+**里程碑 M2** ✅: BSP 驱动全部验证通过，CAN 收发测试通过，Timer/WDG 正常工作。
 
-> **实际产出**：`qi_wireless_bootloader/` 和 `qi_wireless_code/` 两个独立工程；CAN 250kbps 扩展帧驱动（中断收发 + 16 帧软件 FIFO）；Timer 驱动（16 个软件定时器 + SysTick 1ms）；NVM 驱动（metadata 主备双份读写）；Qi UART 底层驱动（USART2 9600 8N1 + 64 字节环形缓冲）。
+> **实际产出**：`qi_wireless_bootloader/` 和 `qi_wireless_code/` 两个独立工程；CAN 250kbps 扩展帧驱动（中断收发 + 16 帧软件 FIFO）；Timer 驱动（16 个软件定时器 + SysTick 1ms）；WDG 驱动（IWDG ~1s 超时）；NVM 驱动（metadata 主备双份读写）；Qi UART 底层驱动（USART2 9600 8N1 + 64 字节环形缓冲）。
 
 ---
 
@@ -186,13 +186,13 @@
 | 4.6 | 配置管理器 (NVM 持久化 DID) | ✅ | 配置管理模块 |
 | 4.7 | 操作模式管理 (正常/服务/制造/运输) | ⬜ | 模式管理模块 |
 | 4.8 | 低功耗管理 (空闲超时 + CAN 唤醒) | ⬜ | 低功耗模块 |
-| 4.9 | ~~看门狗集成~~ | ✅ 已移除 | IWDG 已从 Bootloader 中移除 |
+| 4.9 | 看门狗集成 | ✅ | WDG 模块 |
 | 4.10 | CAN MCU ↔ 上位机调试接口 (模拟 CCU) | ⬜ | 上位机调试工具 |
 | 4.11 | 故障管理器 (CAN 通信故障 + 内部故障处理) | ⬜ | 故障管理模块 |
 
-**里程碑 M4** 🔄: CAN 驱动 + Timer + NVM 已验证通过；GPIO/串口协议解析/状态机/加密待完成。
+**里程碑 M4** 🔄: CAN 驱动 + Timer/WDG + NVM 已验证通过；GPIO/串口协议解析/状态机/加密待完成。
 
-> **已完成**：CAN 驱动收发验证、Timer 16 定时器并发、NVM metadata 读写。
+> **已完成**：CAN 驱动收发验证、Timer 16 定时器并发、WDG 1s 超时、NVM metadata 读写。
 > **未完成**：GPIO 控制、串口协议解析层、充电状态机、加密模块、故障管理。
 
 ---
@@ -217,7 +217,7 @@
 **里程碑 M5** 🔄: Bootloader 完整启动流程 + Safe Mode UDS + Flash 下载 + CRC32 校验 + Trial 框架已验证。
 
 > **实际产出**（基于 `workflow-detail.md`）：
-> - Bootloader 启动流程：时钟→Timer→元数据初始化→启动原因检测→Trial 状态机→Safe Mode 检查→槽位选择→镜像校验→跳转
+> - Bootloader 启动流程：时钟→WDG→元数据初始化→启动原因检测→Trial 状态机→Safe Mode 检查→槽位选择→镜像校验→跳转
 > - Safe Mode UDS：0x10/0x27/0x34/0x36/0x37/0x11 全部实现
 > - Flash 下载：0x34 擦除 APP_A 24 扇区 + 0x36 word 编程 + 0x37 生成 Image Header + CRC32
 > - 元数据管理：主备双份 + CRC32 校验 + 三级回退（主区→备份区→默认值）
@@ -307,9 +307,9 @@
 | 里程碑 | 时间 | 状态 | 标志 | 风险等级 |
 |--------|------|------|------|----------|
 | M1 技术评审 | 第 1 周末 | ✅ 已达成 | 双 MCU 架构确认 + 接口协议定义完成 | 🟢 低 |
-| M2 BSP 验证 | 第 2 周末 | ✅ 已达成 | CAN 收发 + Timer + NVM 通过 | 🟢 低 |
+| M2 BSP 验证 | 第 2 周末 | ✅ 已达成 | CAN 收发 + Timer/WDG + NVM 通过 | 🟢 低 |
 | M3 UDS 通信 | 第 4 周末 | 🔄 部分达成 | Bootloader Safe Mode UDS 已验证；APP 端基础 UDS 已验证 | 🟡 中 |
-| M4 CAN MCU 功能 | 第 6 周末 | 🔄 部分达成 | CAN↔Timer 联动通过；GPIO/串口协议/状态机待完成 | 🟡 中 |
+| M4 CAN MCU 功能 | 第 6 周末 | 🔄 部分达成 | CAN↔Timer↔WDG 联动通过；GPIO/串口协议/状态机待完成 | 🟡 中 |
 | M5 OTA 验证 | 第 8 周末 | ✅ 核心达成 | Bootloader+Flash+Trial+ECDSA 已验证；Trigger 链路已修复；ISO-TP 待完成 | 🟡 中 |
 | M6 测试通过 | 第 11 周末 | ⬜ 待启动 | 全部测试用例通过 | 🟡 中 |
 | M7 交付验收 | 第 12 周末 | ⬜ 待启动 | 19 项交付物归档 | 🟢 低 |
@@ -323,7 +323,7 @@
 | 阶段一 | ✅ 完成 | 40h | ~40h | 0h | 架构确认、协议定义 |
 | 阶段二 | ✅ 完成 | 40h | ~40h | 0h | 工程搭建、基础驱动 |
 | 阶段三 | ✅ 核心完成 | 80h | ~60h | ~20h | Safe Mode UDS 已完成；SecurityAccess ECDSA 已完成；DID/会话管理待完善 |
-| 阶段四 | 🔄 部分 | 80h | ~20h | ~60h | Timer/NVM 已完成；GPIO/串口协议/状态机/加密/故障管理待完成 |
+| 阶段四 | 🔄 部分 | 80h | ~20h | ~60h | Timer/WDG/NVM 已完成；GPIO/串口协议/状态机/加密/故障管理待完成 |
 | 阶段五 | ✅ 核心完成 | 80h | ~65h | ~15h | Bootloader+Flash+Trial+ECDSA 已完成；ISO-TP/工具待完成 |
 | 阶段六 | ⬜ 待启动 | 148h | 0h | 148h | 依赖阶段三/四/五完成 |
 | 阶段七 | ⬜ 待启动 | 40h | 0h | 40h | 依赖阶段六完成 |
@@ -353,7 +353,7 @@
 | 风险 | 概率 | 影响 | 应对措施 |
 |------|------|------|----------|
 | ECDSA P-256 软件验签耗时超限（200~800ms） | 高 | 高 | NRC 0x78 延迟响应（P2* 超时 5000ms）+ micro-ecc 库 + 确认硬件加密引擎 |
-| AT32F426 外设驱动兼容性 | 低 | 中 | 使用 Artery 官方 SPL 库；CAN/UART/Timer 已验证通过 |
+| AT32F426 外设驱动兼容性 | 低 | 中 | 使用 Artery 官方 SPL 库；CAN/UART/Timer/WDG 已验证通过 |
 | Flash 写入寿命 | 低 | 中 | metadata 区域按需擦写；NVM 区域采用磨损均衡 |
 
 ---

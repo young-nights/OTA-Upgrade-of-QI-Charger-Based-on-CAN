@@ -639,7 +639,7 @@ bool ota_verify_image_signature(uint8_t slot)
    - 初始化 NVM 访问
    - 发送 BOOTUP 广播
    - 100ms 健康延迟后自动确认 trial
-7. 如果确认失败 (系统复位):
+7. 如果确认失败 (看门狗复位):
    - Bootloader 重新进入试启动流程
 ```
 
@@ -719,8 +719,8 @@ static void boot_rollback(void)
 | **TransferData 期间**         | 目标槽位数据不完整   | Bootloader 检测到 trial_state=PENDING 但镜像 CRC 无效 → 标记槽位无效, 启动之前的有效槽位 |
 | **元数据写入中**              | 主元数据可能损坏     | Bootloader 读取备份元数据恢复                                                             |
 | **CCUReset 之后、APP 启动前** | 新镜像未执行         | Bootloader 正常进入试启动流程                                                             |
-| **试启动期间**                | 新镜像部分执行       | 系统复位 → Bootloader 递增重试计数 → 超限则回滚                                         |
-| **确认写入中**                | 确认标志可能未写入   | 试启动超时 → 系统复位 → 重试 → 最终回滚                                                |
+| **试启动期间**                | 新镜像部分执行       | 看门狗复位 → Bootloader 递增重试计数 → 超限则回滚                                       |
+| **确认写入中**                | 确认标志可能未写入   | 试启动超时 → 看门狗复位 → 重试 → 最终回滚                                              |
 
 ### 7.2 元数据损坏恢复
 

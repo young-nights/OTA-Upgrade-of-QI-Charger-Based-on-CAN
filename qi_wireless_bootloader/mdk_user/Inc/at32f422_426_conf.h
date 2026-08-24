@@ -70,8 +70,8 @@ extern "C" {
 #define SPI_MODULE_ENABLED
 #define TMR_MODULE_ENABLED
 #define USART_MODULE_ENABLED
-#define WDT_MODULE_ENABLED
-#define WWDT_MODULE_ENABLED
+
+/* WDT/WWDT removed — watchdog is disabled in bootloader */
 
 /* includes ------------------------------------------------------------------*/
 #ifdef ADC_MODULE_ENABLED
@@ -127,12 +127,6 @@ extern "C" {
 #endif
 #ifdef USART_MODULE_ENABLED
 #include "at32f422_426_usart.h"
-#endif
-#ifdef WDT_MODULE_ENABLED
-#include "at32f422_426_wdt.h"
-#endif
-#ifdef WWDT_MODULE_ENABLED
-#include "at32f422_426_wwdt.h"
 #endif
 
 #ifdef __cplusplus

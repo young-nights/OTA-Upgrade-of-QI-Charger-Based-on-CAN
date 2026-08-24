@@ -16,7 +16,7 @@
 
 1. APP 只按 Slot A 链接（`0x08005100`），Slot B 无法作为独立可执行镜像启动，A/B 回滚名存实亡。
 2. 元数据只写 Primary，Backup 区被 NVM 占用，掉电原子性被主动放弃。
-3. 试启动 10s 超时在跳转 APP 后失效；APP 一启动就自动 CONFIRMED，HardFault 死循环无法复位，回滚几乎走不到。
+3. 试启动 10s 超时在跳转 APP 后失效；APP 一启动就自动 CONFIRMED，HardFault 还持续喂狗，回滚几乎走不到。
 4. 进入 Safe Mode 时立刻清掉 `OTA_STATE_DOWNLOADING`，下载过程中复位会回到旧 APP，会话无法恢复。
 5. 上位机 / 测试工程未对齐现行 ISO-TP + ECDSA 流程；`0x38` 是私有 SID，标准 CCU 不会发。
 
@@ -151,16 +151,16 @@ NVM 目前只有 `nvm_drv_init()`，没有业务读写，冲突是布局问题�
 |------|----------------|
 | Boot 里 `timer_create(1000, trial_timer_callback)` | 在 `try_boot_slot()` **之前**启动，一跳进 APP，SysTick/软件定时器全部被 APP 重建，**10 s 回调不会再跑** |
 | APP `ota_trial_init()` + `ota_trial_poll()` | 100ms 健康延迟后自动确认 `trial_state` 为 CONFIRMED |
-| APP `HardFault_Handler` | `while(1)` —— 死机也 **不复位**，Boot 的 retry/rollback 进不去 |
+| APP `HardFault_Handler` | `while(1) { wdg_drv_refresh(); }` —— 死机也 **不复位**，Boot 的 retry/rollback 进不去 |
 | `process_trial_state(ACTIVE)` | 只在 `last_boot_reason == WDG` 时加 retry；正常跑着的坏 APP 永远 ACTIVE 或已被自动确认 |
 
-结果：只要新镜像能跑到 `main()` 后半段，就会被永久确认。真正该死机回滚的路径（HardFault、卡死）都失效。再叠加 4.1，回滚目标槽本身也跑不起来。
+结果：只要新镜像能跑到 `main()` 后半段，就会被永久确认。真正该死机回滚的路径（HardFault、卡死但还在喂狗）都失效。再叠加 4.1，回滚目标槽本身也跑不起来。
 
 **建议**
 
-1. 试启动计时放在 **APP**：APP 自己在 10 s 未确认时触发系统复位。
+1. 试启动计时放在 **APP**：确认前不喂狗超过 WDG 窗口，或 APP 自己在 10 s 未确认时停狗复位。
 2. 确认改为：核心健康检查通过 **且** 可选的 CCU DID 写入；不要 `main()` 里无条件 CONFIRMED。
-3. Fault handler 触发系统复位，回到 Boot。
+3. Fault handler **禁止喂狗**，让 IWDG 复位回到 Boot。
 4. Boot 的 `trial_timer_callback` 在跳转后无意义，应删除或改成“未跳转才计时”，避免误导。
 
 ### 4.4 下载会话在进 Safe Mode 时被清掉
@@ -177,7 +177,7 @@ if (g_meta.ota_state == OTA_STATE_DOWNLOADING) {
 
 **问题**
 
-- 擦 46 KB、ECDSA、0x36 写 Flash 期间若掉电复位，下次启动 `ota_state` 已是 IDLE。
+- 擦 46 KB、ECDSA、0x36 写 Flash 期间若 WDG/掉电复位，下次启动 `ota_state` 已是 IDLE。
 - 旧槽仍 valid → 直接进 APP，上位机还停在 Programming 流程中间。
 - 若第一次升级（无有效 APP），仍会因镜像无效进 Safe Mode，表现不一致。
 
@@ -308,7 +308,7 @@ Boot 的 `g_firmware_type`、APP 的 `security_unlocked` 在 APP 里永远是 0�
 
 `boot_jump.c`：关外设不完整（只 reset CAN1）、跳转前 `__enable_irq()`。向量和 MSP 校验合理。建议跳转保持 `__disable_irq()`，由 APP 的 `Reset_Handler`/`SystemInit` 再开中断。
 
-Boot `HardFault` 死循环，系统无自动恢复（看门狗已移除）。APP 的 Fault 处理同样如此。
+Boot `HardFault` 死循环不喂狗，约 1 s 后 IWDG 复位，这是对的。APP 的 Fault 喂狗是错的（见 4.3）。
 
 ### 6.3 CAN 位时序
 
@@ -348,7 +348,7 @@ APB1=180 MHz，`div=10`，BTS1=54，BTS2=17 → 250 kbps，采样点 55/72 ≈ *
 
 1. 拆开 Metadata Backup 与 NVM，恢复双写。
 2. `DOWNLOADING` 保持到 0x37 成功。
-3. APP 故障触发系统复位；试启动由 APP 计时；禁止无条件 CONFIRMED。
+3. APP 故障不喂狗；试启动由 APP 计时；禁止无条件 CONFIRMED。
 4. 补 DID 0x2112–0x2116（含 pending），Boot Safe Mode 也要能读。
 
 ### 阶段 C — 协议对齐与加固
@@ -373,7 +373,7 @@ APB1=180 MHz，`div=10`，BTS1=54，BTS2=17 → 250 kbps，采样点 55/72 ≈ *
 |----|--------|--------|------|
 | OTA-01 | P0 | APP + Boot | 单链接地址，Slot B 不能作为可执行槽，回滚失败 |
 | OTA-02 | P0 | 两端 metadata | 只写 Primary，Backup 与 NVM 冲突，掉电不原子 |
-| OTA-03 | P0 | Boot trial + APP | 10 s 超时死代码；APP 自动确认；Fault 无法复位导致无法回滚 |
+| OTA-03 | P0 | Boot trial + APP | 10 s 超时死代码；APP 自动确认；Fault 喂狗导致无法回滚 |
 | OTA-04 | P0 | Boot main | 进 Safe Mode 立即清 DOWNLOADING，中途复位丢失会话 |
 | OTA-05 | P0 | Boot UDS + 主机 | 私有 0x38 + MCU 生成 header，与标准 UDS 下载不兼容 |
 | OTA-06 | P0 | 测试工程 | ZCANPRO 脚本未按 ISO-TP 与现行流程编写 |
@@ -385,7 +385,7 @@ APB1=180 MHz，`div=10`，BTS1=54，BTS2=17 → 250 kbps，采样点 55/72 ≈ *
 | OTA-12 | P1 | 元数据 | `pending_slot` 不更新 |
 | OTA-13 | P1 | 产线 | 无打包/签名工具，工厂 APP 无 header 则无法启动 |
 | OTA-14 | P2 | 文档 | 16/20 KB、500/250 kbps、Ed25519/ECDSA、元数据大小已修正为 272 B |
-| OTA-15 | P2 | APP | HardFault 无法自动恢复；广播 1 Hz 空载荷；UART IAP 未做 |
+| OTA-15 | P2 | APP | HardFault 喂狗；广播 1 Hz 空载荷；UART IAP 未做 |
 
 ---
 
