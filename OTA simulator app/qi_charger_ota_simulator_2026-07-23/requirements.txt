@@ -1,0 +1,11 @@
+# Qi Charger OTA Simulator - Python Requirements
+# Install with: pip3 install -r requirements.txt
+
+python-can>=4.0.0        # CAN bus communication library
+can-isotp>=2.0.0         # ISO-TP transport protocol (multi-frame CAN messages)
+cryptography>=41.0.0     # ECDSA P-256 signatures (SecurityAccess, ECDSA client only)
+
+# CAN adapter driver — install the one matching your hardware, e.g. for CANalyst-II:
+#   canalystii>=0.1.0
+#   pyusb>=1.2.0
+# (socketcan needs no extra Python driver.)

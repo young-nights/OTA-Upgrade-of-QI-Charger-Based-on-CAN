@@ -798,6 +798,26 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         resp[3U + ver_len] = 0U;
         safe_mode_send_response(resp, 4U + ver_len);
       }
+      else if (did == 0xF195U)
+      {
+        /* DID 0xF195: ECU Software Version (ISO 14229 standard, same as 0xF189) */
+        const char *ver = SW_VERSION;
+        uint8_t ver_len = (uint8_t)strlen(ver);
+
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1]; /* DID high byte */
+        resp[2] = data[2]; /* DID low byte */
+        if (ver_len > 15U)
+        {
+          ver_len = 15U;
+        }
+        for (pos = 0; pos < ver_len; pos++)
+        {
+          resp[3U + pos] = (uint8_t)ver[pos];
+        }
+        resp[3U + ver_len] = 0U;
+        safe_mode_send_response(resp, 4U + ver_len);
+      }
       else if (did == 0x2112U)
       {
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
