@@ -34,9 +34,9 @@
  * @brief  CAN bit timing calculation
  * @note   APB1 clock = 180 MHz
  *         bittime_div = 10, CAN clock = 180MHz / 10 = 18 MHz
- *         bit_time = 1 + BTS1 + BTS2 = 1 + 56 + 15 = 72 Tq
+ *         bit_time = 1 + BTS1 + BTS2 = 1 + 62 + 9 = 72 Tq
  *         bitrate = 18MHz / 72 = 250 kbps
- *         sample point = 57/72 ≈ 79.2%, SJW = 4 Tq
+ *         sample point = 63/72 ≈ 87.5%, SJW = 4 Tq
  */
 #define CAN_BITTIME_DIV                 10U
 #define CAN_BITTIME_SJW                 4U
