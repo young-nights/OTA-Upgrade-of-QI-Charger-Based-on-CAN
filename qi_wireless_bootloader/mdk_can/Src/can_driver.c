@@ -85,6 +85,11 @@ void can_driver_init(void)
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
   crm_periph_clock_enable(CRM_CAN1_PERIPH_CLOCK, TRUE);
 
+  /* CAN kernel clock defaults to HEXT (8 MHz). Bit timing below assumes 180 MHz.
+   * 8e6 / 10 / 72 ≈ 11.1 kbps — that is what a bitrate probe shows if this is omitted.
+   * Datasheet: CAN clock must come from PLL sourced by HEXT. */
+  crm_can_clock_select(CRM_CAN1, CRM_CAN_CLOCK_SOURCE_PLL);
+
   /* configure PA11 (CAN_RX) as input with pull-up */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = GPIO_PINS_11;
