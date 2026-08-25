@@ -36,7 +36,7 @@
  *         bittime_div = 10, CAN clock = 180MHz / 10 = 18 MHz
  *         bit_time = 1 + BTS1 + BTS2 = 1 + 53 + 18 = 72 Tq
  *         bitrate = 18MHz / 72 = 250 kbps
- *         sample point = 54/72 = 75%, SJW = 4 Tq
+ *         sample point = 54/72 = 75% (bench), SJW = 4 Tq
  */
 #define CAN_BITTIME_DIV                 10U
 #define CAN_BITTIME_SJW                 4U
@@ -70,8 +70,8 @@ static uint8_t rx_fifo_is_full(void)
 /**
  * @brief  initialize CAN1 peripheral in extended frame mode at 250kbps
  * @note   configures PA11(CAN_RX) and PA12(CAN_TX) with AF mux,
- *         sets up acceptance filter to accept all extended frames,
- *         enables RX and error interrupts.
+ *         brings the CAST CAN-CTRL out of software reset after config,
+ *         filter accepts all classic extended data frames (bench test).
  * @param  none
  * @retval none
  */
@@ -105,16 +105,20 @@ void can_driver_init(void)
   gpio_init(GPIOA, &gpio_init_struct);
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE12, GPIO_MUX_4);
 
-  /* initialize SIT1145 CAN transceiver (must be before CAN controller init) */
-  sit1145_init();
+  /* transceiver must be in Normal Mode before the CAN controller leaves reset */
+  if (sit1145_init() == 0U)
+  {
+    (void)sit1145_init();
+  }
 
-  /* reset CAN peripheral */
+  /* CRM reset leaves CTRLSTAT.RESET=1; config bits are only writable then */
   can_reset(CAN1);
+  can_software_reset(CAN1, TRUE);
 
   /* set CAN to normal communication mode */
   can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
 
-  /* configure bit timing for 250 kbps */
+  /* 250 kbps, sample point 75% (bench). 1 + 53 + 18 = 72 Tq, 18 MHz / 72 */
   can_bittime_default_para_init(&can_bittime_struct);
   can_bittime_struct.bittime_div  = CAN_BITTIME_DIV;
   can_bittime_struct.ac_rsaw_size = CAN_BITTIME_SJW;
@@ -122,12 +126,12 @@ void can_driver_init(void)
   can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
   can_bittime_set(CAN1, &can_bittime_struct);
 
-  /* Filter 0: physical UDS request 0x18DA0D03 (exact 29-bit ID) */
+  /* Filter 0: all classic CAN 2.0B extended data frames (ID don't-care) */
   can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = CAN_ID_UDS_REQUEST;
+  can_filter_struct.code_para.id         = 0U;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
+  can_filter_struct.mask_para.id         = 0U;
   can_filter_struct.mask_para.id_type    = TRUE;
   can_filter_struct.mask_para.frame_type = TRUE;
   can_filter_struct.mask_para.data_length = 0U;
@@ -135,20 +139,10 @@ void can_driver_init(void)
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
 
-  /* Filter 1: functional UDS request 0x18DB33F1 (ISO 14229) */
-  can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = CAN_ID_FUNCTIONAL_REQUEST;
-  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
-  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
-  can_filter_struct.mask_para.id_type    = TRUE;
-  can_filter_struct.mask_para.frame_type = TRUE;
-  can_filter_struct.mask_para.data_length = 0U;
-  can_filter_struct.mask_para.recv_frame = FALSE;
-  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
-  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
+  /* leave software reset so the controller actually participates on the bus */
+  can_software_reset(CAN1, FALSE);
 
-  /* enable RX interrupt and error interrupt */
+  /* enable RX interrupt and error interrupt after leaving reset */
   can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);
   can_interrupt_enable(CAN1, CAN_EIE_INT, TRUE);
 

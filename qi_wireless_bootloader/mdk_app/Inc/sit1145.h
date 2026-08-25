@@ -30,9 +30,18 @@ extern "C" {
 #define SIT1145_READ                0x01
 
 /* SIT1145 register addresses */
-#define SIT1145_REG_MODE_CONTROL    0x01
-#define SIT1145_REG_CAN_CONTROL     0x20
-#define SIT1145_REG_DATA_RATE       0x26
+#define SIT1145_REG_MODE_CONTROL          0x01
+#define SIT1145_REG_CAN_CONTROL           0x20
+#define SIT1145_REG_TRANSCEIVER_STATUS    0x22
+#define SIT1145_REG_DATA_RATE             0x26
+#define SIT1145_REG_IDENTIFICATION        0x7E
+
+/* Identification register values (datasheet table 28) */
+#define SIT1145_ID_AQ               0x70  /* SIT1145AQ */
+#define SIT1145_ID_AQ_FD            0x74  /* SIT1145AQ/FD */
+
+/* Transceiver status register bits (0x22) */
+#define SIT1145_TRAN_STA_CTS        (1U << 7)  /* 1 = in Normal, ready to transmit */
 
 /* Mode control register values */
 #define SIT1145_MC_SLEEP_MODE       0x01
@@ -68,9 +77,9 @@ extern "C" {
 
 /**
  * @brief  initialize SIT1145 CAN transceiver
- * @note   configures SPI1 GPIO, initializes hardware SPI1,
- *         sets SIT1145 to Normal Mode, configures CAN control
- *         and data rate. Must be called before can_driver_init().
+ * @note   SPI Mode 1 (CPOL=0, CPHA=1), then CAN Control, Data Rate,
+ *         Normal Mode, CTS poll, identification check.
+ *         Called from can_driver_init() before the CAN controller leaves reset.
  * @retval 1 on success, 0 on failure
  */
 uint8_t sit1145_init(void);

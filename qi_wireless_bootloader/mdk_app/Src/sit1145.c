@@ -49,6 +49,42 @@ static void sit1145_delay_us(void)
 }
 
 /**
+ * @brief  busy-wait milliseconds (init path only)
+ */
+static void sit1145_delay_ms(uint32_t ms)
+{
+  uint32_t n;
+  while (ms-- > 0U)
+  {
+    for (n = 0U; n < 1000U; n++)
+    {
+      sit1145_delay_us();
+    }
+  }
+}
+
+/**
+ * @brief  wait until transceiver CTS=1 (Normal Mode, ready to drive the bus)
+ * @retval 1 if CTS set, 0 on timeout
+ */
+static uint8_t sit1145_wait_cts(uint32_t timeout_ms)
+{
+  uint32_t elapsed;
+  uint8_t sta;
+
+  for (elapsed = 0U; elapsed < timeout_ms; elapsed++)
+  {
+    sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+    if ((sta & SIT1145_TRAN_STA_CTS) != 0U)
+    {
+      return 1U;
+    }
+    sit1145_delay_ms(1U);
+  }
+  return 0U;
+}
+
+/**
  * @brief  assert CS (pull low)
  */
 static void sit1145_cs_low(void)
@@ -133,6 +169,8 @@ uint8_t sit1145_normal_mode_set(void)
 
   /* write Normal Mode to mode control register */
   sit1145_write_reg(SIT1145_REG_MODE_CONTROL, SIT1145_MC_NORMAL_MODE);
+  sit1145_delay_us();
+  sit1145_delay_us();
 
   /* verify mode was set correctly */
   mode_val = sit1145_read_reg(SIT1145_REG_MODE_CONTROL);
@@ -151,10 +189,12 @@ uint8_t sit1145_normal_mode_set(void)
  *         2. Configure PA5/PA6/PA7 as SPI1 AF pins (MUX0)
  *         3. Configure PA4 as GPIO output (CS, default high)
  *         4. Configure PB3 as GPIO output low (floating pin)
- *         5. Initialize SPI1 in master mode
- *         6. Configure CAN Control register (in Standby/Init mode)
- *         7. Configure Data Rate register (250kbps)
- *         8. Switch to Normal Mode (must be last)
+ *         5. Initialize SPI1 Mode 1 (CPOL=0, CPHA=1) — datasheet falling-edge sample
+ *         6. Read identification 0x7E (0x70 AQ / 0x74 AQ-FD)
+ *         7. Configure CAN Control register (CMC=01, CFDC=1)
+ *         8. Configure Data Rate register (250kbps)
+ *         9. Switch to Normal Mode
+ *        10. Poll CTS until the transmitter is ready
  * @retval 1 on success, 0 on failure
  */
 uint8_t sit1145_init(void)
@@ -162,7 +202,7 @@ uint8_t sit1145_init(void)
   gpio_init_type gpio_init_struct;
   spi_init_type spi_init_struct;
   uint8_t can_ctrl_val;
-  uint8_t mode_val;
+  uint8_t chip_id;
 
   /* ---- Step 1: Enable peripheral clocks ---- */
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
@@ -224,48 +264,58 @@ uint8_t sit1145_init(void)
   spi_init_struct.first_bit_transmission = SPI_FIRST_BIT_MSB;
   spi_init_struct.frame_bit_num         = SPI_FRAME_8BIT;
   spi_init_struct.clock_polarity        = SPI_CLOCK_POLARITY_LOW;
-  spi_init_struct.clock_phase           = SPI_CLOCK_PHASE_1EDGE;
+  spi_init_struct.clock_phase           = SPI_CLOCK_PHASE_2EDGE;
   spi_init_struct.cs_mode_selection     = SPI_CS_SOFTWARE_MODE;
   spi_init(SPI1, &spi_init_struct);
 
   /* enable SPI1 */
   spi_enable(SPI1, TRUE);
+  sit1145_delay_ms(1U);
 
-  /* ---- Step 6: Configure CAN Control register ----
+  /* ---- Step 6: SPI smoke check via identification register 0x7E ---- */
+  chip_id = sit1145_read_reg(SIT1145_REG_IDENTIFICATION);
+  if ((chip_id != SIT1145_ID_AQ) && (chip_id != SIT1145_ID_AQ_FD))
+  {
+    return 0;
+  }
+
+  /* ---- Step 7: Configure CAN Control register ----
    *   CFDC=1 (CAN FD tolerance enabled)
    *   PNCOK=0 (partial networking config invalid)
    *   CPNC=0 (selective wakeup disabled)
-   *   CMC=01 (normal mode with VCC undervoltage recovery)
+   *   CMC=01 (active with VCC undervoltage recovery)
    * Must be done before switching to Normal Mode. */
   can_ctrl_val = SIT1145_CAN_FD_TOLERANCE_EN
                | SIT1145_CAN_NETW_INVALID
                | SIT1145_SEL_WAKEUP_DIS
                | SIT1145_CAN_MODE_NORMAL;
   sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl_val);
+  if (sit1145_read_reg(SIT1145_REG_CAN_CONTROL) != can_ctrl_val)
+  {
+    return 0;
+  }
 
-  /* ---- Step 7: Configure Data Rate (250kbps) ---- */
+  /* ---- Step 8: Configure Data Rate (250kbps, partial-network CDR) ---- */
   sit1145_write_reg(SIT1145_REG_DATA_RATE, SIT1145_DEFAULT_DRATE);
-
-  /* verify data rate */
   if (sit1145_read_reg(SIT1145_REG_DATA_RATE) != SIT1145_DEFAULT_DRATE)
   {
     return 0;
   }
 
-  /* ---- Step 8: Switch to Normal Mode (must be last) ---- */
+  /* ---- Step 9: Switch to Normal Mode ---- */
   if (sit1145_normal_mode_set() == 0)
   {
-    /* first attempt failed, retry once after a short delay */
-    sit1145_delay_us();
-    sit1145_delay_us();
-    sit1145_delay_us();
+    sit1145_delay_ms(1U);
     if (sit1145_normal_mode_set() == 0)
     {
-      /* SIT1145 failed to enter Normal Mode, read back for debug */
-      mode_val = sit1145_read_reg(SIT1145_REG_MODE_CONTROL);
-      (void)mode_val; /* suppress unused warning in release */
       return 0;
     }
+  }
+
+  /* ---- Step 10: wait until CTS indicates the transmitter is active ---- */
+  if (sit1145_wait_cts(20U) == 0U)
+  {
+    return 0;
   }
 
   return 1;

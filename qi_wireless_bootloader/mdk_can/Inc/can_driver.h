@@ -76,8 +76,8 @@ typedef void (*can_rx_callback_t)(uint32_t id, uint8_t *data, uint8_t len);
 /**
  * @brief  initialize CAN1 peripheral in extended frame mode at 250kbps
  * @note   configures PA11(CAN_RX) and PA12(CAN_TX) with AF mux,
- *         sets up acceptance filter to accept all extended frames,
- *         enables RX and error interrupts.
+ *         exits CAN software reset after bit timing/filter config,
+ *         acceptance filter: all classic extended data frames.
  * @param  none
  * @retval none
  */
