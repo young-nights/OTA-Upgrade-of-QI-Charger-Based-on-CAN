@@ -170,11 +170,21 @@ uint8_t sit1145_init(void)
   crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, TRUE);
 
   /* ---- Step 2: Configure SPI1 data pins (PA5=SCK, PA6=MISO, PA7=MOSI) ---- */
+  /* SCK and MOSI: no pull */
   gpio_default_para_init(&gpio_init_struct);
-  gpio_init_struct.gpio_pins           = GPIO_PINS_5 | GPIO_PINS_6 | GPIO_PINS_7;
+  gpio_init_struct.gpio_pins           = GPIO_PINS_5 | GPIO_PINS_7;
   gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
   gpio_init_struct.gpio_out_type       = GPIO_OUTPUT_PUSH_PULL;
   gpio_init_struct.gpio_pull           = GPIO_PULL_NONE;
+  gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
+  gpio_init(GPIOA, &gpio_init_struct);
+
+  /* MISO (PA6): pull-up to avoid floating when SIT1145 is not driving */
+  gpio_default_para_init(&gpio_init_struct);
+  gpio_init_struct.gpio_pins           = GPIO_PINS_6;
+  gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
+  gpio_init_struct.gpio_out_type       = GPIO_OUTPUT_PUSH_PULL;
+  gpio_init_struct.gpio_pull           = GPIO_PULL_UP;
   gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
   gpio_init(GPIOA, &gpio_init_struct);
 
