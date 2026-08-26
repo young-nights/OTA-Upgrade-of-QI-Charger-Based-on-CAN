@@ -123,7 +123,7 @@ void can_driver_init(void)
   /* set CAN to normal communication mode */
   can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
 
-  /* 250 kbps, sample point 75% (bench). 1 + 53 + 18 = 72 Tq, 18 MHz / 72 */
+  /* 250 kbps, sample point 87.5%. 1 + 62 + 9 = 72 Tq, 18 MHz / 72 */
   can_bittime_default_para_init(&can_bittime_struct);
   can_bittime_struct.bittime_div  = CAN_BITTIME_DIV;
   can_bittime_struct.ac_rsaw_size = CAN_BITTIME_SJW;
