@@ -34,6 +34,7 @@
 #include "can_driver.h"
 #include "isotp.h"
 #include "timer_drv.h"
+#include "sit1145.h"
 #include "uECC.h"
 #include "sha256.h"
 #include <string.h>
@@ -114,13 +115,24 @@ static uint32_t g_dl_expected_size = 0;
 #define UDS_S3_TIMEOUT_MS     5000U
 
 /** @brief  periodic CAN frame so a bitrate probe sees 250 kbps in Safe Mode.
- *          Same ID as APP lifecycle; byte0=0x00 is not an APP state (0x01..0x06). */
-#define SAFE_MODE_PROBE_ENABLE     1U
+ *          Same ID as APP lifecycle; byte0=0x00 is not an APP state (0x01..0x06).
+ *          Disabled: host UDS RX is being tested with SIT1145 SPI Normal keepalive. */
+#define SAFE_MODE_PROBE_ENABLE     0U
 #define SAFE_MODE_PROBE_PERIOD_MS  500U
 #define SAFE_MODE_PROBE_STATE      0x00U
 
+/** @brief  rewrite SIT1145 mode control to Normal so the transceiver does not
+ *          drop to CTS/Standby while Safe Mode is idle with no CAN TX. */
+#define SAFE_MODE_SIT1145_KEEPALIVE_ENABLE     1U
+#define SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS  500U
+
 static uint32_t g_s3_last_ms = 0;
+#if (SAFE_MODE_PROBE_ENABLE != 0U)
 static uint32_t g_probe_last_ms = 0;
+#endif
+#if (SAFE_MODE_SIT1145_KEEPALIVE_ENABLE != 0U)
+static uint32_t g_sit1145_keepalive_last_ms = 0;
+#endif
 
 
 
@@ -1342,6 +1354,7 @@ static void isotp_message_received(uint8_t *data, uint16_t len)
   uds_process_message(data, len);
 }
 
+#if (SAFE_MODE_PROBE_ENABLE != 0U)
 static void safe_mode_probe_poll(void)
 {
   uint8_t data[8];
@@ -1363,6 +1376,21 @@ static void safe_mode_probe_poll(void)
   data[7] = 0x00U;
   (void)can_driver_send(CAN_ID_LIFECYCLE_BROADCAST, data, 8);
 }
+#endif
+
+#if (SAFE_MODE_SIT1145_KEEPALIVE_ENABLE != 0U)
+static void safe_mode_sit1145_keepalive_poll(void)
+{
+  uint32_t now = timer_get_tick();
+
+  if ((now - g_sit1145_keepalive_last_ms) < SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS)
+  {
+    return;
+  }
+  g_sit1145_keepalive_last_ms = now;
+  (void)sit1145_normal_mode_set();
+}
+#endif
 
 /**
  * @brief  CAN RX handler for safe mode: ID filtering + ISO-TP dispatch
@@ -1402,7 +1430,12 @@ void enter_safe_mode(void)
   /* initialize ISO-TP receiver with UDS message callback */
   isotp_init(isotp_message_received);
   g_s3_last_ms = timer_get_tick();
+#if (SAFE_MODE_PROBE_ENABLE != 0U)
   g_probe_last_ms = 0;
+#endif
+#if (SAFE_MODE_SIT1145_KEEPALIVE_ENABLE != 0U)
+  g_sit1145_keepalive_last_ms = 0;
+#endif
 
   /* safe mode event loop */
   while (1)
@@ -1412,6 +1445,9 @@ void enter_safe_mode(void)
     isotp_poll();
 #if (SAFE_MODE_PROBE_ENABLE != 0U)
     safe_mode_probe_poll();
+#endif
+#if (SAFE_MODE_SIT1145_KEEPALIVE_ENABLE != 0U)
+    safe_mode_sit1145_keepalive_poll();
 #endif
 
     if ((g_current_session != SESSION_DEFAULT) &&
