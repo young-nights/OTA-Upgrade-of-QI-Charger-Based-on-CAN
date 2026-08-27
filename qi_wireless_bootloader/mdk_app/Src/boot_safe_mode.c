@@ -113,7 +113,13 @@ static uint32_t g_dl_expected_size = 0;
 #define UDS_MAX_BLOCK_LEN     256U
 #define UDS_S3_TIMEOUT_MS     5000U
 
+/** @brief  periodic CAN frame so a bitrate probe sees 250 kbps in Safe Mode.
+ *          Same ID as APP lifecycle; byte0=0x00 is not an APP state (0x01..0x06). */
+#define SAFE_MODE_PROBE_PERIOD_MS  200U
+#define SAFE_MODE_PROBE_STATE      0x00U
+
 static uint32_t g_s3_last_ms = 0;
+static uint32_t g_probe_last_ms = 0;
 
 
 
@@ -1335,6 +1341,28 @@ static void isotp_message_received(uint8_t *data, uint16_t len)
   uds_process_message(data, len);
 }
 
+static void safe_mode_probe_poll(void)
+{
+  uint8_t data[8];
+  uint32_t now = timer_get_tick();
+
+  if ((now - g_probe_last_ms) < SAFE_MODE_PROBE_PERIOD_MS)
+  {
+    return;
+  }
+  g_probe_last_ms = now;
+
+  data[0] = SAFE_MODE_PROBE_STATE;
+  data[1] = 0xB0U;
+  data[2] = 0x07U;
+  data[3] = 0x00U;
+  data[4] = 0x00U;
+  data[5] = 0x00U;
+  data[6] = 0x00U;
+  data[7] = 0x00U;
+  (void)can_driver_send(CAN_ID_LIFECYCLE_BROADCAST, data, 8);
+}
+
 /**
  * @brief  CAN RX handler for safe mode: ID filtering + ISO-TP dispatch
  * @param  id:   CAN frame ID
@@ -1373,6 +1401,7 @@ void enter_safe_mode(void)
   /* initialize ISO-TP receiver with UDS message callback */
   isotp_init(isotp_message_received);
   g_s3_last_ms = timer_get_tick();
+  g_probe_last_ms = 0;
 
   /* safe mode event loop */
   while (1)
@@ -1380,6 +1409,7 @@ void enter_safe_mode(void)
     timer_poll();
     can_driver_poll();
     isotp_poll();
+    safe_mode_probe_poll();
 
     if ((g_current_session != SESSION_DEFAULT) &&
         ((timer_get_tick() - g_s3_last_ms) >= UDS_S3_TIMEOUT_MS))
