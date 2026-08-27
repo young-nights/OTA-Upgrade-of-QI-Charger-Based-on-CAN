@@ -115,6 +115,7 @@ static uint32_t g_dl_expected_size = 0;
 
 /** @brief  periodic CAN frame so a bitrate probe sees 250 kbps in Safe Mode.
  *          Same ID as APP lifecycle; byte0=0x00 is not an APP state (0x01..0x06). */
+#define SAFE_MODE_PROBE_ENABLE     0U
 #define SAFE_MODE_PROBE_PERIOD_MS  200U
 #define SAFE_MODE_PROBE_STATE      0x00U
 
@@ -1409,7 +1410,9 @@ void enter_safe_mode(void)
     timer_poll();
     can_driver_poll();
     isotp_poll();
+#if (SAFE_MODE_PROBE_ENABLE != 0U)
     safe_mode_probe_poll();
+#endif
 
     if ((g_current_session != SESSION_DEFAULT) &&
         ((timer_get_tick() - g_s3_last_ms) >= UDS_S3_TIMEOUT_MS))
