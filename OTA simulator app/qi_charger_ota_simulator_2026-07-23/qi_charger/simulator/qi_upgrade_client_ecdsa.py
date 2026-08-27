@@ -91,12 +91,13 @@ class QiFirmwareUpgradeClientEcdsa:
         )
 
         # Load the Qi charger's keypair (used to sign the challenge seed)
+        self.keepalive_s = 1.0
         self.keypair = None
         if HAS_ECDSA:
             self._load_keypair()
 
     def _load_keypair(self):
-        """Load the Qi charger's ECDSA P-256 keypair (32-byte private scalar)"""
+        """Load private key from PEM or raw 32/97-byte blob (must match MCU public key)."""
         try:
             with open(self.keypair_file, 'rb') as f:
                 key_data = f.read()
@@ -104,23 +105,56 @@ class QiFirmwareUpgradeClientEcdsa:
             logging.info(f"✓ Loaded Qi charger keypair from {self.keypair_file}")
         except FileNotFoundError:
             logging.error(f"Keypair file not found: {self.keypair_file}")
-            logging.error("Generate it with: python3 ecdsa-p256-keys/generate_keypair.py")
+            logging.error("Use 智嵌物联CAN/keys/private.pem or generate_keypair.py")
         except Exception as e:
             logging.error(f"Failed to load keypair: {e}")
 
+    def _pump(self):
+        self.isotp_stack.process()
+
+    def _send_tester_present(self):
+        """Keep Programming Session alive (MCU S3 = 5 s). Ignore 0x7E locally."""
+        try:
+            self.isotp_stack.send(bytes([SID_TESTER_PRESENT, 0x00]))
+        except Exception as e:
+            logging.debug(f"TesterPresent send skipped: {e}")
+
     def _send_request(self, request: bytes, timeout: float = 2.0) -> Optional[bytes]:
-        """Send UDS request and receive response"""
+        """Send UDS request and wait for the final response.
+
+        NRC 0x78 (ResponsePending) is ignored and the wait is extended.
+        TesterPresent 0x7E is ignored. Other NRCs are returned to the caller.
+        """
         logging.debug(f"→ TX: {len(request)} bytes: {request.hex(' ').upper()}")
         self.isotp_stack.send(request)
 
-        start_time = time.time()
-        while (time.time() - start_time) < timeout:
-            self.isotp_stack.process()
+        deadline = time.time() + timeout
+        last_keepalive = time.time()
+        while time.time() < deadline:
+            self._pump()
             if self.isotp_stack.available():
                 response = self.isotp_stack.recv()
-                if response:
-                    logging.debug(f"← RX: {len(response)} bytes: {response.hex(' ').upper()}")
+                if not response:
+                    continue
+                logging.debug(f"← RX: {len(response)} bytes: {response.hex(' ').upper()}")
+                if len(response) >= 3 and response[0] == SID_NEGATIVE_RESPONSE:
+                    nrc = response[2]
+                    if nrc == NRC_REQUEST_CORRECTLY_RECEIVED_RESPONSE_PENDING:
+                        logging.info(f"  … NRC 0x78 pending for SID 0x{response[1]:02X}")
+                        deadline = time.time() + timeout
+                        continue
+                    logging.warning(
+                        f"  NRC 0x{nrc:02X} ({get_nrc_description(nrc)}) for SID 0x{response[1]:02X}"
+                    )
                     return response
+                if response[0] == 0x7E:
+                    continue
+                return response
+
+            now = time.time()
+            if self.keepalive_s > 0 and (now - last_keepalive) >= self.keepalive_s:
+                self._send_tester_present()
+                last_keepalive = now
             time.sleep(0.001)
 
         logging.error("Request timeout!")
@@ -180,7 +214,7 @@ class QiFirmwareUpgradeClientEcdsa:
         # 2.3 Send signature
         logging.info("  [2.3] Sending signature...")
         request = bytes([SID_SECURITY_ACCESS, SECURITY_SEND_KEY]) + signature
-        response = self._send_request(request, timeout=5.0)
+        response = self._send_request(request, timeout=10.0)
 
         if not response or response[0] != 0x67:
             logging.error("  ✗ Security access denied")
@@ -212,7 +246,7 @@ class QiFirmwareUpgradeClientEcdsa:
 
         request = bytes([SID_ROUTINE_CONTROL, ROUTINE_START,
                          (ROUTINE_ERASE_MEMORY >> 8) & 0xFF, ROUTINE_ERASE_MEMORY & 0xFF])
-        response = self._send_request(request, timeout=10.0)
+        response = self._send_request(request, timeout=15.0)
 
         if not response or response[0] != 0x71:
             logging.error("Failed to erase memory")
@@ -277,8 +311,10 @@ class QiFirmwareUpgradeClientEcdsa:
                 throughput = offset / elapsed / 1024 if elapsed > 0 else 0
                 logging.info(f"  Progress: {progress}% ({offset}/{len(firmware_data)} bytes, {throughput:.1f} KB/s)")
 
-            # ISO 14229-1: block sequence counter wraps 0xFF -> 0x00 -> 0x01
+            # Boot skips 0x00: 0xFF wraps to 0x01
             block_sequence = (block_sequence + 1) & 0xFF
+            if block_sequence == 0:
+                block_sequence = 1
 
         elapsed = time.time() - start_time
         throughput = len(firmware_data) / elapsed / 1024 if elapsed > 0 else 0
@@ -290,7 +326,7 @@ class QiFirmwareUpgradeClientEcdsa:
         logging.info("\n[Step 7] Requesting Transfer Exit...")
 
         request = bytes([SID_REQUEST_TRANSFER_EXIT])
-        response = self._send_request(request, timeout=5.0)
+        response = self._send_request(request, timeout=15.0)
 
         if not response or response[0] != 0x77:
             logging.error("Failed to exit transfer")
@@ -364,7 +400,11 @@ def main():
     parser.add_argument("--channel", default="0", help="CAN channel (e.g. can0 for socketcan, 0 for canalystii)")
     parser.add_argument("--bitrate", type=int, default=250000, help="CAN bitrate (Qi bus is 250 kbps)")
     parser.add_argument("--device", type=int, default=0, help="Device index for multi-device setups")
-    parser.add_argument("--keypair", default="ecdsa-p256-keys/qi_ecdsa_p256_keypair.bin", help="Qi charger keypair file")
+    parser.add_argument(
+        "--keypair",
+        default=str(Path(__file__).resolve().parents[4] / "智嵌物联CAN" / "keys" / "private.pem"),
+        help="Private key: PEM or 32/97-byte .bin matching MCU public key",
+    )
     parser.add_argument("--firmware", default=None, help="Real firmware binary file")
     parser.add_argument("--size", type=int, default=98304, help="Test firmware size in bytes if --firmware not given")
     parser.add_argument("--type", choices=['app', 'bootloader'], default='app', help="Firmware type (default: app)")
@@ -391,6 +431,8 @@ def main():
                       bitrate=args.bitrate, device=args.device)
 
     logging.info(f"Connected to CAN bus ({args.bustype}, channel={args.channel}, device={args.device})")
+    if args.bustype == "canalystii":
+        logging.info("canalystii is 创芯 CANalyst-II only. NXP/WinUSB 04d8:0053 will time out.")
 
     client = QiFirmwareUpgradeClientEcdsa(bus, keypair_file=args.keypair)
 
@@ -410,8 +452,16 @@ def main():
             logging.error(f"Failed to load firmware: {e}")
             bus.shutdown()
             return 1
+        # Boot 0x37 verifies image_header_t magic "XATO" (0x4F544158 little-endian)
+        if firmware_data[:4] != b"XATO":
+            logging.error("Firmware is not a pack_image.py payload (missing XATO header).")
+            logging.error("  python3 tools/pack_image.py --bin <keil.bin> --key 智嵌物联CAN/keys/private.pem --out app.ota.bin")
+            bus.shutdown()
+            return 1
     else:
-        firmware_data = generate_test_firmware(args.size)
+        logging.error("Safe Mode 0x37 rejects raw/random blobs. Pass --firmware from pack_image.py")
+        bus.shutdown()
+        return 1
 
     firmware_type = FIRMWARE_TYPE_APP if args.type == 'app' else FIRMWARE_TYPE_BOOTLOADER
 

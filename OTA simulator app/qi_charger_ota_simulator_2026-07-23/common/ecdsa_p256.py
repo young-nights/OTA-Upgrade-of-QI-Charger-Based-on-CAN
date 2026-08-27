@@ -70,13 +70,18 @@ def load_private_key(data: bytes):
     """Load a private key from a keypair file blob.
 
     Accepts:
+      - PEM text  : -----BEGIN ... PRIVATE KEY-----
       - 32 bytes  : raw private scalar
       - 97 bytes  : 32-byte scalar + 65-byte public key (public part ignored)
     """
+    stripped = data.lstrip()
+    if stripped.startswith(b"-----BEGIN"):
+        from cryptography.hazmat.primitives.serialization import load_pem_private_key
+        return load_pem_private_key(data, password=None)
     if len(data) not in (PRIVATE_KEY_SIZE, PRIVATE_KEY_SIZE + PUBLIC_KEY_SIZE):
         raise ValueError(
             f"Invalid private key blob size: {len(data)} bytes "
-            f"(expected {PRIVATE_KEY_SIZE} or {PRIVATE_KEY_SIZE + PUBLIC_KEY_SIZE})"
+            f"(expected PEM, {PRIVATE_KEY_SIZE}, or {PRIVATE_KEY_SIZE + PUBLIC_KEY_SIZE})"
         )
     scalar = int.from_bytes(data[:PRIVATE_KEY_SIZE], 'big')
     return ec.derive_private_key(scalar, CURVE)
