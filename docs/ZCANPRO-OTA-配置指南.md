@@ -231,7 +231,7 @@ CF: 21 00 00 00 10 00 00 00
 ```bash
 python3 tools/pack_image.py \
   --bin qi_wireless_code/mdk_project/Objects/qi_wireless.bin \
-  --key 智嵌物联CAN/keys/private.pem \
+  --key OTA simulator app/keys/private.pem \
   --version 1.0.0 \
   --out app_slot_a.ota.bin
 ```
@@ -252,7 +252,7 @@ blockSeq：从 `0x01` 递增，`0xFF` 的下一帧是 **`0x01`（跳过 0x00）*
 
 1. B2 记下 `s0 s1 s2 s3`（大端 4 字节 seed）。
 2. `digest = SHA256(seed)`（对 4 字节 seed 做哈希，不是对固件）。
-3. 用 `智嵌物联CAN/keys/private.pem` 做 ECDSA P-256，输出 IEEE P1363 的 64 字节 `R‖S`。
+3. 用 `OTA simulator app/keys/private.pem` 做 ECDSA P-256，输出 IEEE P1363 的 64 字节 `R‖S`。
 4. 按 4 字节一片通过 `0x27 0x03` 发完，再发 `0x27 0x02`。
 
 连续 3 次验签失败锁 60 s（NRC `0x36`）。切 Default Session **不会**清失败计数。
@@ -261,7 +261,7 @@ blockSeq：从 `0x01` 递增，`0xFF` 的下一帧是 **`0x01`（跳过 0x00）*
 
 ```bash
 printf '\xAA\xBB\xCC\xDD' | openssl dgst -sha256 -binary -out seed.hash
-openssl pkeyutl -sign -inkey 智嵌物联CAN/keys/private.pem \
+openssl pkeyutl -sign -inkey OTA simulator app/keys/private.pem \
   -in seed.hash -pkeyopt digest:sha256 -out sa.der
 # 再把 DER 转成 64 字节 R||S（与 pack_image.py 相同方式）
 ```
@@ -326,7 +326,7 @@ ZCANPRO：发送 → 发送列表 → 加载该文件。确认每条 `is_canfd=0
 |----|-----|
 | 裸 APP | Keil 生成的 `.bin`，链接 `0x08005100`，≤ 46848 字节 |
 | OTA 包 | `pack_image.py` 输出 = 256B 头 + 裸 bin |
-| 私钥 | `智嵌物联CAN/keys/private.pem`（实验室钥） |
+| 私钥 | `OTA simulator app/keys/private.pem`（实验室钥） |
 | 公钥 | 已编进 Boot `.ecdsa_pubkey` |
 
 产线不要只把裸 `.bin` 烧到 `0x08005100`。没有头则验签失败，一直停在 Safe Mode。应把打包文件烧到 **`0x08005000`**（含头），Boot 烧到 `0x08000000`。

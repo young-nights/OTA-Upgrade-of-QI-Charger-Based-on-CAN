@@ -156,23 +156,26 @@ python3 ecdsa-p256-keys/test_ecdsa_crypto.py
 
 必须在 `qi_charger/simulator` 目录下执行。
 
+先打升级包（必须带 XATO 头，裸 Keil `.bin` 会被 0x37 拒绝）：
+
+```bash
+python3 tools/pack_image.py \
+    --bin qi_wireless_code/mdk_project/Objects/qi_wireless.bin \
+    --key "OTA simulator app/keys/private.pem" \
+    --version 1.0.0 \
+    --out app.ota.bin
+```
+
+然后在 `qi_charger/simulator` 下执行：
+
 ```bash
 python3 qi_upgrade_client_ecdsa.py \
     --bustype canalystii --channel 0 --device 0 --bitrate 250000 \
-    --keypair ecdsa-p256-keys/qi_ecdsa_p256_keypair.bin \
-    --firmware /path/to/qi_app.bin \
+    --firmware /home/nights/embedded_item/ota-upgrade-of-qi-charger-based-on-can/app.ota.bin \
     --type app --verbose
 ```
 
-省略 `--firmware` 时会发随机测试数据，只能测流程，不能当正式升级包。
-
-没有 `qi_ecdsa_p256_keypair.bin` 时先生成：
-
-```bash
-python3 ecdsa-p256-keys/generate_keypair.py
-```
-
-`--keypair` 要的是 **32 字节 raw 私钥 .bin**。仓库里的 `智嵌物联CAN/keys/private.pem` 是 PEM，不能直接填。公钥必须和 MCU `boot_verify.c` 里那把一致，否则 SecurityAccess 返回 NRC `0x35`。
+`--keypair` 默认就是 `OTA simulator app/keys/private.pem`，一般不用再写。必须和 MCU `boot_verify.c` 公钥成对，否则 SecurityAccess 返回 NRC `0x35`。不要用 `generate_keypair.py` 另造一把钥，除非同步烧进 MCU。
 
 简单算法客户端（仅当固件是 `seed + 0x5555`；**当前 bootloader 不是**）：
 

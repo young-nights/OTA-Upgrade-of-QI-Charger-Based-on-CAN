@@ -14,7 +14,7 @@ Header (little-endian):
 Example:
   python3 tools/pack_image.py \\
       --bin qi_wireless_code/mdk_project/Objects/qi_wireless.bin \\
-      --key docs/keys/private.pem \\
+      --key "OTA simulator app/keys/private.pem" \\
       --version 1.0.0 \\
       --out app_slot_a.ota.bin
 """

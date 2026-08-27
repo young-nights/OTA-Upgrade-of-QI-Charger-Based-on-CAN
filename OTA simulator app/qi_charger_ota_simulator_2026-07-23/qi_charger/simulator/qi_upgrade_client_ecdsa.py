@@ -105,7 +105,7 @@ class QiFirmwareUpgradeClientEcdsa:
             logging.info(f"✓ Loaded Qi charger keypair from {self.keypair_file}")
         except FileNotFoundError:
             logging.error(f"Keypair file not found: {self.keypair_file}")
-            logging.error("Use 智嵌物联CAN/keys/private.pem or generate_keypair.py")
+            logging.error("Use OTA simulator app/keys/private.pem or generate_keypair.py")
         except Exception as e:
             logging.error(f"Failed to load keypair: {e}")
 
@@ -402,7 +402,7 @@ def main():
     parser.add_argument("--device", type=int, default=0, help="Device index for multi-device setups")
     parser.add_argument(
         "--keypair",
-        default=str(Path(__file__).resolve().parents[4] / "智嵌物联CAN" / "keys" / "private.pem"),
+        default=str(Path(__file__).resolve().parents[3] / "keys" / "private.pem"),
         help="Private key: PEM or 32/97-byte .bin matching MCU public key",
     )
     parser.add_argument("--firmware", default=None, help="Real firmware binary file")
@@ -455,7 +455,7 @@ def main():
         # Boot 0x37 verifies image_header_t magic "XATO" (0x4F544158 little-endian)
         if firmware_data[:4] != b"XATO":
             logging.error("Firmware is not a pack_image.py payload (missing XATO header).")
-            logging.error("  python3 tools/pack_image.py --bin <keil.bin> --key 智嵌物联CAN/keys/private.pem --out app.ota.bin")
+            logging.error("  python3 tools/pack_image.py --bin <keil.bin> --key \"OTA simulator app/keys/private.pem\" --out app.ota.bin")
             bus.shutdown()
             return 1
     else:
