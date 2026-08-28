@@ -241,7 +241,7 @@ int8_t ota_get_image_version(char *out, uint8_t out_len)
     return -1;
   }
 
-  hdr = (const ota_image_header_t *)ota_running_slot_base();
+  hdr = (const ota_image_header_t *)(uintptr_t)ota_running_slot_base();
   if (hdr->magic != OTA_IMAGE_MAGIC)
   {
     return -1;
