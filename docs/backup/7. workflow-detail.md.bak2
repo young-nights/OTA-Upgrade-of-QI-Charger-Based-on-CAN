@@ -85,7 +85,7 @@
 | Slot B | `0x08010800` | `0xB800` (46 KB) | 同上，入口 `0x08010900` |
 | Metadata 主 | `0x0801C000` | `0x800` | `ota_metadata_t` 272 B |
 | Metadata 备 | `0x0801C800` | `0x800` | 先写备、再写主 |
-| Reserved | `0x0801D000` | `0x1000` | Device Info 保留区，存放 SN 等设备标识，OTA 擦写跳过 |
+| Reserved | `0x0801D000` | `0x1000` | 保留 |
 | NVM | `0x0801E000` | `0x2000` | APP 配置 |
 
 ```
@@ -95,7 +95,6 @@
 0x08010800  Slot B 头
 0x08010900  Slot B 向量表/代码
 0x0801C000  Metadata
-0x0801D000  Device Info (SN 等)
 0x0801E000  NVM
 0x08020000  Flash 末尾
 ```
@@ -249,8 +248,6 @@ Programming Session + 解锁之后：
 
 先 `7F 31 78`，擦目标槽全部 2 KB 扇区，置 `g_dl_erased=1`、`pending_slot`、`ota_state=DOWNLOADING`，写指针从**槽基址**开始（含头）。
 
-> **注意**: 擦槽操作 (`0x31 01 FF00`) 只擦除固件 Slot 区域，不会擦除 Device Info 保留区 (`0x0801D000` ~ `0x0801DFFF`)。Bootloader 在执行擦除时会校验目标地址，拒绝擦除 Device Info 区域，从而保护 SN 序列号等设备信息。
-
 **0x34**
 
 未擦 → NRC `0x24`。未解锁 → `0x33`。非 Programming → `0x22`。正响应 `[0x74, 0x20, 0x01, 0x00]`（maxBlockLength = 256，含 SID+序号+数据）。写入地址以擦除时绑定的槽为准，0x34 里的地址字段被解析但**不作为写指针**。
@@ -377,8 +374,6 @@ Bootloader         ota_state==DOWNLOADING → Safe Mode
 | --- | --- |
 | `0xF189` | 本槽 XATO 头里的 version 字符串；头无效则回编译期 `"1.0.0"` |
 | `0xF18C` / `0xF18D` / `0xF191` | 序列号 / Bootloader 版本 / 硬件版本（占位字符串） |
-
-> **说明**: DID `0xF18C`（序列号）的数据存储在 Device Info 保留区 (`0x0801D000` ~ `0x0801DFFF`)，OTA 升级后仍然保留。读取时从 Device Info 保留区获取真实 SN。
 | `0x2010` | 固件类型，APP 固定读 `0x01` |
 | `0x2112` | metadata `ota_state` |
 | `0x2113` | **正在运行的槽**（VTOR），不是尚未确认的 `active_slot` |
@@ -528,7 +523,6 @@ APP_A_BASE_ADDR     0x08005000    APP_A_SIZE 0xB800    入口 0x08005100
 APP_B_BASE_ADDR     0x08010800    APP_B_SIZE 0xB800    入口 0x08010900
 IMAGE_HEADER_SIZE   256
 META_PRIMARY_ADDR   0x0801C000    META_BACKUP_ADDR 0x0801C800
-DEVICE_INFO_ADDR    0x0801D000    DEVICE_INFO_SIZE 0x1000
 
 /* UDS 时序 */
 UDS_MAX_BLOCK_LEN   256
@@ -568,12 +562,3 @@ Keil Target（不用 scatter）：
 8. **Qi 充电协议解析未完成**，不影响 OTA 路径。
 
 实验室一键升级用 `qi_wireless_bootloader/tools/zcanpro_ext_ota.py`；产线打包用同目录 `pack_image.py`。不要在文档和脚本之外再发明第三套地址或会话顺序。
-
----
-
-## 变更记录
-
-| 版本 | 日期 | 变更内容 |
-|------|------|----------|
-| v1.0 | 2026-08-29 | 初始版本 |
-| v1.1 | 2026-08-29 | 新增 Device Info 保留区（SN 存储）：Flash 布局中 Reserved 改为 Device Info，擦槽操作说明补充保护机制，关键常量新增 DEVICE_INFO_ADDR/SIZE，APP DID 补充 0xF18C SN 数据来源 |

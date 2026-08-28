@@ -17,7 +17,6 @@
 0x08005100  Slot A 代码        ← Keil Target → IROM1 从这里开始
 0x08010800  Slot B 头 256B     ← 出厂不烧
 0x08010900  Slot B 代码
-0x0801D000  Device Info 4KB    ← SN 序列号等设备信息，OTA 擦写跳过
 ```
 
 - Keil 链接地址是 **代码入口** `0x08005100`，产出的裸 `.bin` **不含** 头。
@@ -169,43 +168,9 @@ python pack_image.py --bin I:\GitHub-young-nights\ota-upgrade-of-qi-charger-base
 | ---------- | ------------------------ | ---------------------------------------- |
 | Bootloader | `0x08000000`           | Bootloader 的`.bin` / `.axf`         |
 | Slot A     | **`0x08005000`** | **`app_slot_a.ota.bin`（含头）** |
-| Device Info | `0x0801D000`           | SN 序列号等设备信息（产线烧录时写入） |
 | Slot B     | `0x08010800`           | **不烧**                           |
 
 上电后 Bootloader 校验 Slot A 通过即跳 APP。Slot B 空着是正常的。
-
-### 6.1 Device Info 区域烧录（SN 序列号）
-
-产线烧录流程中需新增一步：将 SN 序列号烧录到 Device Info 保留区 (`0x0801D000`)。
-
-Device Info 区域结构（512 字节有效数据，详见文档 2）：
-
-| 偏移 | 长度 | 字段 | 说明 |
-|------|------|------|------|
-| 0x00 | 4 | magic | `0x44455649` ("DEVI") |
-| 0x04 | 4 | version | 设备信息格式版本，当前 = 1 |
-| 0x08 | 4 | crc32 | CRC32 校验 |
-| 0x0C | 32 | sn | 设备序列号 (ASCII, 末尾补 `\0`) |
-| 0x2C | 8 | hw_version | 硬件版本号 (如 "v1.2\0") |
-| 0x34 | 4 | production_date | 产线烧录日期 (Unix 时间戳, 可选) |
-| 0x38 | 476 | reserved | 填充至 512 字节 |
-
-**产线烧录 SN 的命令行示例**（通过 J-Link 写入 `0x0801D000`）：
-
-```bash
-# 1. 准备 Device Info 二进制文件（512 字节，含 magic + SN + CRC32）
-# 2. 通过 J-Link Commander 写入：
-JLinkExe -device AT32F426KBU7 -if SWD -speed 4000 -CommandFile jlink_cmds.txt
-
-# jlink_cmds.txt 内容：
-loadfile device_info.bin 0x0801D000
-verifybin device_info.bin 0x0801D000
-r
-h
-q
-```
-
-> **注意**: Device Info 区域在 OTA 升级过程中不会被擦除，SN 序列号在 OTA 后仍然保留。
 
 ---
 
@@ -236,12 +201,3 @@ ZCANPRO 扩展脚本 `zcanpro_ext_ota.py`：
 4. 确认日志为 **链接 Slot A**、烧录地址 **`0x08005000`**。
 5. Bootloader → `0x08000000`；`app_slot_a.ota.bin` → `0x08005000`。
 6. 上电应进入 APP，不要进 Safe Mode。
-
----
-
-## 变更记录
-
-| 版本 | 日期 | 变更内容 |
-|------|------|----------|
-| v1.0 | 2026-08-28 | 初始版本 |
-| v1.1 | 2026-08-29 | 新增 Device Info 保留区（SN 存储）：Flash 布局图新增 Device Info 区域，产线烧录流程新增 SN 烧录步骤（含 J-Link 命令行示例），明确 OTA 擦写跳过 Device Info 区域 |
