@@ -58,7 +58,7 @@ extern "C" {
 #define UDS_SID_REQUEST_DOWNLOAD     0x34U        /*!< RequestDownload */
 #define UDS_SID_TRANSFER_DATA        0x36U        /*!< TransferData (boot safe mode only) */
 #define UDS_SID_TRANSFER_EXIT        0x37U        /*!< RequestTransferExit (boot safe mode only) */
-#define UDS_SID_TRANSFER_SIGNATURE   0x38U        /*!< TransferSignature (boot safe mode only) */ */
+#define UDS_SID_TRANSFER_SIGNATURE   0x38U        /*!< TransferSignature (boot safe mode only) */
 #define UDS_SID_TESTER_KEEPALIVE     0x3EU        /*!< TesterPresent (keepalive) */
 
 /* ========================================================================== */
