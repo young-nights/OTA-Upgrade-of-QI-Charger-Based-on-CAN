@@ -194,7 +194,7 @@ UDS data is 13 bytes → requires ISO-TP First Frame + Consecutive Frame.
 | Expected Response | `04 74 20 01 00 00 00 00` (maxBlockLen=256) |
 | Wait After TX | **100ms** |
 
-**Size calculation**: Firmware file size in bytes (excluding the 256-byte header), big-endian. Example: 40KB firmware = `0x0000A000`.
+**Size calculation**: Packed file total length (**including** the 256-byte header), big-endian, and ≤ slot size `0xB800`. Example: 40KB firmware + 256B header = `0x0000A100`.
 
 ### Step 8: TransferData (0x36) — Block Transfer
 
@@ -247,9 +247,9 @@ CF:  2x [remaining data]
 | Item | Value |
 |------|-------|
 | TX ID | `0x18DA0D03` |
-| Data | `03 22 F1 95 00 00 00 00` |
-| Parse | `03`=SF len 3, `22`=ReadDataByIdentifier, `F195`=ECU Software Version |
-| Expected Response | `xx 62 F1 95 [version string...]` |
+| Data | `03 22 F1 89 00 00 00 00` |
+| Parse | `03`=SF len 3, `22`=ReadDataByIdentifier, `F189`=Software Version (APP does not implement `F195`) |
+| Expected Response | `xx 62 F1 89 [version string...]` |
 
 ---
 
@@ -267,7 +267,7 @@ CF:  2x [remaining data]
 | 8 | 0x36 × N | **10ms/block** | ISO-TP CF interval 1ms |
 | 9 | 0x37 | **Wait for NRC 0x78 to end** | Verification 100~500ms |
 | 10 | 0x11 0x01 | **2000ms** | Wait for reset |
-| 11 | 0x22 0xF195 | — | Confirm version |
+| 11 | 0x22 0xF189 | — | Confirm version |
 
 ---
 

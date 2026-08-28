@@ -226,15 +226,7 @@ CF: 21 00 00 00 10 00 00 00
 
 0x36 从**槽起始地址**写，前 256 字节必须是 `image_header_t`（magic `XATO` + length + CRC32 + 64B 签名 + 版本…）。
 
-打包：
-
-```bash
-python3 tools/pack_image.py \
-  --bin qi_wireless_code/mdk_project/Objects/qi_wireless.bin \
-  --key OTA simulator app/keys/private.pem \
-  --version 1.0.0 \
-  --out app_slot_a.ota.bin
-```
+打包：用 `qi_wireless_bootloader/tools/pack_image.py` 给裸 Keil `.bin` 加 256 字节 XATO 头。CAN OTA 也可把裸 `.bin` 配进 `zcanpro_ext_ota.py`，由扩展脚本现场打包。已带 XATO 头的 `.ota.bin` 原样下发。
 
 Keil 当前只链 Slot A（`0x08005100`）。第一次升级（目标槽 A）用这份包。第二次会擦 Slot B，同一份 A 链接镜像会在 0x37 验签失败（Reset Handler 不在 B 槽）。
 
