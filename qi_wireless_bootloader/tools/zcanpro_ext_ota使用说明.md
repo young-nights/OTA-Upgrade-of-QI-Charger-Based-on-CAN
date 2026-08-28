@@ -49,12 +49,14 @@ I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can\docs\keys\private.
 
 产线要得到可烧录文件时，用同目录 `pack_image.py`（见第 2.1 节），不要依赖 ZCANPRO。
 
-Slot A / Slot B 必须用各自 scatter 链接的 bin，不能拿 A 的包去升 B。
+Slot A / Slot B 必须用 **Keil Target 里不同的 IROM1 Start** 分别链接，不能拿 A 的包去升 B。不用 scatter 文件。
 
-| 槽 | scatter | 代码起始 | 适用 |
-|----|---------|----------|------|
-| A | `qi_wireless_code\mdk_project\scatter\app_slot_a.sct` | `0x08005100` | 空片首次下载，或当前活跃槽为 B |
-| B | `qi_wireless_code\mdk_project\scatter\app_slot_b.sct` | `0x08010900` | 当前 APP 跑在 Slot A（最常见的二次升级） |
+| 槽 | Target → IROM1 Start | IROM1 Size | 适用 |
+|----|----------------------|------------|------|
+| A | `0x08005100` | `0xB700` | 空片首次下载，或当前活跃槽为 B |
+| B | `0x08010900` | `0xB700` | 当前 APP 跑在 Slot A（最常见的二次升级） |
+
+Linker 勾选 **Use Memory Layout from Target Dialog**，不要勾选 Scatter File。
 
 ### 2.1 命令行打包 `pack_image.py`
 
@@ -72,7 +74,7 @@ python pack_image.py
 
 | 参数 | 含义 |
 |------|------|
-| `--bin` | Keil `fromelf` 产出的裸 APP（Slot A 链接地址 `0x08005100`） |
+| `--bin` | Keil `fromelf` 产出的裸 APP（Slot A：Target IROM1 = `0x08005100`） |
 | `--key` | 与 Bootloader 公钥成对的 PEM 私钥 |
 | `--out` | 输出文件 |
 | `--version` | 写入头的版本，默认 `1.0.0` |
@@ -176,8 +178,8 @@ TRANSFER_BLOCK_DATA = 128                      # 每块数据字节，须 1..254
 | NRC `0x24` | 没擦就下载 | 整段重跑，不要跳步 |
 | NRC `0x72` | CRC/签名失败，或镜像链接地址不在本槽 | 用对应槽的 bin；裸 bin 交给脚本打包 |
 | NRC `0x73` | 块序号错 | 不要同时发其它诊断；重跑 |
-| 镜像链接 Slot 与 MCU 写入槽不符 | APP 在 A 却喂了 A 的 bin（会写入 B） | 换成 `app_slot_b.sct` 链接的镜像 |
-| 镜像超过槽大小 / length 不一致 | 文件大于 46KB 或头字段损坏 | 检查 scatter 与打包结果 |
+| 镜像链接 Slot 与 MCU 写入槽不符 | APP 在 A 却喂了 A 的 bin（会写入 B） | Target IROM1 改为 `0x08010900` 重编后再打包 |
+| 镜像超过槽大小 / length 不一致 | 文件大于 46KB 或头字段损坏 | 检查 Target IROM1 Size（`0xB700`）与打包结果 |
 | 复位后 0x27 仍返回 seed | 未跳转 APP，仍在 Bootloader | 查验签、链接地址、串口 `BOOT`/`APP` |
 | 仍停在 NRC 0x78 | 擦除/验签超过 5 s | 再跑；查验签时是否被 IWDG 复位 |
 | 进 Boot 后全无应答 | 2.5 s 不够或没进 Safe Mode | 加长等待，或确认已在 Boot 后设 `RESET_APP_TO_BOOT = False` |

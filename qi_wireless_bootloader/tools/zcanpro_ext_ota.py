@@ -21,7 +21,7 @@ except ImportError:
     zcanpro = None
 
 # ======== 用户配置 ========
-# Slot A 用 app_slot_a.sct 链接的 bin，Slot B 用 app_slot_b.sct。
+# Slot A：Keil Target IROM1 = 0x08005100；Slot B：IROM1 = 0x08010900。不用 scatter。
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
 REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
 FIRMWARE_PATH = REPO_ROOT + r"\qi_wireless_code\mdk_project\Objects\qi_wireless.bin"
@@ -306,7 +306,7 @@ def validate_image(image):
     linked = image_target_slot(image)
     if linked is None:
         reset = struct.unpack_from("<I", image, IMAGE_HEADER_SIZE + 4)[0]
-        raise RuntimeError("Reset Handler 0x%08X 不在 Slot A/B 内，请用对应 scatter 链接" % reset)
+        raise RuntimeError("Reset Handler 0x%08X 不在 Slot A/B 内，请改 Target IROM1（A=0x08005100 / B=0x08010900）" % reset)
     _log("镜像链接 Slot %s, 总长 %d" % (slot_name(linked), len(image)))
     return linked
 
@@ -445,8 +445,9 @@ def run_ota(bus_id):
             raise RuntimeError("DID 0x2114 槽号无效: %d" % dest)
         if dest != linked:
             raise RuntimeError(
-                "MCU 写入 Slot %s，但镜像按 Slot %s 链接。请改用 app_slot_%s scatter 的 bin"
-                % (slot_name(dest), slot_name(linked), "a" if dest == SLOT_A else "b")
+                "MCU 写入 Slot %s，但镜像按 Slot %s 链接。请把 Target IROM1 Start 改为 0x%08X 后重编"
+                % (slot_name(dest), slot_name(linked),
+                   SLOT_A_BASE + IMAGE_HEADER_SIZE if dest == SLOT_A else SLOT_B_BASE + IMAGE_HEADER_SIZE)
             )
         size = len(image)
         addr_val = slot_base(dest)
