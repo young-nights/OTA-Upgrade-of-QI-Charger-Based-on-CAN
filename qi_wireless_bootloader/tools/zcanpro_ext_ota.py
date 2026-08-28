@@ -23,8 +23,9 @@ except ImportError:
 # ======== 用户配置 ========
 # Slot A 用 app_slot_a.sct 链接的 bin，Slot B 用 app_slot_b.sct。
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
-FIRMWARE_PATH = r"D:\ota\app_slot_a.ota.bin"
-PRIVATE_KEY_PATH = r"D:\ota\private.pem"
+REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
+FIRMWARE_PATH = REPO_ROOT + r"\qi_wireless_code\mdk_project\Objects\qi_wireless.bin"
+PRIVATE_KEY_PATH = REPO_ROOT + r"\docs\keys\private.pem"
 RESET_APP_TO_BOOT = True
 DOWNLOAD_ADDR = 0x08005000
 TRANSFER_BLOCK_DATA = 128

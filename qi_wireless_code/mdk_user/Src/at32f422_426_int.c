@@ -55,7 +55,6 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-  /* do not feed IWDG: trial/rollback needs a reset if APP dies */
   while(1)
   {
   }

@@ -27,7 +27,6 @@
 #include "at32f422_426_clock.h"
 #include "at32f422_426_conf.h"
 #include "timer_drv.h"
-#include "wdg_drv.h"
 #include "can_driver.h"
 #include "can_protocol.h"
 #include "lifecycle.h"
@@ -51,7 +50,6 @@ int main(void)
 
   /* initialize drivers */
   timer_drv_init();
-  wdg_drv_init();
   nvm_drv_init();
   can_driver_init();
   qi_uart_init();
@@ -77,7 +75,6 @@ int main(void)
     qi_uart_poll();
     lifecycle_poll();
     ota_trial_poll();
-    wdg_drv_refresh();
   }
 }
 

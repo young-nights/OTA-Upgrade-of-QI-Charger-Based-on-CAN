@@ -211,23 +211,79 @@ int8_t ota_metadata_save(const ota_metadata_t *meta)
   return 0;
 }
 
-/**
- * @brief  mark metadata for bootloader download mode
- * @retval 0 on success, -1 if flash write failed
- */
-int8_t ota_trigger_prepare(void)
+uint32_t ota_running_slot_base(void)
 {
-  ota_metadata_t meta;
+  uint32_t vtor = SCB->VTOR;
 
-  ota_metadata_read(&meta);
-  meta.ota_state = OTA_STATE_DOWNLOADING;
+  if (vtor >= OTA_APP_B_BASE_ADDR)
+  {
+    return OTA_APP_B_BASE_ADDR;
+  }
+  return OTA_APP_A_BASE_ADDR;
+}
 
-  if (ota_metadata_save(&meta) != 0)
+uint8_t ota_running_slot(void)
+{
+  if (ota_running_slot_base() == OTA_APP_B_BASE_ADDR)
+  {
+    return OTA_SLOT_B;
+  }
+  return OTA_SLOT_A;
+}
+
+int8_t ota_get_image_version(char *out, uint8_t out_len)
+{
+  const ota_image_header_t *hdr;
+  uint8_t i;
+
+  if ((out == (char *)0) || (out_len == 0U))
   {
     return -1;
   }
 
+  hdr = (const ota_image_header_t *)ota_running_slot_base();
+  if (hdr->magic != OTA_IMAGE_MAGIC)
+  {
+    return -1;
+  }
+
+  for (i = 0U; (i < 15U) && (i < (out_len - 1U)); i++)
+  {
+    char c = hdr->version[i];
+    if (c == '\0')
+    {
+      break;
+    }
+    out[i] = c;
+  }
+  out[i] = '\0';
   return 0;
+}
+
+int8_t ota_trigger_prepare(void)
+{
+  ota_metadata_t meta;
+  uint8_t slot;
+
+  if (ota_metadata_read(&meta) != 0)
+  {
+    /* keep the running slot marked valid so Bootloader does not treat this
+     * APP as missing when metadata was never written or both copies failed */
+    slot = ota_running_slot();
+    meta_fill_defaults(&meta);
+    meta.active_slot = slot;
+    if (slot == OTA_SLOT_B)
+    {
+      meta.slot_b_valid = 1U;
+    }
+    else
+    {
+      meta.slot_a_valid = 1U;
+    }
+  }
+
+  meta.ota_state = OTA_STATE_DOWNLOADING;
+  return ota_metadata_save(&meta);
 }
 
 /**
@@ -262,6 +318,12 @@ static int8_t ota_confirm_trial(void)
     return 0;
   }
 
+  /* only confirm if this image is the one under trial */
+  if (meta.trial_slot != ota_running_slot())
+  {
+    return -1;
+  }
+
   meta.active_slot  = meta.trial_slot;
   meta.pending_slot = OTA_SLOT_NONE;
   meta.trial_state  = TRIAL_STATE_CONFIRMED;
@@ -282,6 +344,10 @@ void ota_trial_init(void)
     return;
   }
   if (meta.trial_state != TRIAL_STATE_ACTIVE)
+  {
+    return;
+  }
+  if (meta.trial_slot != ota_running_slot())
   {
     return;
   }
@@ -309,10 +375,8 @@ void ota_trial_poll(void)
   now = timer_get_tick();
   if ((int32_t)(now - g_trial_deadline_ms) >= 0)
   {
-    /* trial timed out: stop feeding IWDG so bootloader can roll back */
-    while (1)
-    {
-    }
+    /* trial timed out: reset into bootloader to roll back */
+    NVIC_SystemReset();
   }
 
   /* confirm only after core init has been up for a short health window */

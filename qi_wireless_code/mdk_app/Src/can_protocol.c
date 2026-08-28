@@ -29,6 +29,7 @@
 #include "ota_trigger.h"
 #include "isotp.h"
 #include "timer_drv.h"
+#include "lifecycle.h"
 
 /* ========================================================================== */
 /*  Version string constants (UTF-8, max 16 bytes including null terminator)  */
@@ -212,7 +213,7 @@ static void handle_ecu_reset(uint8_t *data, uint16_t len)
     return;
   }
 
-  /* programming session + hardReset: enter bootloader download */
+  /* programming session + hardReset: enter bootloader Safe Mode download */
   enter_ota = (current_session == SESSION_PROGRAMMING) ? 1U : 0U;
 
   if (enter_ota)
@@ -231,7 +232,8 @@ static void handle_ecu_reset(uint8_t *data, uint16_t len)
     proto_send_response(resp, 2);
   }
 
-  (void)can_driver_wait_tx_idle(5U);
+  lifecycle_set_state(LIFECYCLE_SHUTDOWN);
+  (void)can_driver_wait_tx_idle(20U);
   NVIC_SystemReset();
 }
 
@@ -265,9 +267,19 @@ static void handle_read_data_by_id(uint8_t *data, uint16_t len)
     switch (did)
     {
       case DID_SW_VERSION:
-        pos += str_copy_to_resp(&resp[pos], SW_VERSION_STR);
+      {
+        char img_ver[16];
+        if (ota_get_image_version(img_ver, (uint8_t)sizeof(img_ver)) == 0)
+        {
+          pos += str_copy_to_resp(&resp[pos], img_ver);
+        }
+        else
+        {
+          pos += str_copy_to_resp(&resp[pos], SW_VERSION_STR);
+        }
         proto_send_response(resp, pos);
         break;
+      }
 
       case DID_SERIAL_NUMBER:
         pos += str_copy_to_resp(&resp[pos], SERIAL_NUMBER_STR);
@@ -305,19 +317,10 @@ static void handle_read_data_by_id(uint8_t *data, uint16_t len)
       }
 
       case DID_ACTIVE_SLOT:
-      {
-        ota_metadata_t meta;
-        if (ota_metadata_read(&meta) == 0)
-        {
-          resp[pos] = meta.active_slot;
-        }
-        else
-        {
-          resp[pos] = 0xFFU;  /* unknown */
-        }
+        /* VTOR is the running image; metadata active_slot lags until trial confirm */
+        resp[pos] = ota_running_slot();
         proto_send_response(resp, (uint8_t)(pos + 1U));
         break;
-      }
 
       case DID_PENDING_SLOT:
       {
@@ -523,6 +526,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     return;
   }
 
+  /* any diagnostic request refreshes S3 (ISO 14229) */
+  last_tester_present_tick = timer_get_tick();
+
   service_id = data[0];
 
   switch (service_id)
@@ -552,12 +558,10 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       break;
 
     case UDS_SID_REQUEST_DOWNLOAD:
-      /* APP does not handle download - done by boot safe mode */
-      proto_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
-      break;
-
+    case UDS_SID_TRANSFER_DATA:
+    case UDS_SID_TRANSFER_EXIT:
     case UDS_SID_TRANSFER_SIGNATURE:
-      /* APP does not handle signature transfer - done in boot safe mode */
+      /* download path is Bootloader Safe Mode only; host must 0x10 0x02 + 0x11 */
       proto_send_nrc(service_id, UDS_NRC_SERVICE_NOT_SUPPORTED);
       break;
 

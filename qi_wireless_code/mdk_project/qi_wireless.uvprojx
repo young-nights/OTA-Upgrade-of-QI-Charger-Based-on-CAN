@@ -549,11 +549,6 @@
               <FilePath>..\mdk_app\Src\timer_drv.c</FilePath>
             </File>
             <File>
-              <FileName>wdg_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\wdg_drv.c</FilePath>
-            </File>
-            <File>
               <FileName>debug_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\debug_uart.c</FilePath>

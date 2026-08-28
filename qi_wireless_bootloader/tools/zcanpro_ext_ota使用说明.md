@@ -25,14 +25,22 @@ ISO-TP 由 ZCANPRO 的 `zcanpro.uds_request()` 完成，接口与官方 `scripts
 
 ## 2. 准备文件
 
-建议在 Windows 建 `D:\ota\`，放入：
+Windows 仓库根目录：
+
+```text
+I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can
+```
 
 | 文件 | 说明 |
 |------|------|
-| 升级镜像 | Keil 编出的 APP `.bin`，或已带 XATO 头的 `.ota.bin` |
+| 升级镜像 | Keil 编出的 APP `.bin`：`qi_wireless_code\mdk_project\Objects\qi_wireless.bin`，或已带 XATO 头的 `.ota.bin` |
 | `private.pem` | ECDSA P-256 私钥，必须与 Bootloader 内公钥成对 |
 
-私钥必须与烧进 Bootloader 的公钥成对。量产请换正式密钥。仓库不附带私钥文件，把 PEM 放到例如 `D:\ota\private.pem`。
+私钥必须与烧进 Bootloader 的公钥成对。量产请换正式密钥。把 PEM 放到：
+
+```text
+I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can\docs\keys\private.pem
+```
 
 镜像两种情况：
 
@@ -53,7 +61,13 @@ Slot A / Slot B 必须用各自 scatter 链接的 bin，不能拿 A 的包去升
 不需要 ZCANPRO。把 Keil 裸 `.bin` 打成带 XATO 头的 `.ota.bin`：
 
 ```text
-python pack_image.py --bin D:\ota\qi_wireless.bin --key D:\ota\private.pem --out D:\ota\app_slot_a.ota.bin --version 1.0.0
+python pack_image.py --bin I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can\qi_wireless_code\mdk_project\Objects\qi_wireless.bin --key I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can\docs\keys\private.pem --out I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can\qi_wireless_code\mdk_project\Objects\app_slot_a.ota.bin --version 1.0.0
+```
+
+在 Windows 上若仓库就在上述路径，也可直接：
+
+```text
+python pack_image.py
 ```
 
 | 参数 | 含义 |
@@ -73,8 +87,9 @@ CAN OTA 可把 `--out` 填进 `zcanpro_ext_ota.py` 的 `FIRMWARE_PATH`，也可�
 用记事本打开 `zcanpro_ext_ota.py`，改：
 
 ```python
-FIRMWARE_PATH = r"D:\ota\app_slot_a.ota.bin"   # 须与将要写入的槽一致
-PRIVATE_KEY_PATH = r"D:\ota\private.pem"       # 私钥路径
+REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
+FIRMWARE_PATH = REPO_ROOT + r"\qi_wireless_code\mdk_project\Objects\qi_wireless.bin"
+PRIVATE_KEY_PATH = REPO_ROOT + r"\docs\keys\private.pem"
 RESET_APP_TO_BOOT = True                       # APP 在跑则先复位进 Boot
 DOWNLOAD_ADDR = 0x08005000                     # 仅兜底；实际 0x34 地址取自 DID 0x2114
 TRANSFER_BLOCK_DATA = 128                      # 每块数据字节，须 1..254

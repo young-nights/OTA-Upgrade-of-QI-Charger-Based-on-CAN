@@ -62,7 +62,25 @@ extern "C" {
 /** @brief  Flash sector size for AT32F426 */
 #define OTA_FLASH_SECTOR_SIZE   0x800U        /*!< 2KB per sector */
 
+/** @brief  image header magic "XATO" (must match bootloader IMAGE_MAGIC) */
+#define OTA_IMAGE_MAGIC         0x4F544158U
+
 /* exported types ------------------------------------------------------------*/
+
+/**
+ * @brief  application image header (256 bytes) at each slot base
+ * @note   must match bootloader image_header_t
+ */
+typedef struct
+{
+  uint32_t magic;              /*!< 0x4F544158 "XATO" */
+  uint32_t image_length;       /*!< firmware size excluding this header */
+  uint32_t crc32;              /*!< CRC32 of firmware (excluding header) */
+  uint8_t  signature[64];      /*!< ECDSA P-256 R||S */
+  char     version[16];        /*!< "MAJOR.MINOR.PATCH\0" */
+  uint32_t build_timestamp;    /*!< Unix timestamp */
+  uint8_t  reserved[160];      /*!< pad to 256 bytes */
+} ota_image_header_t;
 
 /**
  * @brief  OTA metadata structure (must match bootloader definition)
@@ -89,7 +107,7 @@ typedef struct
   uint8_t  last_boot_reason;    /*!< 0x00=power-on, 0x02=WDG, 0x03=OTA, 0x04=rollback */
   uint8_t  ota_state;           /*!< 0x00=idle, 0x01=downloading */
   uint8_t  reserved2[2];        /*!< reserved */
-  uint8_t  padding[232];        /*!< padding to 276 bytes (must match bootloader) */
+  uint8_t  padding[232];        /*!< padding to 272 bytes (must match bootloader) */
   uint32_t crc32;               /*!< CRC32 of all above fields */
 } ota_metadata_t;
 
@@ -126,9 +144,9 @@ int8_t ota_metadata_read(ota_metadata_t *meta);
 int8_t ota_metadata_save(const ota_metadata_t *meta);
 
 /**
- * @brief  start trial-boot watchdog window after APP init
+ * @brief  start trial-boot window after APP init
  * @note   if metadata trial_state is ACTIVE, APP must confirm within
- *         trial_timeout_sec or it stops feeding IWDG so bootloader can roll back.
+ *         trial_timeout_sec or it resets so bootloader can roll back.
  */
 void ota_trial_init(void);
 
@@ -144,6 +162,24 @@ void ota_trial_poll(void);
  * @retval CRC32 value
  */
 uint32_t ota_crc32(const void *data, uint32_t length);
+
+/**
+ * @brief  slot this APP image is running from (0=A, 1=B), derived from VTOR
+ */
+uint8_t ota_running_slot(void);
+
+/**
+ * @brief  Flash base of the running slot (header address)
+ */
+uint32_t ota_running_slot_base(void);
+
+/**
+ * @brief  copy version string from this slot's image header
+ * @param  out: destination buffer
+ * @param  out_len: capacity including NUL
+ * @retval 0 on success, -1 if header magic is invalid
+ */
+int8_t ota_get_image_version(char *out, uint8_t out_len);
 
 #ifdef __cplusplus
 }

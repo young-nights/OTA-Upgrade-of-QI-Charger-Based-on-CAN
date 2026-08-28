@@ -26,14 +26,19 @@ from zcanpro_ext_ota import (  # noqa: E402
     validate_image,
 )
 
+REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
+DEFAULT_BIN = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "qi_wireless.bin")
+DEFAULT_KEY = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
+DEFAULT_OUT = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "app_slot_a.ota.bin")
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Pack Keil APP .bin with XATO header (CRC32 + ECDSA P-256)"
     )
-    parser.add_argument("--bin", required=True, help="Keil fromelf 产出的裸 APP .bin")
-    parser.add_argument("--key", required=True, help="ECDSA P-256 私钥 PEM（须与 Bootloader 公钥成对）")
-    parser.add_argument("--out", required=True, help="输出镜像，例如 app_slot_a.ota.bin")
+    parser.add_argument("--bin", default=DEFAULT_BIN, help="Keil fromelf 产出的裸 APP .bin")
+    parser.add_argument("--key", default=DEFAULT_KEY, help="ECDSA P-256 私钥 PEM（须与 Bootloader 公钥成对）")
+    parser.add_argument("--out", default=DEFAULT_OUT, help="输出镜像，例如 app_slot_a.ota.bin")
     parser.add_argument("--version", default="1.0.0", help="写入头的版本字符串，默认 1.0.0")
     args = parser.parse_args(argv)
 

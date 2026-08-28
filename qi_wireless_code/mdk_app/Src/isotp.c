@@ -8,7 +8,6 @@
 #include "isotp.h"
 #include "can_driver.h"
 #include "timer_drv.h"
-#include "wdg_drv.h"
 
 static isotp_rx_ctx_t rx_ctx;
 static isotp_complete_cb_t complete_callback = (isotp_complete_cb_t)0;
@@ -27,7 +26,6 @@ static int8_t isotp_can_send(uint32_t can_id, uint8_t *frame, uint8_t len)
   uint32_t start = timer_get_tick();
   while ((timer_get_tick() - start) < ISOTP_N_AS_TIMEOUT_MS)
   {
-    wdg_drv_refresh();
     if (can_driver_send(can_id, frame, len) == 0)
     {
       return 0;
@@ -221,7 +219,6 @@ static void isotp_delay_ms(uint32_t ms)
   }
   while ((timer_get_tick() - start) < ms)
   {
-    wdg_drv_refresh();
   }
 }
 
@@ -255,8 +252,6 @@ static int8_t isotp_wait_cts(uint8_t *out_bs, uint8_t *out_stmin)
 
   while ((timer_get_tick() - start) < ISOTP_N_BS_TIMEOUT_MS)
   {
-    wdg_drv_refresh();
-
     if (g_fc_flag != 0U)
     {
       g_fc_flag = 0;
