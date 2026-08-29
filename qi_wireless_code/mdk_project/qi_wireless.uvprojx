@@ -563,6 +563,31 @@
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\lifecycle.c</FilePath>
             </File>
+            <File>
+              <FileName>device_info.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\device_info.c</FilePath>
+            </File>
+            <File>
+              <FileName>board_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\board_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>sit1145.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\sit1145.c</FilePath>
+            </File>
+            <File>
+              <FileName>sha256.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\sha256.c</FilePath>
+            </File>
+            <File>
+              <FileName>uECC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdk_app\Src\uECC.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

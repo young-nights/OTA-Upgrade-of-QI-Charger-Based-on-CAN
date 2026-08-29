@@ -26,7 +26,7 @@ from zcanpro_ext_ota import (  # noqa: E402
     validate_image,
 )
 
-REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
+REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
 DEFAULT_BIN = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "qi_wireless.bin")
 DEFAULT_KEY = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 DEFAULT_OUT = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "app_slot_a.ota.bin")

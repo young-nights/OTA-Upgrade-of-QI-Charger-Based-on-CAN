@@ -39,26 +39,26 @@ APP_BASE = BOOT_BASE + SLOT_A_OFFSET  # 0x08005000
 
 
 def bin_to_ihex(data, base_addr):
-    """Convert raw bytes to Intel HEX string (base_addr = start address)."""
+    """Convert raw bytes to Intel HEX; emit ELA when upper 16 bits change."""
     lines = []
+    last_upper = None
     for i in range(0, len(data), 16):
+        addr = base_addr + i
+        upper = (addr >> 16) & 0xFFFF
+        if upper != last_upper:
+            ext = "02000004{:04X}".format(upper)
+            check = (~sum(byte.fromhex(ext[j : j + 2]) for j in range(0, len(ext), 2)) + 1) & 0xFF
+            lines.append(":{}{:02X}".format(ext, check))
+            last_upper = upper
         chunk = data[i : i + 16]
         byte_count = len(chunk)
-        address = (base_addr + i) & 0xFFFF
-        record_type = 0x00  # Data Record
+        address = addr & 0xFFFF
+        record_type = 0x00
         line = "{:02X}{:04X}{:02X}".format(byte_count, address, record_type)
         line += chunk.hex().upper()
-        # checksum: two's complement of the sum of all bytes
         check = (~sum(byte.fromhex(line[j : j + 2]) for j in range(0, len(line), 2)) + 1) & 0xFF
         line += "{:02X}".format(check)
         lines.append(":{}".format(line))
-    # Extended Linear Address record (to set upper 16 bits of address)
-    upper = (base_addr >> 16) & 0xFFFF
-    if upper:
-        ext = "02000004{:04X}".format(upper)
-        check = (~sum(byte.fromhex(ext[j : j + 2]) for j in range(0, len(ext), 2)) + 1) & 0xFF
-        lines.insert(0, ":{}{:02X}".format(ext, check))
-    # End Of File
     lines.append(":00000001FF")
     return "\r\n".join(lines) + "\r\n"
 
@@ -101,6 +101,13 @@ def main(argv=None):
         sys.stderr.write(
             "ERROR: Bootloader too large: {} bytes (max {})\n".format(
                 len(boot_data), BOOT_SIZE
+            )
+        )
+        return 1
+    if len(app_data) > 0xB800:
+        sys.stderr.write(
+            "ERROR: Slot A image too large: {} bytes (max {})\n".format(
+                len(app_data), 0xB800
             )
         )
         return 1

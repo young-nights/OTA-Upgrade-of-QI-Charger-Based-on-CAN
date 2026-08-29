@@ -36,7 +36,7 @@ extern "C" {
 
 /* exported constants --------------------------------------------------------*/
 
-/** @brief  Flash layout constants (must match bootloader / scatter / docs/flash.md) */
+/** @brief  Flash layout constants (must match bootloader / docs Flash layout) */
 #define OTA_APP_A_BASE_ADDR     0x08005000U   /*!< application A start address */
 #define OTA_APP_A_SIZE          0xB800U       /*!< application A size: 46KB */
 #define OTA_APP_B_BASE_ADDR     0x08010800U   /*!< application B start address */

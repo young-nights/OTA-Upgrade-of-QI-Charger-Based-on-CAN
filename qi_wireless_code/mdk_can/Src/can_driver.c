@@ -26,6 +26,7 @@
 /* includes ------------------------------------------------------------------*/
 #include "can_driver.h"
 #include "timer_drv.h"
+#include "sit1145.h"
 
 /* private define ------------------------------------------------------------*/
 
@@ -115,6 +116,11 @@ void can_driver_init(void)
   gpio_init(GPIOA, &gpio_init_struct);
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE12, GPIO_MUX_4);
 
+  if (sit1145_init() == 0U)
+  {
+    (void)sit1145_init();
+  }
+
   /* reset CAN peripheral */
   can_reset(CAN1);
 
@@ -142,12 +148,12 @@ void can_driver_init(void)
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
 
-  /* Filter 1: functional UDS request 0x18DB33D0 */
+  /* Filter 1: functional UDS 0x18DB33xx (SA ignored) */
   can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = CAN_ID_FUNCTIONAL_REQUEST;
+  can_filter_struct.code_para.id         = 0x18DB3300U;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
+  can_filter_struct.mask_para.id         = 0x1FFFFF00U;
   can_filter_struct.mask_para.id_type    = TRUE;
   can_filter_struct.mask_para.frame_type = TRUE;
   can_filter_struct.mask_para.data_length = 0U;

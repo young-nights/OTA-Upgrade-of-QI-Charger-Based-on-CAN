@@ -75,6 +75,7 @@ extern "C" {
 #define UDS_NRC_SERVICE_NOT_SUPPORTED       0x11U  /*!< service not supported */
 #define UDS_NRC_SUBFUNCTION_NOT_SUPPORTED   0x12U  /*!< sub-function not supported */
 #define UDS_NRC_INCORRECT_MESSAGE_LENGTH    0x13U  /*!< incorrect message length or invalid format */
+#define UDS_NRC_RESPONSE_TOO_LONG           0x14U  /*!< response too long */
 #define UDS_NRC_CONDITIONS_NOT_CORRECT      0x22U  /*!< conditions not correct */
 #define UDS_NRC_REQUEST_OUT_OF_RANGE        0x31U  /*!< request out of range */
 #define UDS_NRC_SECURITY_ACCESS_DENIED      0x33U  /*!< security access denied */
@@ -100,10 +101,10 @@ extern "C" {
 /* ========================================================================== */
 
 /** @brief  Standard identifier DIDs (per 通用CAN协议规范 8.) */
-#define DID_SW_VERSION              0xF189U   /*!< software version, UTF-8 string "MAJOR.MINOR.PATCH" */
-#define DID_SERIAL_NUMBER           0xF18CU   /*!< serial number, UTF-8 string */
-#define DID_BOOTLOADER_VERSION      0xF18DU   /*!< bootloader version, UTF-8 string */
-#define DID_HW_VERSION              0xF191U   /*!< hardware version, UTF-8 string */
+#define DID_SW_VERSION              0xF195U   /*!< APP software version, 32-byte ASCII */
+#define DID_SERIAL_NUMBER           0xF18CU   /*!< serial number from Device Info */
+#define DID_BOOTLOADER_VERSION      0xF180U   /*!< bootloader version */
+#define DID_HW_VERSION              0xF193U   /*!< hardware version */
 
 /** @brief  Firmware management DIDs */
 #define DID_FW_TYPE                 0x2010U   /*!< firmware type, uint8, read/write */
@@ -114,6 +115,7 @@ extern "C" {
 #define DID_PENDING_SLOT            0x2114U   /*!< pending firmware slot */
 #define DID_LAST_BOOT_REASON        0x2115U   /*!< last boot reason */
 #define DID_ROLLBACK_COUNT          0x2116U   /*!< rollback counter */
+#define DID_CLAMP_STATE             0x2118U   /*!< PA0 hall: 0=closed, 1=open */
 
 /* ========================================================================== */
 /*  Session management constants                                             */

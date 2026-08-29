@@ -36,7 +36,7 @@ extern "C" {
 
 /* exported constants --------------------------------------------------------*/
 
-/** @brief  Flash layout constants (must match scatter / docs/flash.md)
+/** @brief  Flash layout (Keil Target IROM, no scatter).
  *          Bootloader 20KB, APP_A/B 46KB each, 2KB-sector aligned. */
 #define BOOT_BASE_ADDR          0x08000000U   /*!< bootloader start address */
 #define BOOT_SIZE               0x5000U       /*!< bootloader size: 20KB */

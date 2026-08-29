@@ -50,6 +50,7 @@ static volatile uint8_t g_trial_timer_flag = 0;
  */
 void trial_timer_callback(void)
 {
+  /* unused: 10 s trial window is enforced in APP ota_trial_poll */
   g_trial_elapsed_sec++;
   g_trial_timer_flag = 1;
 

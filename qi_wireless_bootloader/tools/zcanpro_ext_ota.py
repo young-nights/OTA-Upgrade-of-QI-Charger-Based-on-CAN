@@ -23,9 +23,10 @@ except ImportError:
 # ======== 用户配置 ========
 # Slot A：Keil Target IROM1 = 0x08005100；Slot B：IROM1 = 0x08010900。不用 scatter。
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
-REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
-FIRMWARE_PATH = REPO_ROOT + r"\qi_wireless_code\mdk_project\Objects\qi_wireless.bin"
-PRIVATE_KEY_PATH = REPO_ROOT + r"\docs\keys\private.pem"
+_TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(_TOOLS_DIR))
+FIRMWARE_PATH = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "qi_wireless.bin")
+PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
 DOWNLOAD_ADDR = 0x08005000
 TRANSFER_BLOCK_DATA = 128
@@ -388,16 +389,16 @@ def read_did_u8(bus_id, did):
 
 
 def confirm_app_after_reset(bus_id):
-    rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x89])
+    rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
     _log("版本: " + _hex(rx[3:]))
     try:
-        uds_req(bus_id, SID_SA, [0x01])
+        uds_req(bus_id, SID_RD, [0x00])
     except UdsNrcError as e:
         if e.nrc == NRC_SNS:
-            _log("复位后 0x27 NRC 0x11，已在 APP")
+            _log("复位后 0x34 NRC 0x11，已在 APP")
             return
-        raise RuntimeError("复位后 0x27 异常: " + str(e))
-    raise RuntimeError("复位后 0x27 仍返回 seed，未跳转 APP（仍在 Bootloader）")
+        raise RuntimeError("复位后 0x34 异常: " + str(e))
+    raise RuntimeError("复位后 0x34 未回 NRC 0x11，仍在 Bootloader")
 
 
 def run_ota(bus_id):
@@ -454,6 +455,8 @@ def run_ota(bus_id):
         if DOWNLOAD_ADDR != addr_val:
             _log("0x34 地址用槽基址 0x%08X（配置 DOWNLOAD_ADDR=0x%08X 已忽略）" % (addr_val, DOWNLOAD_ADDR))
         sz = [(size >> 24) & 0xFF, (size >> 16) & 0xFF, (size >> 8) & 0xFF, size & 0xFF]
+        addr = [(addr_val >> 24) & 0xFF, (addr_val >> 16) & 0xFF,
+                (addr_val >> 8) & 0xFF, addr_val & 0xFF]
         _log("---- RequestDownload %d @ 0x%08X ----" % (size, addr_val))
         uds_req(bus_id, SID_RD, [0x00, 0x44] + addr + sz)
         _log("---- TransferData ----")

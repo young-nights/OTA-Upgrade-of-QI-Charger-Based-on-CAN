@@ -17,7 +17,7 @@
 3. 选择 APP 固件类型，擦除非活跃槽  
 4. 读 DID `0x2114`，核镜像 Reset Handler 是否指向该槽  
 5. 分块下发镜像（`0x34` 长度为 **含 256 字节头的总长**），`TransferExit` 验签  
-6. 复位后读 `0x22 F189`，并用 `0x27` 是否 NRC `0x11` 确认已在 APP
+6. 复位后读 `0x22 F195`，并用 `0x34` 是否 NRC `0x11` 确认已在 APP
 
 ISO-TP 由 ZCANPRO 的 `zcanpro.uds_request()` 完成，接口与官方 `scripts\demo.py` 相同。
 
@@ -89,9 +89,7 @@ CAN OTA 可把 `--out` 填进 `zcanpro_ext_ota.py` 的 `FIRMWARE_PATH`，也可�
 用记事本打开 `zcanpro_ext_ota.py`，改：
 
 ```python
-REPO_ROOT = r"I:\GitHub-young-nights\ota-upgrade-of-qi-charger-based-on-can"
-FIRMWARE_PATH = REPO_ROOT + r"\qi_wireless_code\mdk_project\Objects\qi_wireless.bin"
-PRIVATE_KEY_PATH = REPO_ROOT + r"\docs\keys\private.pem"
+# REPO_ROOT 默认由脚本路径推算仓库根；复制到 ZCANPRO/scripts 时可改 FIRMWARE_PATH / PRIVATE_KEY_PATH
 RESET_APP_TO_BOOT = True                       # APP 在跑则先复位进 Boot
 DOWNLOAD_ADDR = 0x08005000                     # 仅兜底；实际 0x34 地址取自 DID 0x2114
 TRANSFER_BLOCK_DATA = 128                      # 每块数据字节，须 1..254
@@ -155,8 +153,8 @@ TRANSFER_BLOCK_DATA = 128                      # 每块数据字节，须 1..254
 ---- TransferData ----         0x36，隔一段打印进度
 ---- TransferExit ----         0x37 验 CRC + ECDSA
 ---- Reset ----                0x11
-版本: ...                      0x22 F1 89
-复位后 0x27 NRC 0x11，已在 APP
+版本: ...                      0x22 F1 95
+复位后 0x34 NRC 0x11，已在 APP
 ======== OTA 成功 ========
 ```
 
@@ -174,14 +172,14 @@ TRANSFER_BLOCK_DATA = 128                      # 每块数据字节，须 1..254
 | NRC `0x22` | 不在 Programming | 确认 0x10 成功；S3 超时则重跑 |
 | NRC `0x33` | 未解锁 | 检查 0x27 |
 | NRC `0x35` | 私钥和 MCU 公钥不匹配 | 换密钥或重编 Bootloader |
-| NRC `0x36` | 连续验签失败已锁定 | 等约 60 秒再跑 |
+| NRC `0x36` | 连续验签失败已锁定 | 等约 30 秒再跑 |
 | NRC `0x24` | 没擦就下载 | 整段重跑，不要跳步 |
 | NRC `0x72` | CRC/签名失败，或镜像链接地址不在本槽 | 用对应槽的 bin；裸 bin 交给脚本打包 |
 | NRC `0x73` | 块序号错 | 不要同时发其它诊断；重跑 |
 | 镜像链接 Slot 与 MCU 写入槽不符 | APP 在 A 却喂了 A 的 bin（会写入 B） | Target IROM1 改为 `0x08010900` 重编后再打包 |
 | 镜像超过槽大小 / length 不一致 | 文件大于 46KB 或头字段损坏 | 检查 Target IROM1 Size（`0xB700`）与打包结果 |
-| 复位后 0x27 仍返回 seed | 未跳转 APP，仍在 Bootloader | 查验签、链接地址、串口 `BOOT`/`APP` |
-| 仍停在 NRC 0x78 | 擦除/验签超过 5 s | 再跑；查验签时是否被 IWDG 复位 |
+| 复位后 0x34 未回 NRC 0x11 | 未跳转 APP，仍在 Bootloader | 查验签、链接地址 |
+| 仍停在 NRC 0x78 | 擦除/验签超过 5 s | 再跑 |
 | 进 Boot 后全无应答 | 2.5 s 不够或没进 Safe Mode | 加长等待，或确认已在 Boot 后设 `RESET_APP_TO_BOOT = False` |
 
 调试串口 USART1（**PB6 TX，115200 8N1**）：`APP` 心跳=应用在跑，`BOOT`=Bootloader。OTA 过程应变 `APP` → `BOOT` → 再 `APP`。

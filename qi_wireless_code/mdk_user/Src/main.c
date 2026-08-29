@@ -33,6 +33,7 @@
 #include "ota_trigger.h"
 #include "nvm_drv.h"
 #include "qi_uart.h"
+#include "board_gpio.h"
 
 extern uint32_t __Vectors;
 
@@ -50,6 +51,7 @@ int main(void)
 
   /* initialize drivers */
   timer_drv_init();
+  board_gpio_init();
   nvm_drv_init();
   can_driver_init();
   qi_uart_init();
