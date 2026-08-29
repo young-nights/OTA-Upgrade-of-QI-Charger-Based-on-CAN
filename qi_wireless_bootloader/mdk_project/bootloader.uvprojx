@@ -395,49 +395,14 @@
           <GroupName>mdk_libraries</GroupName>
           <Files>
             <File>
-              <FileName>at32f422_426_adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_adc.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_can.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_can.c</FilePath>
             </File>
             <File>
-              <FileName>at32f422_426_cmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_cmp.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_crc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_crc.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_crm.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_crm.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_dma.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_dma.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_ertc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_ertc.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_exint.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_exint.c</FilePath>
             </File>
             <File>
               <FileName>at32f422_426_flash.c</FileName>
@@ -450,19 +415,9 @@
               <FilePath>..\libraries\drivers\src\at32f422_426_gpio.c</FilePath>
             </File>
             <File>
-              <FileName>at32f422_426_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_i2c.c</FilePath>
-            </File>
-            <File>
               <FileName>at32f422_426_misc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_misc.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_pwc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_pwc.c</FilePath>
             </File>
             <File>
               <FileName>at32f422_426_scfg.c</FileName>
@@ -474,26 +429,7 @@
               <FileType>1</FileType>
               <FilePath>..\libraries\drivers\src\at32f422_426_spi.c</FilePath>
             </File>
-            <File>
-              <FileName>at32f422_426_tmr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_tmr.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_wdt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_wdt.c</FilePath>
-            </File>
-            <File>
-              <FileName>at32f422_426_wwdt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\libraries\drivers\src\at32f422_426_wwdt.c</FilePath>
-            </File>
+
           </Files>
         </Group>
         <Group>
@@ -550,11 +486,6 @@
               <FilePath>..\mdk_app\Src\boot_verify.c</FilePath>
             </File>
             <File>
-              <FileName>nvm_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\nvm_drv.c</FilePath>
-            </File>
-            <File>
               <FileName>sha256.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\sha256.c</FilePath>
@@ -578,11 +509,6 @@
               <FileName>sit1145.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mdk_app\Src\sit1145.c</FilePath>
-            </File>
-            <File>
-              <FileName>device_info.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mdk_app\Src\device_info.c</FilePath>
             </File>
           </Files>
         </Group>

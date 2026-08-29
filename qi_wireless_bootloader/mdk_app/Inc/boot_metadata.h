@@ -39,6 +39,8 @@ extern "C" {
 /** @brief  Flash layout (Keil Target IROM, no scatter).
  *          Bootloader 20KB, APP_A/B 46KB each, 2KB-sector aligned. */
 #define BOOT_BASE_ADDR          0x08000000U   /*!< bootloader start address */
+#define DEVICE_INFO_ADDR        0x0801D000U   /*!< SN area; OTA must not erase */
+#define DEVICE_INFO_SIZE        0x1000U
 #define BOOT_SIZE               0x5000U       /*!< bootloader size: 20KB */
 #define APP_A_BASE_ADDR         0x08005000U   /*!< application A start address */
 #define APP_A_SIZE              0xB800U       /*!< application A size: 46KB */

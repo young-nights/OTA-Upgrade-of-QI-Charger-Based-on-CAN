@@ -37,7 +37,6 @@
 #include "sit1145.h"
 #include "uECC.h"
 #include "sha256.h"
-#include "device_info.h"
 #include <string.h>
 
 #define SW_VERSION  "1.0.0"
@@ -782,42 +781,28 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       did = ((uint16_t)data[1] << 8) | (uint16_t)data[2];
 
-      if ((did == 0xF180U) || (did == 0xF193U) || (did == 0xF195U) ||
-          (did == 0xF18CU))
+      if ((did == 0xF180U) || (did == 0xF193U) || (did == 0xF195U))
       {
-        uint8_t pad[32];
-        device_info_t di;
+        const char *src = (did == 0xF193U) ? HW_VERSION : BL_VERSION;
+        uint8_t i;
 
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1];
         resp[2] = data[2];
-        if (did == 0xF18CU)
+        for (i = 0U; i < 32U; i++)
         {
-          if (device_info_read(&di) != 0)
-          {
-            safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
-            break;
-          }
-          device_info_pad32(pad, di.sn);
+          resp[3U + i] = 0x20U;
         }
-        else if (did == 0xF193U)
+        for (i = 0U; (i < 32U) && (src[i] != '\0'); i++)
         {
-          if (device_info_read(&di) == 0)
-          {
-            device_info_pad32(pad, di.hw_version);
-          }
-          else
-          {
-            device_info_pad32(pad, HW_VERSION);
-          }
+          resp[3U + i] = (uint8_t)src[i];
         }
-        else
-        {
-          /* F180 / F195: bootloader version in Safe Mode */
-          device_info_pad32(pad, BL_VERSION);
-        }
-        memcpy(&resp[3], pad, 32U);
         safe_mode_send_response(resp, 35U);
+      }
+      else if (did == 0xF18CU)
+      {
+        /* SN is written later from APP (0x2E F18C); Boot does not store it */
+        safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
       }
       else if (did == 0x2112U)
       {
@@ -902,38 +887,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         }
         g_firmware_type = data[3];
 
-        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-        resp[1] = data[1];
-        resp[2] = data[2];
-        safe_mode_send_response(resp, 3);
-      }
-      else if (did == 0xF18CU)
-      {
-        uint8_t sn32[32];
-        uint16_t n;
-        uint16_t i;
-
-        if (len < 35U)
-        {
-          safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
-          break;
-        }
-        n = (uint16_t)(len - 3U);
-        if (n > 32U)
-        {
-          safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_OUT_OF_RANGE);
-          break;
-        }
-        memset(sn32, 0x20, 32U);
-        for (i = 0U; i < n; i++)
-        {
-          sn32[i] = data[3U + i];
-        }
-        if (device_info_write_sn(sn32) != 0)
-        {
-          safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-          break;
-        }
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1];
         resp[2] = data[2];
