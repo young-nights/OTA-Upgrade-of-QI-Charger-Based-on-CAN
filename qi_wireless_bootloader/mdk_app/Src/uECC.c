@@ -191,16 +191,14 @@ static void bn_mul512(uint32_t lo[8], uint32_t hi[8],
 static void modmul(w256 r, const w256 a, const w256 b,
                    const w256 R, const w256 mod)
 {
-    w256 aa, bb, hi;
+    w256 hi;
     uint32_t acc[17];
     uint32_t wr_lo[8], wr_hi[8];
     int i, rnd;
     uint64_t carry;
 
-    memcpy(aa, a, sizeof(w256));
-    memcpy(bb, b, sizeof(w256));
     memset(acc, 0, sizeof(acc));
-    bn_mul512(acc, acc + 8, aa, bb);
+    bn_mul512(acc, acc + 8, a, b);
 
     for (rnd = 0; rnd < 16; rnd++) {
         uint32_t z = 0;

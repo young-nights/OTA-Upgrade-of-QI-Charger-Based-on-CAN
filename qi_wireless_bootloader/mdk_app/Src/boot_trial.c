@@ -35,26 +35,6 @@
 /** @brief  OTA metadata instance */
 ota_metadata_t g_meta;
 
-/** @brief  trial boot elapsed seconds counter */
-static volatile uint32_t g_trial_elapsed_sec = 0;
-
-/** @brief  trial timer expired flag (set from timer callback) */
-static volatile uint8_t g_trial_timer_flag = 0;
-
-/* private functions ---------------------------------------------------------*/
-
-/**
- * @brief  trial boot timer callback (called every 1 second)
- * @param  none
- * @retval none
- */
-void trial_timer_callback(void)
-{
-  /* 10 s window is in APP ota_trial_poll. Boot main does not start this timer. */
-  g_trial_elapsed_sec++;
-  g_trial_timer_flag = 1;
-}
-
 /* exported functions --------------------------------------------------------*/
 
 /**

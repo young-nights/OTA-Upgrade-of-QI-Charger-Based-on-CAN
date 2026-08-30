@@ -55,7 +55,6 @@
 #define UDS_REQUEST_DOWNLOAD        0x34U
 #define UDS_TRANSFER_DATA           0x36U
 #define UDS_REQUEST_TRANSFER_EXIT   0x37U
-#define UDS_TRANSFER_SIGNATURE      0x38U
 #define UDS_ECU_RESET               0x11U
 #define UDS_READ_DATA_BY_ID         0x22U
 #define UDS_WRITE_DATA_BY_ID        0x2EU
@@ -133,12 +132,6 @@ static uint32_t g_sit1145_keepalive_last_ms = 0;
 #endif
 
 
-
-/** @brief  signature transfer buffer (accumulated from 0x38 frames) */
-static uint8_t  g_sig_buf[64];
-static uint8_t  g_sig_bytes_received = 0;
-static uint8_t  g_sig_block_seq = 0;
-static uint8_t  g_sig_active = 0;
 
 /** @brief  security access state */
 static uint8_t  g_security_unlocked = 0;
@@ -258,7 +251,6 @@ static void dl_reset_state(void)
 static void dl_abort(void)
 {
   g_dl_active        = 0;
-  g_sig_active       = 0;
   g_dl_erased        = 0;
   g_dl_expected_size = 0;
 }
@@ -1103,86 +1095,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       break;
     }
 
-    case UDS_TRANSFER_SIGNATURE:
-    {
-      uint8_t block_seq;
-      uint16_t sig_data_len;
-      uint16_t i;
-
-      if (g_current_session != SESSION_PROGRAMMING)
-      {
-        safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
-        break;
-      }
-
-      if (!g_security_unlocked)
-      {
-        safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
-        break;
-      }
-
-      if (len < 3U)
-      {
-        safe_mode_send_nrc(service_id, UDS_NRC_INCORRECT_MSG_LENGTH);
-        break;
-      }
-
-      block_seq = data[1];
-
-      /* first frame: reset signature buffer */
-      if (block_seq == 0x01U && g_sig_bytes_received == 0U)
-      {
-        g_sig_active = 1;
-        g_sig_block_seq = 0;
-        g_sig_bytes_received = 0;
-        memset(g_sig_buf, 0, 64);
-      }
-
-      if (!g_sig_active)
-      {
-        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
-        break;
-      }
-
-      g_sig_block_seq++;
-      /* skip 0x00 on wraparound: host jumps from 0xFF to 0x01 */
-      if (g_sig_block_seq == 0x00U)
-      {
-        g_sig_block_seq = 0x01U;
-      }
-      if (block_seq != g_sig_block_seq)
-      {
-        g_sig_active = 0;
-        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
-        break;
-      }
-
-      sig_data_len = (uint16_t)(len - 2U);
-
-      if ((g_sig_bytes_received + sig_data_len) > 64U)
-      {
-        g_sig_active = 0;
-        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
-        break;
-      }
-
-      /* accumulate signature data */
-      for (i = 0; i < sig_data_len; i++)
-      {
-        g_sig_buf[g_sig_bytes_received + i] = data[2U + i];
-      }
-      g_sig_bytes_received += sig_data_len;
-
-      resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      resp[1] = block_seq;
-      safe_mode_send_response(resp, 2);
-      break;
-    }
-
     case UDS_REQUEST_TRANSFER_EXIT:
     {
       uint32_t computed_crc;
-      uint32_t w;
 
       /* programming session check */
       if (g_current_session != SESSION_PROGRAMMING)
@@ -1227,40 +1142,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      /* optional 0x38: patch signature only if the header field is still erased */
-      if (g_sig_bytes_received == 64U)
-      {
-        const uint8_t *flash_sig = (const uint8_t *)(g_dl_slot_base + 12U);
-        uint8_t erased = 1U;
-        for (w = 0; w < 64U; w++)
-        {
-          if (flash_sig[w] != 0xFFU)
-          {
-            erased = 0U;
-            break;
-          }
-        }
-        if (erased != 0U)
-        {
-          uint32_t sig_words[16];
-          memcpy((void *)sig_words, g_sig_buf, 64U);
-          flash_unlock();
-          for (w = 0; w < 16U; w++)
-          {
-            if (flash_word_program(g_dl_slot_base + 12U + (w * 4U), sig_words[w]) != FLASH_OPERATE_DONE)
-            {
-              flash_lock();
-              safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-              return;
-            }
-          }
-          flash_lock();
-        }
-      }
-
-      g_sig_bytes_received = 0;
-      g_sig_active = 0;
-      g_sig_block_seq = 0;
       g_dl_erased = 0;
 
       safe_mode_send_pending(service_id);

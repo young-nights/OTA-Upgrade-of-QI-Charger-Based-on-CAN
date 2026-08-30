@@ -11,9 +11,6 @@
 #include <stdint.h>
 #include "boot_metadata.h"
 
-/** @brief  trial boot timer period (1 second) */
-#define TRIAL_TIMER_PERIOD_MS       1000U
-
 /** @brief  OTA metadata instance (extern for main.c access) */
 extern ota_metadata_t g_meta;
 
@@ -46,12 +43,5 @@ void process_trial_state(ota_metadata_t *meta);
  * @retval 0 if the image verified (caller must jump), -1 on failure
  */
 int8_t try_boot_slot(uint8_t slot, ota_metadata_t *meta);
-
-/**
- * @brief  trial boot timer callback (called every 1 second)
- * @param  none
- * @retval none
- */
-void trial_timer_callback(void);
 
 #endif /* __BOOT_TRIAL_H */
