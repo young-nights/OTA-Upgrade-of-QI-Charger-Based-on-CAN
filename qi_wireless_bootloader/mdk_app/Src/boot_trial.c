@@ -78,15 +78,28 @@ void trial_timer_callback(void)
  */
 uint8_t detect_boot_reason(void)
 {
-  /* check RCC reset status register */
-  if (crm_flag_get(CRM_WDT_RESET_FLAG) != RESET)
+  uint8_t reason = BOOT_REASON_POWER_ON;
+  flag_status wdt  = crm_flag_get(CRM_WDT_RESET_FLAG);
+  flag_status wwdt = crm_flag_get(CRM_WWDT_RESET_FLAG);
+  flag_status sw   = crm_flag_get(CRM_SW_RESET_FLAG);
+  flag_status por  = crm_flag_get(CRM_POR_RESET_FLAG);
+
+  /* snapshot first: crm_flag_clear(RSTFC) clears every reset flag */
+  if ((wdt != RESET) || (wwdt != RESET))
   {
-    crm_flag_clear(CRM_WDT_RESET_FLAG);
-    return BOOT_REASON_WDG;
+    reason = BOOT_REASON_WDG;
+  }
+  else if (sw != RESET)
+  {
+    reason = BOOT_REASON_SW;
+  }
+  else if (por != RESET)
+  {
+    reason = BOOT_REASON_POWER_ON;
   }
 
-  /* default: power-on reset */
-  return BOOT_REASON_POWER_ON;
+  crm_flag_clear(CRM_ALL_RESET_FLAG);
+  return reason;
 }
 
 /**

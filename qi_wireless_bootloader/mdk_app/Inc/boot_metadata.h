@@ -76,8 +76,9 @@ extern "C" {
 #define TRIAL_TIMEOUT_SEC       10U           /*!< trial timeout in seconds */
 
 /** @brief  Boot reason codes */
-#define BOOT_REASON_POWER_ON    0x00U         /*!< normal power-on reset */
-#define BOOT_REASON_WDG         0x02U         /*!< watchdog reset (legacy, watchdog removed) */
+#define BOOT_REASON_POWER_ON    0x00U         /*!< POR / NRST / unknown */
+#define BOOT_REASON_SW          0x01U         /*!< NVIC_SystemReset / UDS 0x11 */
+#define BOOT_REASON_WDG         0x02U         /*!< IWDG/WWDT (legacy, watchdog removed) */
 #define BOOT_REASON_OTA_ACT     0x03U         /*!< OTA activation */
 #define BOOT_REASON_ROLLBACK    0x04U         /*!< rollback from failed trial */
 
@@ -109,7 +110,7 @@ typedef struct
   uint16_t trial_timeout_sec;   /*!< trial timeout in seconds (default 10) */
   uint16_t reserved1;           /*!< reserved for alignment */
   uint32_t rollback_count;      /*!< number of rollbacks performed */
-  uint8_t  last_boot_reason;    /*!< 0x00=power-on, 0x02=WDG, 0x03=OTA, 0x04=rollback */
+  uint8_t  last_boot_reason;    /*!< 0x00=POR, 0x01=SW, 0x02=WDG, 0x03=OTA, 0x04=rollback */
   uint8_t  ota_state;           /*!< 0x00=idle, 0x01=downloading */
   uint8_t  reserved2[2];        /*!< reserved */
   uint8_t  padding[232];        /*!< padding to 272 bytes (reduced from 512 for size optimization) */
