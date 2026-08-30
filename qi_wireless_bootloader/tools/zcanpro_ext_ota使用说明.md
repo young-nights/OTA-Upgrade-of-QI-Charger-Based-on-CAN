@@ -13,7 +13,7 @@
 在 ZCANPRO 里一键完成 MCU 自身 OTA，不用手动点 UDS、也不用自己组 ISO-TP。流程：
 
 1. （可选）让正在跑的 APP 进 Bootloader  
-2. Programming Session + ECDSA P-256 解锁（`0x27 0x01` + 一条 ISO-TP `0x27 0x02` 带 64 字节签名）  
+2. Programming Session + ECDSA P-256 解锁（`27 01` 取 seed → `27 03` 分 16 帧送 64 字节签名 → `27 02` 验签。不要一条 ISO-TP `27 02` 带 64B，ZCANPRO 会用 `fill_byte` 填满，MCU 回 `7F 27 35`）  
 3. 选择 APP 固件类型，擦除非活跃槽  
 4. 读 DID `0x2114`，核镜像 Reset Handler 是否指向该槽  
 5. 分块下发镜像（`0x34` 长度为 **含 256 字节头的总长**），`TransferExit` 验签  

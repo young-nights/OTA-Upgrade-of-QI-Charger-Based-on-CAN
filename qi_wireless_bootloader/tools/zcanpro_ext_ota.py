@@ -37,6 +37,8 @@ SID_DSC, SID_ER, SID_RDBI, SID_SA = 0x10, 0x11, 0x22, 0x27
 SID_WDBI, SID_RC, SID_RD, SID_TD, SID_RTE = 0x2E, 0x31, 0x34, 0x36, 0x37
 SID_NRC, SID_PR = 0x7F, 0x40
 NRC_SNS = 0x11
+NRC_RCRRP = 0x78
+SA_SIG_CHUNK = 4  # 27 03 单帧：SID+03+seq+4B = 7，避开 ISO-TP 多帧
 IMAGE_MAGIC = 0x4F544158
 IMAGE_HEADER_SIZE = 256
 SLOT_A, SLOT_B = 0, 1
@@ -365,6 +367,8 @@ def uds_req(bus_id, sid, payload):
     if data:
         _log("[Rx] " + _hex(data[:24]))
     if len(data) >= 3 and data[0] == SID_NRC:
+        if data[2] == NRC_RCRRP:
+            raise RuntimeError("SID=0x%02X 只收到 NRC 0x78，ZCANPRO 未等到最终响应" % sid)
         raise UdsNrcError(data[1], data[2])
     if not resp or not resp.get("result"):
         raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
@@ -388,6 +392,26 @@ def read_did_u8(bus_id, did):
     return rx[3]
 
 
+def send_security_key(bus_id, sig):
+    """Send 64-byte P1363 signature as 16 single-frame 0x27 0x03 chunks, then 0x27 0x02.
+
+    A one-shot ISO-TP `27 02` + 64B is easy for ZCANPRO to pad with fill_byte (0xCC).
+    MCU still sees len>=66 and returns NRC 0x35 (invalid key) instead of 0x13.
+    """
+    sig = _to_bytes(sig)
+    if len(sig) != 64:
+        raise RuntimeError("ECDSA 签名须 64 字节, 实际 %d" % len(sig))
+    seq = 1
+    off = 0
+    while off < 64:
+        piece = sig[off:off + SA_SIG_CHUNK]
+        uds_req(bus_id, SID_SA, [0x03, seq] + _to_list(piece))
+        off += len(piece)
+        seq += 1
+    _log("27 03 已送 64 字节 / %d 帧" % (seq - 1))
+    uds_req(bus_id, SID_SA, [0x02])
+
+
 def confirm_app_after_reset(bus_id):
     rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
     _log("版本: " + _hex(rx[3:]))
@@ -408,6 +432,7 @@ def run_ota(bus_id):
         raise RuntimeError("找不到固件: " + FIRMWARE_PATH)
     if not os.path.isfile(PRIVATE_KEY_PATH):
         raise RuntimeError("找不到私钥: " + PRIVATE_KEY_PATH)
+    _log("私钥 " + PRIVATE_KEY_PATH)
     priv = load_ec_private_key(PRIVATE_KEY_PATH)
     image = pack_image_if_needed(FIRMWARE_PATH, priv)
     linked = validate_image(image)
@@ -435,7 +460,8 @@ def run_ota(bus_id):
         else:
             _log("seed " + _hex(rx[2:6]))
             sig = ecdsa_sign_msg(priv, seed)
-            uds_req(bus_id, SID_SA, [0x02] + _to_list(sig))
+            _log("SendKey 签名 %d 字节（27 03 分片 + 27 02 验签）" % len(sig))
+            send_security_key(bus_id, sig)
         _log("---- DID 0x2010 APP ----")
         uds_req(bus_id, SID_WDBI, [0x20, 0x10, 0x01])
         _log("---- 擦除 ----")
