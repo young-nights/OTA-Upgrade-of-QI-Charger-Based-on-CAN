@@ -30,6 +30,7 @@
 #include "boot_metadata.h"
 #include "boot_safe_mode.h"
 #include "boot_trial.h"
+#include "boot_jump.h"
 
 /* exported functions --------------------------------------------------------*/
 
@@ -75,42 +76,40 @@ int main(void)
   /* step 5: process trial boot state machine */
   process_trial_state(&g_meta);
 
-  /* step 6: select boot slot */
+  /* step 6: PENDING/ACTIVE → trial_slot, else active_slot */
   if (select_boot_slot(&g_meta, &boot_slot) != 0)
   {
-    /* no valid slot selected, enter safe mode */
     enter_safe_mode();
-    /* does not return */
   }
 
-  /* trial 10s window is enforced in APP (ota_trial_poll). Boot only
-   * counts resets while trial_state is ACTIVE. */
+  /* trial 10s window is enforced in APP (ota_trial_poll). */
 
-  /* step 7: try to boot from selected slot */
+  /* step 7: verify then jump. Jump does not return, so save rollback
+   * metadata before jumping to the fallback slot. */
   boot_result = try_boot_slot(boot_slot, &g_meta);
-
-  if (boot_result != 0)
+  if (boot_result == 0)
   {
-    /* selected slot failed, try the other slot */
-    other_slot = (boot_slot == SLOT_A) ? SLOT_B : SLOT_A;
-    boot_result = try_boot_slot(other_slot, &g_meta);
+    boot_jump_to_app(boot_metadata_slot_addr(boot_slot) + IMAGE_HEADER_SIZE);
+  }
 
-    if (boot_result == 0)
+  other_slot = (boot_slot == SLOT_A) ? SLOT_B : SLOT_A;
+  boot_result = try_boot_slot(other_slot, &g_meta);
+  if (boot_result == 0)
+  {
+    if (g_meta.trial_state == TRIAL_STATE_ACTIVE)
     {
-      /* update active slot to the one that worked */
-      g_meta.active_slot = other_slot;
-      boot_metadata_save(&g_meta);
+      g_meta.trial_state       = TRIAL_STATE_IDLE;
+      g_meta.pending_slot      = SLOT_NONE;
+      g_meta.trial_retry_count = 0U;
+      g_meta.rollback_count++;
+      g_meta.last_boot_reason  = BOOT_REASON_ROLLBACK;
     }
+    g_meta.active_slot = other_slot;
+    (void)boot_metadata_save(&g_meta);
+    boot_jump_to_app(boot_metadata_slot_addr(other_slot) + IMAGE_HEADER_SIZE);
   }
 
-  /* step 8: if both slots failed, enter safe mode */
-  if (boot_result != 0)
-  {
-    enter_safe_mode();
-    /* does not return */
-  }
-
-  /* should never reach here (boot_jump_to_app does not return) */
+  enter_safe_mode();
   while (1)
   {
     __NOP();

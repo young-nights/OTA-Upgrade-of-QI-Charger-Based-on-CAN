@@ -50,6 +50,7 @@ extern "C" {
  *                   vector table: [0]=initial MSP, [4]=reset handler)
  * @retval none (does not return on success)
  */
+int8_t boot_jump_vectors_ok(uint32_t app_addr);
 void boot_jump_to_app(uint32_t app_addr);
 
 #ifdef __cplusplus

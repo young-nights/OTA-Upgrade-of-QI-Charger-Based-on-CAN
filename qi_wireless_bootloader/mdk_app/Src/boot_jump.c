@@ -52,70 +52,63 @@ typedef void (*app_reset_handler_t)(void);
  *                   vector table: [0]=initial MSP, [4]=reset handler)
  * @retval none (does not return on success)
  */
-void boot_jump_to_app(uint32_t app_addr)
+int8_t boot_jump_vectors_ok(uint32_t app_addr)
 {
   uint32_t app_msp;
+  uint32_t reset_fn;
+
+  app_msp  = *(volatile uint32_t *)(app_addr);
+  reset_fn = (*(volatile uint32_t *)(app_addr + 4U)) & 0xFFFFFFFEU;
+
+  /* ARM initial SP may equal SRAM_BASE+SRAM_SIZE (one past last byte). */
+  if ((app_msp < SRAM_BASE_ADDR) ||
+      (app_msp > (SRAM_BASE_ADDR + SRAM_SIZE)))
+  {
+    return -1;
+  }
+  if ((reset_fn < (APP_A_BASE_ADDR + IMAGE_HEADER_SIZE)) ||
+      (reset_fn >= META_PRIMARY_ADDR))
+  {
+    return -1;
+  }
+  return 0;
+}
+
+void boot_jump_to_app(uint32_t app_addr)
+{
   uint32_t app_reset_addr;
   app_reset_handler_t app_reset_handler;
   volatile uint32_t delay;
 
-  /* step 1: disable all interrupts */
+  if (boot_jump_vectors_ok(app_addr) != 0)
+  {
+    return;
+  }
+
+  app_reset_addr = *(volatile uint32_t *)(app_addr + 4U);
+
   __disable_irq();
 
-  /* step 1.5: reset CAN1 peripheral to prevent spurious activity after jump */
   can_reset(CAN1);
   crm_periph_clock_enable(CRM_CAN1_PERIPH_CLOCK, FALSE);
 
-  /* step 2: disable SysTick */
   SysTick->CTRL = 0;
   SysTick->LOAD = 0;
   SysTick->VAL  = 0;
 
-  /* step 3: clear all pending interrupts in NVIC */
-  /* AT32F426 has up to 64 interrupt sources, clear all ICPR registers */
   NVIC->ICER[0] = 0xFFFFFFFFU;
   NVIC->ICER[1] = 0xFFFFFFFFU;
   NVIC->ICPR[0] = 0xFFFFFFFFU;
   NVIC->ICPR[1] = 0xFFFFFFFFU;
 
-  /* small delay to ensure all pending operations complete */
   for (delay = 0; delay < 1000; delay++)
   {
     __NOP();
   }
 
-  /* step 4: set vector table offset register to application base */
   SCB->VTOR = app_addr;
+  __set_MSP(*(volatile uint32_t *)(app_addr));
 
-  /* step 5: read initial MSP from application vector table [0] */
-  app_msp = *(volatile uint32_t *)(app_addr);
-
-  /* step 6: read reset handler address from application vector table [1] */
-  app_reset_addr = *(volatile uint32_t *)(app_addr + 4U);
-
-  /* Validate MSP is in SRAM and reset handler is in application flash.
-   * Note: this is a loose safety check. If the APP uses a custom SRAM layout
-   * (e.g. stack in a different region, MPU-based stack overflow protection),
-   * this range check may need adjustment. */
-  if ((app_msp < SRAM_BASE_ADDR) ||
-      (app_msp > (SRAM_BASE_ADDR + SRAM_SIZE)))
-  {
-    return;
-  }
-  if ((app_reset_addr == 0xFFFFFFFFU) || (app_reset_addr == 0x00000000U))
-  {
-    return;
-  }
-  if ((app_reset_addr < (APP_A_BASE_ADDR + IMAGE_HEADER_SIZE)) ||
-      (app_reset_addr >= META_PRIMARY_ADDR))
-  {
-    return;
-  }
-
-  /* set main stack pointer to application's initial MSP */
-  __set_MSP(app_msp);
-
-  /* keep IRQ disabled; APP Reset_Handler / SystemInit re-enables them */
   app_reset_handler = (app_reset_handler_t)(app_reset_addr | 1U);
   app_reset_handler();
 }

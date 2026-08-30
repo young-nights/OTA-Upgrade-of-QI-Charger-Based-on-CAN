@@ -50,23 +50,9 @@ static volatile uint8_t g_trial_timer_flag = 0;
  */
 void trial_timer_callback(void)
 {
-  /* unused: 10 s trial window is enforced in APP ota_trial_poll */
+  /* 10 s window is in APP ota_trial_poll. Boot main does not start this timer. */
   g_trial_elapsed_sec++;
   g_trial_timer_flag = 1;
-
-  /* Check if trial has timed out */
-  if (g_meta.trial_state == TRIAL_STATE_ACTIVE &&
-      g_trial_elapsed_sec >= (uint32_t)g_meta.trial_timeout_sec)
-  {
-    /* Timeout: increment retry count and rollback to previous slot */
-    g_meta.trial_retry_count++;
-    g_meta.trial_state = TRIAL_STATE_IDLE;
-    g_meta.active_slot = (g_meta.trial_slot == SLOT_A) ? SLOT_B : SLOT_A;
-    boot_metadata_save(&g_meta);
-
-    /* Force system reset to apply rollback */
-    NVIC_SystemReset();
-  }
 }
 
 /* exported functions --------------------------------------------------------*/
@@ -110,21 +96,26 @@ uint8_t detect_boot_reason(void)
  */
 int8_t select_boot_slot(const ota_metadata_t *meta, uint8_t *slot)
 {
-  /* check if there is a pending trial */
-  if (meta->trial_state == TRIAL_STATE_PENDING)
+  uint8_t s;
+
+  /* PENDING is turned into ACTIVE in process_trial_state() before this
+   * runs. Both must still boot trial_slot; active_slot stays the last
+   * confirmed image until APP confirms. */
+  if ((meta->trial_state == TRIAL_STATE_PENDING) ||
+      (meta->trial_state == TRIAL_STATE_ACTIVE))
   {
-    /* use the trial slot */
-    *slot = meta->trial_slot;
-    return 0;
+    s = meta->trial_slot;
+  }
+  else
+  {
+    s = meta->active_slot;
   }
 
-  /* NOTE: TRIAL_STATE_PENDING is the only state that routes to a specific trial slot.
-   * All other states (IDLE, ACTIVE, CONFIRMED) fall through to the active slot below.
-   * This means ACTIVE and CONFIRMED states are handled by the default active_slot path,
-   * which is correct: the trial slot IS the active slot once the trial is activated. */
-
-  /* use the active slot */
-  *slot = meta->active_slot;
+  if ((s != SLOT_A) && (s != SLOT_B))
+  {
+    return -1;
+  }
+  *slot = s;
   return 0;
 }
 
@@ -152,17 +143,13 @@ void process_trial_state(ota_metadata_t *meta)
       break;
 
     case TRIAL_STATE_ACTIVE:
-      /* WDG reset while trial is active counts as a failed attempt */
-      if (meta->last_boot_reason == BOOT_REASON_WDG)
-      {
-        meta->trial_retry_count++;
-        boot_metadata_save(meta);
-      }
-
+      /* APP did not confirm (timeout NVIC_SystemReset, crash, or WDG). */
+      meta->trial_retry_count++;
       if (meta->trial_retry_count > meta->trial_max_retries)
       {
         meta->rollback_count++;
         meta->trial_state       = TRIAL_STATE_IDLE;
+        meta->pending_slot      = SLOT_NONE;
         meta->trial_retry_count = 0;
         meta->last_boot_reason  = BOOT_REASON_ROLLBACK;
 
@@ -173,6 +160,10 @@ void process_trial_state(ota_metadata_t *meta)
           meta->active_slot = other_slot;
         }
 
+        boot_metadata_save(meta);
+      }
+      else
+      {
         boot_metadata_save(meta);
       }
       break;
@@ -196,7 +187,7 @@ void process_trial_state(ota_metadata_t *meta)
  * @brief  attempt to boot from a given slot
  * @param  slot: slot index (0=A, 1=B)
  * @param  meta: pointer to metadata
- * @retval 0 on success (jumped), -1 on failure
+ * @retval 0 if the image verified (caller jumps), -1 on failure
  */
 int8_t try_boot_slot(uint8_t slot, ota_metadata_t *meta)
 {
@@ -212,31 +203,32 @@ int8_t try_boot_slot(uint8_t slot, ota_metadata_t *meta)
     return -1;
   }
 
-  /* verify image */
-  if (boot_verify_image(slot_addr, slot_size) == 0)
+  if (slot == SLOT_A)
   {
-    /* image valid, update validity flag */
-    if (slot == SLOT_A)
-    {
-      valid_flag = &meta->slot_a_valid;
-    }
-    else
-    {
-      valid_flag = &meta->slot_b_valid;
-    }
+    valid_flag = &meta->slot_a_valid;
+  }
+  else
+  {
+    valid_flag = &meta->slot_b_valid;
+  }
 
-    if (*valid_flag == 0)
+  if ((boot_verify_image(slot_addr, slot_size) != 0) ||
+      (boot_jump_vectors_ok(slot_addr + IMAGE_HEADER_SIZE) != 0))
+  {
+    if (*valid_flag != 0U)
     {
-      *valid_flag = 1;
-      boot_metadata_save(meta);
+      *valid_flag = 0U;
+      (void)boot_metadata_save(meta);
     }
-
-    /* jump to application */
-    boot_jump_to_app(slot_addr + IMAGE_HEADER_SIZE);
-
-    /* jump returned: vector/MSP invalid */
     return -1;
   }
 
-  return -1;
+  if (*valid_flag == 0U)
+  {
+    *valid_flag = 1U;
+    (void)boot_metadata_save(meta);
+  }
+
+  /* caller jumps after it has saved any trial/rollback metadata */
+  return 0;
 }

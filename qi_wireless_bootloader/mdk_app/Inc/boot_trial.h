@@ -28,7 +28,7 @@ uint8_t detect_boot_reason(void);
  * @brief  select the slot to boot from based on metadata
  * @param  meta: pointer to metadata
  * @param  slot: output, selected slot index (0=A, 1=B)
- * @retval 0 on success (valid slot found), -1 if no valid slot available
+ * @retval 0 on success (slot A or B), -1 if the chosen index is invalid
  */
 int8_t select_boot_slot(const ota_metadata_t *meta, uint8_t *slot);
 
@@ -43,7 +43,7 @@ void process_trial_state(ota_metadata_t *meta);
  * @brief  attempt to boot from a given slot
  * @param  slot: slot index (0=A, 1=B)
  * @param  meta: pointer to metadata
- * @retval 0 on success (jumped), -1 on failure
+ * @retval 0 if the image verified (caller must jump), -1 on failure
  */
 int8_t try_boot_slot(uint8_t slot, ota_metadata_t *meta);
 
