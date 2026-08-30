@@ -704,15 +704,16 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       else if (sub_func == 0x02U)
       {
         /* Sub-function 0x02: SendKey / Verify Signature.
-         * Accept 64-byte key in this ISO-TP message (data[2..65]),
-         * or the buffer accumulated via 0x03 chunks. */
+         * Use 0x03 buffer if already full. Do not copy from this message
+         * when len>=66 is just ZCANPRO fill_byte padding (would overwrite
+         * a good signature with 0xCC and return NRC 0x35). */
         if (!g_seed_generated || g_seed_sub != 0x01U)
         {
           safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_SEQUENCE_ERROR);
           break;
         }
 
-        if (len >= 66U)
+        if ((g_sa_sig_bytes_received != 64U) && (len >= 66U))
         {
           uint16_t k;
           for (k = 0; k < 64U; k++)

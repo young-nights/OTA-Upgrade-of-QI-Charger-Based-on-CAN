@@ -609,7 +609,8 @@ static void handle_security_access(uint8_t *data, uint16_t len)
       proto_send_nrc(UDS_SID_SECURITY_ACCESS, UDS_NRC_REQUEST_SEQUENCE_ERROR);
       return;
     }
-    if (len >= 66U)
+    /* 0x03 already filled the buffer: ignore padded 27 02 (ZCANPRO fill 0xCC). */
+    if ((g_sa_sig_bytes_received != 64U) && (len >= 66U))
     {
       uint16_t k;
       for (k = 0U; k < 64U; k++)
