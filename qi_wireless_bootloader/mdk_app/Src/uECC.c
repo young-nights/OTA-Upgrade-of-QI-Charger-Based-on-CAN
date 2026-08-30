@@ -191,60 +191,69 @@ static void bn_mul512(uint32_t lo[8], uint32_t hi[8],
 static void modmul(w256 r, const w256 a, const w256 b,
                    const w256 R, const w256 mod)
 {
-    uint32_t lo[8], hi[8], tlo[8], thi[8];
+    w256 aa, bb, hi;
+    uint32_t acc[17];
+    uint32_t wr_lo[8], wr_hi[8];
     int i, rnd;
     uint64_t carry;
 
-    bn_mul512(lo, hi, a, b);
+    memcpy(aa, a, sizeof(w256));
+    memcpy(bb, b, sizeof(w256));
+    memset(acc, 0, sizeof(acc));
+    bn_mul512(acc, acc + 8, aa, bb);
 
-    for (rnd = 0; rnd < 8; rnd++) {
+    for (rnd = 0; rnd < 16; rnd++) {
         uint32_t z = 0;
-        for (i = 0; i < 8; i++) z |= hi[i];
-        if (!z) break;
+        for (i = 8; i < 17; i++) {
+            z |= acc[i];
+        }
+        if (!z) {
+            break;
+        }
 
-        bn_mul512(tlo, thi, hi, R);
+        memcpy(hi, acc + 8, sizeof(w256));
+        bn_mul512(wr_lo, wr_hi, hi, R);
 
         carry = 0;
         for (i = 0; i < 8; i++) {
-            carry += (uint64_t)lo[i] + tlo[i];
-            tlo[i] = (uint32_t)carry;
+            carry += (uint64_t)acc[i] + wr_lo[i];
+            acc[i] = (uint32_t)carry;
             carry >>= 32;
         }
-        for (i = 0; carry && i < 8; i++) {
-            carry += thi[i];
-            thi[i] = (uint32_t)carry;
+        for (i = 0; i < 8; i++) {
+            carry += wr_hi[i];
+            acc[8 + i] = (uint32_t)carry;
             carry >>= 32;
         }
-
-        memcpy(lo, tlo, sizeof(lo));
-        memcpy(hi, thi, sizeof(hi));
+        acc[16] = (uint32_t)carry;
     }
 
-    memcpy(r, lo, sizeof(w256));
-    if (bn_gte(r, mod)) bn_sub(r, r, mod);
+    memcpy(r, acc, sizeof(w256));
+    while (bn_gte(r, mod)) {
+        bn_sub(r, r, mod);
+    }
 }
 
-/* Modular inverse via Fermat: r = a^(exp) mod mod,  exp = mod - 2 */
+/* Modular inverse via Fermat: r = a^(mod-2) mod mod (right-to-left). */
 static void modinv(w256 r, const w256 a,
                    const w256 R, const w256 mod, const w256 exp)
 {
-    w256 acc;
-    int i, j, started = 0;
+    w256 base, res;
+    int i, j;
 
-    memcpy(acc, a, sizeof(w256));
+    memcpy(base, a, sizeof(w256));
+    memset(res, 0, sizeof(res));
+    res[0] = 1;
 
-    for (i = 7; i >= 0; i--) {
-        for (j = 31; j >= 0; j--) {
-            int bit = (exp[i] >> j) & 1;
-            if (!started) {
-                if (bit) started = 1;
-                else continue;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 32; j++) {
+            if ((exp[i] >> j) & 1) {
+                modmul(res, res, base, R, mod);
             }
-            modmul(acc, acc, acc, R, mod);
-            if (bit) modmul(acc, acc, a, R, mod);
+            modmul(base, base, base, R, mod);
         }
     }
-    memcpy(r, acc, sizeof(w256));
+    memcpy(r, res, sizeof(w256));
 }
 
 static void modadd(w256 r, const w256 a, const w256 b, const w256 mod)
@@ -389,25 +398,32 @@ static void jp_to_affine(w256 ax, w256 ay, const jpoint_t *p)
     fmul(ay, p->y, zi3);
 }
 
-/* Scalar multiplication: r = k·p  (constant-time double-and-add-always) */
+/* Scalar multiplication: r = k·p  (left-to-right double-and-add) */
 static void point_mul(jpoint_t *r, const jpoint_t *p, const w256 k)
 {
-    jpoint_t r0, r1, sum;
-    int i, j;
+    jpoint_t acc, tmp;
+    int i, j, started = 0;
 
-    memset(&r0, 0, sizeof(r0));
-    r1 = *p;
-
+    memset(&acc, 0, sizeof(acc));
     for (i = 7; i >= 0; i--) {
         for (j = 31; j >= 0; j--) {
             int bit = (k[i] >> j) & 1;
-            jp_add(&sum, &r0, &r1);
-            jp_double(bit ? &r0 : &r1, bit ? &r0 : &r1);
-            if (bit) memcpy(&r1, &sum, sizeof(jpoint_t));
-            else     memcpy(&r0, &sum, sizeof(jpoint_t));
+            if (started) {
+                jp_double(&tmp, &acc);
+                acc = tmp;
+            }
+            if (bit) {
+                if (!started) {
+                    acc = *p;
+                    started = 1;
+                } else {
+                    jp_add(&tmp, &acc, p);
+                    acc = tmp;
+                }
+            }
         }
     }
-    *r = r0;
+    *r = acc;
 }
 
 /* =========================================================================
@@ -437,6 +453,7 @@ int uECC_verify(const uint8_t *public_key,
     bytes_to_w256(gen_x, G_bytes + 1);
     bytes_to_w256(gen_y, G_bytes + 33);
     bytes_to_w256(e_val, message_hash);
+    if (bn_gte(e_val, N)) bn_sub(e_val, e_val, N);
 
     sinv(w_val, s_val);            /* w = s⁻¹ mod n */
     smul(u1, e_val, w_val);        /* u1 = e·w mod n */
