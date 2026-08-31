@@ -109,16 +109,27 @@ static void sit1145_cs_high(void)
  */
 static uint8_t sit1145_spi_xfer(uint8_t tx_data)
 {
-  /* wait until TX buffer is empty */
-  while (spi_i2s_flag_get(SPI1, SPI_I2S_TDBE_FLAG) == RESET)
+  uint32_t guard = 100000U;
+
+  while ((spi_i2s_flag_get(SPI1, SPI_I2S_TDBE_FLAG) == RESET) && (guard != 0U))
   {
+    guard--;
+  }
+  if (guard == 0U)
+  {
+    return 0xFFU;
   }
 
   spi_i2s_data_transmit(SPI1, (uint16_t)tx_data);
 
-  /* wait until RX buffer is not empty (transfer complete) */
-  while (spi_i2s_flag_get(SPI1, SPI_I2S_RDBF_FLAG) == RESET)
+  guard = 100000U;
+  while ((spi_i2s_flag_get(SPI1, SPI_I2S_RDBF_FLAG) == RESET) && (guard != 0U))
   {
+    guard--;
+  }
+  if (guard == 0U)
+  {
+    return 0xFFU;
   }
 
   return (uint8_t)spi_i2s_data_receive(SPI1);

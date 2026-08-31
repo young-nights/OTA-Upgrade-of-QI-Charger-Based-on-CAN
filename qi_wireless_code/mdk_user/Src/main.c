@@ -54,11 +54,9 @@ int main(void)
   board_gpio_init();
   nvm_drv_init();
   can_driver_init();
+  can_protocol_init();
   qi_uart_init();
   __enable_irq();
-
-  /* initialize CAN protocol module (registers UDS handler) */
-  can_protocol_init();
 
   /* initialize lifecycle broadcast (sends BOOTUP) */
   lifecycle_init();
