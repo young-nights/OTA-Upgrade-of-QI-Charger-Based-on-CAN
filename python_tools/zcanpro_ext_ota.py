@@ -607,12 +607,6 @@ def run_ota(bus_id):
             seq = 1 if seq == 0xFF else seq + 1
             if off == size or (off % (TRANSFER_BLOCK_DATA * 16) == 0):
                 _log("  %d/%d" % (off, size))
-        try:
-            zcanpro.uds_deinit()
-        except Exception:
-            pass
-        time.sleep(0.1)
-        uds_init()
         _log("---- TransferExit ----")
         transfer_exit(bus_id)
         _log("---- Reset ----")
