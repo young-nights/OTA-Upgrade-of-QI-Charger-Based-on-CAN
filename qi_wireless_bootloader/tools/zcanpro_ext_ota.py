@@ -412,8 +412,49 @@ def send_security_key(bus_id, sig):
     uds_req(bus_id, SID_SA, [0x02])
 
 
+def uds_ecu_reset(bus_id):
+    """HardReset. MCU may drop 51 01 if it resets immediately; do not require a response."""
+    req = {
+        "src_addr": UDS_REQ_ID,
+        "dst_addr": UDS_RESP_ID,
+        "suppress_response": 1,
+        "sid": SID_ER,
+        "data": [0x81],
+    }
+    _log("[Tx] 11 81 (suppress)")
+    try:
+        zcanpro.uds_request(bus_id, req)
+    except Exception as e:
+        _log("可忽略: " + str(e))
+
+
 def confirm_app_after_reset(bus_id):
-    rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
+    """ECU reset tears down ISO-TP. Re-init UDS and poll until APP answers."""
+    try:
+        zcanpro.uds_deinit()
+    except Exception:
+        pass
+    time.sleep(0.5)
+    uds_init()
+
+    last_err = None
+    t0 = time.time()
+    rx = None
+    while time.time() - t0 < 10.0:
+        if stopTask:
+            raise RuntimeError("用户停止脚本")
+        try:
+            rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
+            break
+        except Exception as e:
+            last_err = e
+            _log("等待复位完成: " + str(e))
+            time.sleep(0.4)
+    if rx is None:
+        raise RuntimeError(
+            "复位后 10s 无 0x22 F195（Boot/APP 都应能应答）。"
+            "看原始 CAN 有无帧；无帧则 MCU 未起来。最后错误: %s" % last_err
+        )
     _log("版本: " + _hex(rx[3:]))
     try:
         uds_req(bus_id, SID_RD, [0x00])
@@ -442,12 +483,17 @@ def run_ota(bus_id):
             _log("---- APP 进 Boot ----")
             uds_try(bus_id, SID_DSC, [0x02])
             time.sleep(0.05)
-            uds_try(bus_id, SID_ER, [0x01])
+            uds_ecu_reset(bus_id)
             t0 = time.time()
-            while time.time() - t0 < 2.5:
+            while time.time() - t0 < 2.0:
                 if stopTask:
                     raise RuntimeError("用户停止脚本")
                 time.sleep(0.1)
+            try:
+                zcanpro.uds_deinit()
+            except Exception:
+                pass
+            uds_init()
         _log("---- Programming ----")
         uds_req(bus_id, SID_DSC, [0x02])
         _log("---- SecurityAccess ----")
@@ -500,9 +546,9 @@ def run_ota(bus_id):
         _log("---- TransferExit ----")
         uds_req(bus_id, SID_RTE, [])
         _log("---- Reset ----")
-        uds_try(bus_id, SID_ER, [0x01])
+        uds_ecu_reset(bus_id)
         t0 = time.time()
-        while time.time() - t0 < 3.0:
+        while time.time() - t0 < 1.5:
             if stopTask:
                 raise RuntimeError("用户停止脚本")
             time.sleep(0.1)

@@ -1,7 +1,7 @@
 /**
   **************************************************************************
   * @file     boot_verify.h
-  * @brief    Image verification for bootloader (CRC32 + signature placeholder)
+  * @brief    Image verification for bootloader (CRC32 + ECDSA P-256)
   **************************************************************************
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
@@ -70,7 +70,7 @@ typedef struct
   uint32_t magic;              /*!< 0x4F544158 "XATO" */
   uint32_t image_length;       /*!< valid image size in bytes (excluding header) */
   uint32_t crc32;              /*!< CRC32 of image data (excluding header) */
-  uint8_t  signature[64];      /*!< ECDSA P-256 R||S signature (placeholder) */
+  uint8_t  signature[64];      /*!< ECDSA P-256 IEEE P1363 R||S */
   char     version[16];        /*!< "MAJOR.MINOR.PATCH\0" */
   uint32_t build_timestamp;    /*!< Unix timestamp of build */
   uint8_t  reserved[160];      /*!< padding to 256 bytes */
@@ -80,8 +80,8 @@ typedef struct
 
 /**
  * @brief  verify an application image at the given base address
- * @note   checks: (1) header magic, (2) image_length within slot bounds,
- *         (3) CRC32 of image data. signature is currently a placeholder.
+ * @note   checks: magic, length, CRC32 of naked firmware, Reset Handler
+ *         in-slot, pubkey KEYP, ECDSA P-256 of SHA-256(naked firmware).
  * @param  base_addr: start address of the image slot (header is at this address)
  * @param  slot_size: total size of the slot in bytes
  * @retval 0 if image is valid, -1 if verification fails

@@ -27,7 +27,6 @@
 #include "boot_trial.h"
 #include "boot_verify.h"
 #include "boot_jump.h"
-#include "timer_drv.h"
 #include "at32f422_426_conf.h"
 
 /* private variables ---------------------------------------------------------*/
@@ -72,7 +71,7 @@ uint8_t detect_boot_reason(void)
  * @brief  select the slot to boot from based on metadata
  * @param  meta: pointer to metadata
  * @param  slot: output, selected slot index (0=A, 1=B)
- * @retval 0 on success (valid slot found), -1 if no valid slot available
+ * @retval 0 on success (slot A or B), -1 if the chosen index is invalid
  */
 int8_t select_boot_slot(const ota_metadata_t *meta, uint8_t *slot)
 {
@@ -149,8 +148,9 @@ void process_trial_state(ota_metadata_t *meta)
       break;
 
     case TRIAL_STATE_CONFIRMED:
-      /* trial passed, clear trial state */
+      /* APP already set active_slot to the trial slot */
       meta->trial_state       = TRIAL_STATE_IDLE;
+      meta->pending_slot      = SLOT_NONE;
       meta->trial_retry_count = 0;
       boot_metadata_save(meta);
       break;

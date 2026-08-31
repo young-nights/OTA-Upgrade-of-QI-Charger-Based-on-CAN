@@ -12,8 +12,8 @@
 
 /**
  * @brief  enter safe mode: initialize CAN and wait for OTA download
- * @note   called when both application slots are invalid.
- *         runs a minimal event loop with CAN polling.
+ * @note   entered when ota_state is DOWNLOADING, no bootable slot, or
+ *         both slots fail verify. CAN UDS event loop; does not return.
  * @param  none
  * @retval none (does not return)
  */

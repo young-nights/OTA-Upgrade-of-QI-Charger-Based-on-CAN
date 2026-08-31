@@ -41,20 +41,21 @@ extern uint32_t __Vectors;
 
 int main(void)
 {
-  /* VTOR follows the linked vector table so Slot A and Slot B builds both work. */
+  /* SystemInit() forced VTOR to FLASH_BASE (Boot). Restore APP table
+   * before any interrupt is enabled. */
   SCB->VTOR = (uint32_t)&__Vectors;
-  __enable_irq();
 
   /* configure system clock to 180MHz */
   system_clock_config();
   nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
 
-  /* initialize drivers */
+  /* initialize drivers while IRQ still masked from Boot jump / reset */
   timer_drv_init();
   board_gpio_init();
   nvm_drv_init();
   can_driver_init();
   qi_uart_init();
+  __enable_irq();
 
   /* initialize CAN protocol module (registers UDS handler) */
   can_protocol_init();

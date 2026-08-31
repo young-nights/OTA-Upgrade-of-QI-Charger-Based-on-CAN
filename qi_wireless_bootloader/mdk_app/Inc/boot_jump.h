@@ -37,20 +37,18 @@ extern "C" {
 /* exported functions -------------------------------------------------------*/
 
 /**
- * @brief  jump to application at the given address
- * @note   performs the following sequence:
- *         1. disable all interrupts
- *         2. disable SysTick
- *         3. clear pending interrupt flags
- *         4. set VTOR to application base address
- *         5. set MSP from application vector table
- *         6. jump to application reset handler
- *         this function does not return.
- * @param  app_addr: base address of the application (must contain a valid
- *                   vector table: [0]=initial MSP, [4]=reset handler)
- * @retval none (does not return on success)
+ * @brief  check APP vector table before tearing down Boot
+ * @param  app_addr: slot entry (header+256), [0]=MSP, [4]=Reset Handler
+ * @retval 0 if MSP is in SRAM and Reset Handler is in APP flash
  */
 int8_t boot_jump_vectors_ok(uint32_t app_addr);
+
+/**
+ * @brief  jump to application; validates vectors first, then disables IRQ/CAN
+ * @note   does not return on success. On vector failure, returns so the
+ *         caller can try the other slot or enter Safe Mode.
+ * @param  app_addr: application vector table address
+ */
 void boot_jump_to_app(uint32_t app_addr);
 
 #ifdef __cplusplus

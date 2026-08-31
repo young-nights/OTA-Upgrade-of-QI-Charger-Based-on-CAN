@@ -38,20 +38,6 @@ typedef void (*app_reset_handler_t)(void);
 
 /* exported functions --------------------------------------------------------*/
 
-/**
- * @brief  jump to application at the given address
- * @note   performs the following sequence:
- *         1. disable all interrupts
- *         2. disable SysTick
- *         3. clear all pending interrupt flags (NVIC ICPR)
- *         4. set VTOR to application base address
- *         5. set MSP from application vector table entry [0]
- *         6. jump to application reset handler from vector table entry [1]
- *         this function does not return.
- * @param  app_addr: base address of the application (must contain a valid
- *                   vector table: [0]=initial MSP, [4]=reset handler)
- * @retval none (does not return on success)
- */
 int8_t boot_jump_vectors_ok(uint32_t app_addr)
 {
   uint32_t app_msp;

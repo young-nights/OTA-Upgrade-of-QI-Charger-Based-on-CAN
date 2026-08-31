@@ -1,7 +1,7 @@
 /**
   **************************************************************************
   * @file     boot_verify.c
-  * @brief    Image verification for bootloader (CRC32 + signature placeholder)
+  * @brief    Image verification for bootloader (CRC32 + ECDSA P-256)
   **************************************************************************
   *
   * Copyright (c) 2025, Artery Technology, All rights reserved.
@@ -33,7 +33,7 @@
 
 /** @brief  ECDSA P-256 public key (uncompressed SEC1: 04 || x || y)
  *          Stored in a dedicated .rodata section.  The linker will place this
- *          in the bootloader flash region (0x08000000..0x08003FFF).
+ *          in the bootloader flash region (0x08000000..0x08004FFF, 20KB).
  *          A magic marker is appended after the key for corruption detection.
  *          Generated via: openssl ecparam -genkey -name prime256v1
  *          Private key stored at: docs/keys/private.pem (for host-side signing)
@@ -90,8 +90,7 @@ const image_header_t *boot_verify_get_header(uint32_t base_addr)
 
 /**
  * @brief  verify an application image at the given base address
- * @note   checks: (1) header magic, (2) image_length within slot bounds,
- *         (3) CRC32 of image data. signature verification is a placeholder.
+ * @note   checks: magic, length, CRC32, Reset Handler in-slot, KEYP, ECDSA.
  * @param  base_addr: start address of the image slot (header is at this address)
  * @param  slot_size: total size of the slot in bytes
  * @retval 0 if image is valid, -1 if verification fails

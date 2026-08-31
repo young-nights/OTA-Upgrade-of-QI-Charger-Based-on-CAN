@@ -530,7 +530,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         safe_mode_send_response(resp, 2);
       }
 
-      (void)can_driver_wait_tx_idle(5U);
+      (void)can_driver_wait_tx_idle(20U);
 
       NVIC_SystemReset();
       /* not reached */
@@ -933,6 +933,14 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         g_dl_erased = 1;
         g_meta.ota_state    = OTA_STATE_DOWNLOADING;
         g_meta.pending_slot = g_dl_slot;
+        if (g_dl_slot == SLOT_A)
+        {
+          g_meta.slot_a_valid = 0U;
+        }
+        else
+        {
+          g_meta.slot_b_valid = 0U;
+        }
         (void)boot_metadata_save(&g_meta);
 
         dl_reset_state();
@@ -1166,12 +1174,17 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         g_meta.slot_b_valid = 1;
         g_meta.slot_b_crc32 = computed_crc;
       }
-      /* keep active_slot as last confirmed image; trial boots pending_slot */
-      g_meta.ota_state      = OTA_STATE_IDLE;
-      g_meta.pending_slot   = g_dl_slot;
-      g_meta.trial_state    = TRIAL_STATE_PENDING;
-      g_meta.trial_slot     = g_dl_slot;
+      /* do not change active_slot (last confirmed). next reset:
+       * PENDING→ACTIVE, select_boot_slot() boots trial_slot. APP confirms. */
+      g_meta.ota_state         = OTA_STATE_IDLE;
+      g_meta.pending_slot      = g_dl_slot;
+      g_meta.trial_state       = TRIAL_STATE_PENDING;
+      g_meta.trial_slot        = g_dl_slot;
       g_meta.trial_retry_count = 0;
+      if (g_meta.trial_max_retries == 0U)
+      {
+        g_meta.trial_max_retries = TRIAL_MAX_RETRIES;
+      }
 
       if (boot_metadata_save(&g_meta) != 0)
       {
@@ -1262,8 +1275,7 @@ static void safe_mode_can_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
 
 /**
  * @brief  enter safe mode: initialize CAN and wait for OTA download
- * @note   called when both application slots are invalid.
- *         runs a minimal event loop with CAN polling.
+ * @note   DOWNLOADING, no bootable slot, or both verifies failed.
  * @param  none
  * @retval none (does not return)
  */
