@@ -1118,6 +1118,14 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
 
       block_seq = data[1];
+      /* ISO 14229: same BSC as last success → replay 76, do not write again. */
+      if ((g_dl_block_seq != 0U) && (block_seq == g_dl_block_seq))
+      {
+        resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = block_seq;
+        safe_mode_send_response(resp, 2);
+        break;
+      }
       g_dl_block_seq++;
       if (g_dl_block_seq == 0x00U)
       {
@@ -1168,9 +1176,24 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
+      if (g_xfer_exit_pending != 0U)
+      {
+        safe_mode_send_pending(service_id);
+        break;
+      }
+
       if (!g_dl_active)
       {
-        safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        if ((g_meta.trial_state == TRIAL_STATE_PENDING) &&
+            (g_meta.trial_slot == g_dl_slot))
+        {
+          resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+          safe_mode_send_response(resp, 1);
+        }
+        else
+        {
+          safe_mode_send_nrc(service_id, UDS_NRC_TRANSFER_DATA_ABORTED);
+        }
         break;
       }
 

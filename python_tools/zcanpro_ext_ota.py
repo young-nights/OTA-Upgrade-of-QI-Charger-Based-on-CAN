@@ -338,7 +338,7 @@ def pack_image_if_needed(fw_path, priv, version="1.0.0"):
 
 def uds_init():
     zcanpro.uds_init({
-        "response_timeout_ms": 10000,
+        "response_timeout_ms": 5000,
         "use_canfd": 0,
         "canfd_brs": 0,
         "trans_ver": 0,
@@ -346,7 +346,7 @@ def uds_init():
         "frame_type": 1,
         "trans_stmin_valid": 1,
         "trans_stmin": 1,
-        "enhanced_timeout_ms": 30000,
+        "enhanced_timeout_ms": 12000,
     })
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
@@ -368,13 +368,60 @@ def uds_req(bus_id, sid, payload):
         _log("[Rx] " + _hex(data[:24]))
     if len(data) >= 3 and data[0] == SID_NRC:
         if data[2] == NRC_RCRRP:
-            raise RuntimeError("SID=0x%02X 只收到 NRC 0x78，ZCANPRO 未等到最终响应" % sid)
+            raise RuntimeError("无应答 SID=0x%02X NRC 0x78 pending" % sid)
         raise UdsNrcError(data[1], data[2])
     if not resp or not resp.get("result"):
         raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
     if len(data) < 1 or data[0] != (sid + SID_PR):
         raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
     return data
+
+
+def _is_timeout(exc):
+    msg = str(exc)
+    low = msg.lower()
+    return ("无应答" in msg) or ("timeout" in low) or ("no response" in low)
+
+
+def uds_req_retry(bus_id, sid, payload, retries=3):
+    """Retry on timeout only. NRC is not retried (except 0x78 via _is_timeout)."""
+    last = None
+    n = retries if retries > 0 else 1
+    for i in range(n):
+        try:
+            return uds_req(bus_id, sid, payload)
+        except UdsNrcError:
+            raise
+        except Exception as e:
+            last = e
+            if (not _is_timeout(e)) or (i + 1 >= n):
+                raise
+            _log("SID=0x%02X 超时，重发 %d/%d: %s" % (sid, i + 1, n - 1, e))
+            time.sleep(0.1)
+    raise last
+
+
+def transfer_exit(bus_id):
+    """0x37 with timeout retry. Replay 77 if MCU already finished (NRC 0x71)."""
+    last = None
+    for i in range(3):
+        if stopTask:
+            raise RuntimeError("用户停止脚本")
+        try:
+            return uds_req(bus_id, SID_RTE, [])
+        except UdsNrcError as e:
+            if (e.nrc in (0x71, 0x24)) and (i > 0):
+                _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % e.nrc)
+                return None
+            raise
+        except Exception as e:
+            last = e
+            _log("0x37 第 %d/3 次无应答: %s" % (i + 1, e))
+            time.sleep(0.25)
+            alive = uds_try(bus_id, 0x3E, [0x00])
+            if alive is None:
+                _log("TesterPresent 也无应答（MCU 可能卡死/已复位）")
+    raise last
 
 
 def uds_try(bus_id, sid, payload):
@@ -538,14 +585,19 @@ def run_ota(bus_id):
             if stopTask:
                 raise RuntimeError("用户停止")
             chunk = image[off:off + TRANSFER_BLOCK_DATA]
-            uds_req(bus_id, SID_TD, [seq] + _to_list(chunk))
+            uds_req_retry(bus_id, SID_TD, [seq] + _to_list(chunk), retries=3)
             off += len(chunk)
             seq = 1 if seq == 0xFF else seq + 1
             if off == size or (off % (TRANSFER_BLOCK_DATA * 16) == 0):
                 _log("  %d/%d" % (off, size))
-        time.sleep(0.05)
+        try:
+            zcanpro.uds_deinit()
+        except Exception:
+            pass
+        time.sleep(0.1)
+        uds_init()
         _log("---- TransferExit ----")
-        uds_req(bus_id, SID_RTE, [])
+        transfer_exit(bus_id)
         _log("---- Reset ----")
         uds_ecu_reset(bus_id)
         t0 = time.time()
