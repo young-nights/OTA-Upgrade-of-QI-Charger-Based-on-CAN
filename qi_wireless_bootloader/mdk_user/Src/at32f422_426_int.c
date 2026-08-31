@@ -52,9 +52,7 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
@@ -64,10 +62,7 @@ void HardFault_Handler(void)
   */
 void MemManage_Handler(void)
 {
-  /* go to infinite loop when memory manage exception occurs */
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
@@ -77,10 +72,7 @@ void MemManage_Handler(void)
   */
 void BusFault_Handler(void)
 {
-  /* go to infinite loop when bus fault exception occurs */
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
@@ -90,10 +82,7 @@ void BusFault_Handler(void)
   */
 void UsageFault_Handler(void)
 {
-  /* go to infinite loop when usage fault exception occurs */
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**

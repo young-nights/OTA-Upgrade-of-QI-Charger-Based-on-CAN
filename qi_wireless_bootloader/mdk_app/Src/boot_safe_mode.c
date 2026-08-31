@@ -106,6 +106,9 @@ static uint8_t  g_dl_pad[4];
 static uint8_t  g_dl_pad_len       = 0;
 static uint8_t  g_dl_erased        = 0;
 static uint32_t g_dl_expected_size = 0;
+static uint8_t  g_xfer_exit_pending = 0;
+
+static void safe_mode_finish_transfer_exit(void);
 
 /** @brief  maxNumberOfBlockLength advertised in 0x34 (SID+BSC+data) */
 #define UDS_MAX_BLOCK_LEN     256U
@@ -1156,9 +1159,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
     case UDS_REQUEST_TRANSFER_EXIT:
     {
-      uint32_t computed_crc;
-
-      /* programming session check */
+      /* Do not CRC/SHA/ECDSA here. This runs inside can_driver_poll → ISO-TP.
+       * Blocking kills SIT1145 keepalive; 77 is then sent with the transceiver
+       * already out of Normal and the host only sees SID=0x37 timeout. */
       if (g_current_session != SESSION_PROGRAMMING)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
@@ -1171,7 +1174,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      /* security gate */
       if (!g_security_unlocked)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_SECURITY_ACCESS_DENIED);
@@ -1179,79 +1181,10 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
 
       g_dl_active = 0;
-
-      safe_mode_begin_long_op(service_id);
-
-      flash_unlock();
-      if (program_image_flush() != 0U)
-      {
-        flash_lock();
-        safe_mode_end_long_op();
-        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-      flash_lock();
-
-      if (g_dl_bytes_written < IMAGE_HEADER_SIZE)
-      {
-        safe_mode_end_long_op();
-        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      if ((g_dl_expected_size != 0U) && (g_dl_bytes_written != g_dl_expected_size))
-      {
-        safe_mode_end_long_op();
-        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      g_dl_erased = 0;
-
-      if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
-      {
-        safe_mode_end_long_op();
-        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      {
-        const image_header_t *hdr = boot_verify_get_header(g_dl_slot_base);
-        computed_crc = hdr->crc32;
-      }
-
-      if (g_dl_slot == SLOT_A)
-      {
-        g_meta.slot_a_valid = 1;
-        g_meta.slot_a_crc32 = computed_crc;
-      }
-      else
-      {
-        g_meta.slot_b_valid = 1;
-        g_meta.slot_b_crc32 = computed_crc;
-      }
-      /* do not change active_slot (last confirmed). next reset:
-       * PENDING→ACTIVE, select_boot_slot() boots trial_slot. APP confirms. */
-      g_meta.ota_state         = OTA_STATE_IDLE;
-      g_meta.pending_slot      = g_dl_slot;
-      g_meta.trial_state       = TRIAL_STATE_PENDING;
-      g_meta.trial_slot        = g_dl_slot;
-      g_meta.trial_retry_count = 0;
-      if (g_meta.trial_max_retries == 0U)
-      {
-        g_meta.trial_max_retries = TRIAL_MAX_RETRIES;
-      }
-
-      if (boot_metadata_save(&g_meta) != 0)
-      {
-        safe_mode_end_long_op();
-        safe_mode_send_nrc(service_id, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      safe_mode_end_long_op();
-      resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-      safe_mode_send_response(resp, 1);
+      safe_mode_send_pending(service_id);
+      (void)can_driver_wait_tx_idle(50U);
+      (void)sit1145_normal_mode_set();
+      g_xfer_exit_pending = 1U;
       break;
     }
 
@@ -1272,6 +1205,82 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 static void isotp_message_received(uint8_t *data, uint16_t len)
 {
   uds_process_message(data, len);
+}
+
+static void safe_mode_finish_transfer_exit(void)
+{
+  uint8_t resp[4];
+  uint32_t computed_crc;
+
+  g_s3_last_ms = timer_get_tick();
+  (void)sit1145_normal_mode_set();
+
+  flash_unlock();
+  if (program_image_flush() != 0U)
+  {
+    flash_lock();
+    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    return;
+  }
+  flash_lock();
+
+  if (g_dl_bytes_written < IMAGE_HEADER_SIZE)
+  {
+    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    return;
+  }
+
+  if ((g_dl_expected_size != 0U) && (g_dl_bytes_written != g_dl_expected_size))
+  {
+    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    return;
+  }
+
+  g_dl_erased = 0;
+
+  if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
+  {
+    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    return;
+  }
+
+  {
+    const image_header_t *hdr = boot_verify_get_header(g_dl_slot_base);
+    computed_crc = hdr->crc32;
+  }
+
+  if (g_dl_slot == SLOT_A)
+  {
+    g_meta.slot_a_valid = 1;
+    g_meta.slot_a_crc32 = computed_crc;
+  }
+  else
+  {
+    g_meta.slot_b_valid = 1;
+    g_meta.slot_b_crc32 = computed_crc;
+  }
+  g_meta.ota_state         = OTA_STATE_IDLE;
+  g_meta.pending_slot      = g_dl_slot;
+  g_meta.trial_state       = TRIAL_STATE_PENDING;
+  g_meta.trial_slot        = g_dl_slot;
+  g_meta.trial_retry_count = 0;
+  if (g_meta.trial_max_retries == 0U)
+  {
+    g_meta.trial_max_retries = TRIAL_MAX_RETRIES;
+  }
+
+  if (boot_metadata_save(&g_meta) != 0)
+  {
+    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    return;
+  }
+
+  (void)sit1145_normal_mode_set();
+  (void)can_driver_wait_tx_idle(50U);
+  resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
+  safe_mode_send_response(resp, 1);
+  (void)can_driver_wait_tx_idle(50U);
+  g_s3_last_ms = timer_get_tick();
 }
 
 #if (SAFE_MODE_PROBE_ENABLE != 0U)
@@ -1368,6 +1377,12 @@ void enter_safe_mode(void)
 #if (SAFE_MODE_SIT1145_KEEPALIVE_ENABLE != 0U)
     safe_mode_sit1145_keepalive_poll();
 #endif
+
+    if (g_xfer_exit_pending != 0U)
+    {
+      g_xfer_exit_pending = 0U;
+      safe_mode_finish_transfer_exit();
+    }
 
     if ((g_current_session != SESSION_DEFAULT) &&
         ((timer_get_tick() - g_s3_last_ms) >= UDS_S3_TIMEOUT_MS))
