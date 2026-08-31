@@ -202,7 +202,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\libraries\cmsis\device_support\system_at32f422_426.c</PathWithFileName>
+      <PathWithFileName>..\mdk_user\Src\system_at32f422_426.c</PathWithFileName>
       <FilenameWithoutPath>system_at32f422_426.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
