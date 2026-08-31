@@ -24,7 +24,7 @@ except ImportError:
 # Slot A：Keil Target IROM1 = 0x08005100；Slot B：IROM1 = 0x08010900。不用 scatter。
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.dirname(os.path.dirname(_TOOLS_DIR))
+REPO_ROOT = os.path.dirname(_TOOLS_DIR)
 FIRMWARE_PATH = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "qi_wireless.bin")
 PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
