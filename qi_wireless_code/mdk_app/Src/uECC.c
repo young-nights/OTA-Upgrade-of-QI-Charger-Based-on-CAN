@@ -38,6 +38,20 @@
 #include "uECC.h"
 #include <string.h>
 
+static void (*g_progress_cb)(void) = 0;
+
+void uECC_set_progress_cb(void (*cb)(void))
+{
+    g_progress_cb = cb;
+}
+
+static void progress(void)
+{
+    if (g_progress_cb != 0) {
+        g_progress_cb();
+    }
+}
+
 /* =========================================================================
  * Internal types
  * ========================================================================= */
@@ -250,6 +264,7 @@ static void modinv(w256 r, const w256 a,
             }
             modmul(base, base, base, R, mod);
         }
+        progress();
     }
     memcpy(r, res, sizeof(w256));
 }
@@ -420,6 +435,7 @@ static void point_mul(jpoint_t *r, const jpoint_t *p, const w256 k)
                 }
             }
         }
+        progress();
     }
     *r = acc;
 }

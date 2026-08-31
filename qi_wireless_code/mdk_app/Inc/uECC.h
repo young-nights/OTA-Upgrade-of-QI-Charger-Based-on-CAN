@@ -39,4 +39,11 @@ int uECC_verify(const uint8_t *public_key,
                 const uint8_t *message_hash,
                 const uint8_t *signature);
 
+/**
+ * @brief  Optional progress hook for long uECC_verify (Fermat + point_mul).
+ *         Boot uses this to refresh SIT1145 and re-send NRC 0x78.
+ *         Pass NULL to clear. Not used on the APP path.
+ */
+void uECC_set_progress_cb(void (*cb)(void));
+
 #endif /* _UECC_H_ */

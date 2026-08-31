@@ -338,7 +338,7 @@ def pack_image_if_needed(fw_path, priv, version="1.0.0"):
 
 def uds_init():
     zcanpro.uds_init({
-        "response_timeout_ms": 3000,
+        "response_timeout_ms": 10000,
         "use_canfd": 0,
         "canfd_brs": 0,
         "trans_ver": 0,
@@ -346,7 +346,7 @@ def uds_init():
         "frame_type": 1,
         "trans_stmin_valid": 1,
         "trans_stmin": 1,
-        "enhanced_timeout_ms": 5000,
+        "enhanced_timeout_ms": 30000,
     })
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
@@ -543,7 +543,7 @@ def run_ota(bus_id):
             seq = 1 if seq == 0xFF else seq + 1
             if off == size or (off % (TRANSFER_BLOCK_DATA * 16) == 0):
                 _log("  %d/%d" % (off, size))
-        _log("---- TransferExit ----")
+        _log("---- TransferExit（CRC/SHA/ECDSA，MCU 会先回 7F 37 78）----")
         uds_req(bus_id, SID_RTE, [])
         _log("---- Reset ----")
         uds_ecu_reset(bus_id)
