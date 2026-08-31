@@ -80,7 +80,7 @@
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>1</RunUserProg2>
             <UserProg1Name>fromelf --m32combined --output=$L@L.s19 !L</UserProg1Name>
             <UserProg2Name>fromelf --bin --output="$L@L.bin" "#L"</UserProg2Name>
@@ -277,7 +277,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x5000</Size>
+                <Size>0x6800</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
