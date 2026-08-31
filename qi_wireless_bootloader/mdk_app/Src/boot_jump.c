@@ -29,26 +29,24 @@
 #include "core_cm4.h"
 #include "at32f422_426_conf.h"
 
-/* private types -------------------------------------------------------------*/
-
-/**
- * @brief  function pointer type for application reset handler
- */
-typedef void (*app_reset_handler_t)(void);
-
-/* exported functions --------------------------------------------------------*/
-
 int8_t boot_jump_vectors_ok(uint32_t app_addr)
 {
   uint32_t app_msp;
   uint32_t reset_fn;
 
+  /* Cortex-M4 VTOR: bits [6:0] must be 0 (128-byte aligned). */
+  if ((app_addr & 0x7FU) != 0U)
+  {
+    return -1;
+  }
+
   app_msp  = *(volatile uint32_t *)(app_addr);
   reset_fn = (*(volatile uint32_t *)(app_addr + 4U)) & 0xFFFFFFFEU;
 
-  /* ARM initial SP may equal SRAM_BASE+SRAM_SIZE (one past last byte). */
+  /* Initial SP may equal SRAM_BASE+SIZE (one past last byte). AAPCS: 8-byte aligned. */
   if ((app_msp < SRAM_BASE_ADDR) ||
-      (app_msp > (SRAM_BASE_ADDR + SRAM_SIZE)))
+      (app_msp > (SRAM_BASE_ADDR + SRAM_SIZE)) ||
+      ((app_msp & 7U) != 0U))
   {
     return -1;
   }
@@ -62,39 +60,53 @@ int8_t boot_jump_vectors_ok(uint32_t app_addr)
 
 void boot_jump_to_app(uint32_t app_addr)
 {
-  uint32_t app_reset_addr;
-  app_reset_handler_t app_reset_handler;
-  volatile uint32_t delay;
+  uint32_t msp;
+  uint32_t reset;
 
   if (boot_jump_vectors_ok(app_addr) != 0)
   {
     return;
   }
 
-  app_reset_addr = *(volatile uint32_t *)(app_addr + 4U);
+  /* snapshot from Flash before MSP switches to the APP stack */
+  msp   = *(volatile uint32_t *)(app_addr);
+  reset = (*(volatile uint32_t *)(app_addr + 4U)) | 1U;
 
   __disable_irq();
 
   can_reset(CAN1);
   crm_periph_clock_enable(CRM_CAN1_PERIPH_CLOCK, FALSE);
 
-  SysTick->CTRL = 0;
-  SysTick->LOAD = 0;
-  SysTick->VAL  = 0;
+  SysTick->CTRL = 0U;
+  SysTick->LOAD = 0U;
+  SysTick->VAL  = 0U;
+  SCB->ICSR = SCB_ICSR_PENDSTCLR_Msk;
 
   NVIC->ICER[0] = 0xFFFFFFFFU;
   NVIC->ICER[1] = 0xFFFFFFFFU;
   NVIC->ICPR[0] = 0xFFFFFFFFU;
   NVIC->ICPR[1] = 0xFFFFFFFFU;
 
-  for (delay = 0; delay < 1000; delay++)
+  /* privileged thread, MSP, no FPCA (Boot may have used FPU) */
+  __set_CONTROL(0U);
+  __DSB();
+  __ISB();
+
+  SCB->VTOR = app_addr;
+  __DSB();
+  __ISB();
+
+  /* do not touch C locals after MSR MSP — they lived on the Boot stack */
+  __ASM volatile(
+    "msr msp, %0 \n"
+    "bx  %1      \n"
+    :
+    : "r" (msp), "r" (reset)
+    : "memory"
+  );
+
+  while (1)
   {
     __NOP();
   }
-
-  SCB->VTOR = app_addr;
-  __set_MSP(*(volatile uint32_t *)(app_addr));
-
-  app_reset_handler = (app_reset_handler_t)(app_reset_addr | 1U);
-  app_reset_handler();
 }

@@ -45,8 +45,8 @@ int8_t boot_jump_vectors_ok(uint32_t app_addr);
 
 /**
  * @brief  jump to application; validates vectors first, then disables IRQ/CAN
- * @note   does not return on success. On vector failure, returns so the
- *         caller can try the other slot or enter Safe Mode.
+ * @note   does not return on success. MSP is switched in asm so Reset
+ *         is not reloaded from the Boot stack. Vector failure returns.
  * @param  app_addr: application vector table address
  */
 void boot_jump_to_app(uint32_t app_addr);
