@@ -37,15 +37,15 @@ extern "C" {
 /* exported constants --------------------------------------------------------*/
 
 /** @brief  Flash layout (Keil Target IROM, no scatter).
- *          Bootloader 20KB, APP_A/B 46KB each, 2KB-sector aligned. */
+ *          Bootloader 28KB, APP_A/B 42KB each, 2KB-sector aligned. */
 #define BOOT_BASE_ADDR          0x08000000U   /*!< bootloader start address */
 #define DEVICE_INFO_ADDR        0x0801D000U   /*!< SN area; OTA must not erase */
 #define DEVICE_INFO_SIZE        0x1000U
-#define BOOT_SIZE               0x5000U       /*!< bootloader size: 20KB */
-#define APP_A_BASE_ADDR         0x08005000U   /*!< application A start address */
-#define APP_A_SIZE              0xB800U       /*!< application A size: 46KB */
-#define APP_B_BASE_ADDR         0x08010800U   /*!< application B start address */
-#define APP_B_SIZE              0xB800U       /*!< application B size: 46KB */
+#define BOOT_SIZE               0x7000U       /*!< bootloader size: 28KB */
+#define APP_A_BASE_ADDR         0x08007000U   /*!< application A start address */
+#define APP_A_SIZE              0xA800U       /*!< application A size: 42KB */
+#define APP_B_BASE_ADDR         0x08011800U   /*!< application B start address */
+#define APP_B_SIZE              0xA800U       /*!< application B size: 42KB */
 #define IMAGE_HEADER_SIZE       256U          /*!< image header size in bytes */
 #define META_PRIMARY_ADDR       0x0801C000U   /*!< primary metadata (2KB sector) */
 #define META_BACKUP_ADDR        0x0801C800U   /*!< backup metadata (next 2KB sector) */

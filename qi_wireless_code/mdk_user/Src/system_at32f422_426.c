@@ -38,7 +38,7 @@ extern uint32_t __Vectors;
 /** @addtogroup AT32F422_426_system_private_defines
   * @{
   */
-/* APP is linked at Slot A 0x08005100 or Slot B 0x08010900. Do not use
+/* APP is linked at Slot A 0x08007100 or Slot B 0x08011900. Do not use
  * FLASH_BASE (0x08000000) — that is the Bootloader table. */
 /**
   * @}

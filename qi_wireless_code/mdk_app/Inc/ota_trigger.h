@@ -37,10 +37,10 @@ extern "C" {
 /* exported constants --------------------------------------------------------*/
 
 /** @brief  Flash layout constants (must match bootloader / docs Flash layout) */
-#define OTA_APP_A_BASE_ADDR     0x08005000U   /*!< application A start address */
-#define OTA_APP_A_SIZE          0xB800U       /*!< application A size: 46KB */
-#define OTA_APP_B_BASE_ADDR     0x08010800U   /*!< application B start address */
-#define OTA_APP_B_SIZE          0xB800U       /*!< application B size: 46KB */
+#define OTA_APP_A_BASE_ADDR     0x08007000U   /*!< application A start address */
+#define OTA_APP_A_SIZE          0xA800U       /*!< application A size: 42KB */
+#define OTA_APP_B_BASE_ADDR     0x08011800U   /*!< application B start address */
+#define OTA_APP_B_SIZE          0xA800U       /*!< application B size: 42KB */
 #define OTA_META_PRIMARY_ADDR   0x0801C000U   /*!< primary metadata (2KB sector) */
 #define OTA_META_BACKUP_ADDR    0x0801C800U   /*!< backup metadata (next 2KB sector) */
 #define OTA_META_PAGE_SIZE      0x800U        /*!< metadata erase size: 1 sector */

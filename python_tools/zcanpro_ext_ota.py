@@ -21,14 +21,14 @@ except ImportError:
     zcanpro = None
 
 # ======== 用户配置 ========
-# Slot A：Keil Target IROM1 = 0x08005100；Slot B：IROM1 = 0x08010900。不用 scatter。
+# Slot A：Keil Target IROM1 = 0x08007100；Slot B：IROM1 = 0x08011900。不用 scatter。
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(_TOOLS_DIR)
 FIRMWARE_PATH = os.path.join(REPO_ROOT, "qi_wireless_code", "mdk_project", "Objects", "qi_wireless.bin")
 PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
-DOWNLOAD_ADDR = 0x08005000
+DOWNLOAD_ADDR = 0x08007000
 TRANSFER_BLOCK_DATA = 128
 
 UDS_REQ_ID = 0x18DA0D03
@@ -42,9 +42,9 @@ SA_SIG_CHUNK = 4  # 27 03 单帧：SID+03+seq+4B = 7，避开 ISO-TP 多帧
 IMAGE_MAGIC = 0x4F544158
 IMAGE_HEADER_SIZE = 256
 SLOT_A, SLOT_B = 0, 1
-SLOT_A_BASE = 0x08005000
-SLOT_B_BASE = 0x08010800
-SLOT_SIZE = 0xB800
+SLOT_A_BASE = 0x08007000
+SLOT_B_BASE = 0x08011800
+SLOT_SIZE = 0xA800
 MAX_TD_DATA = 254
 
 # secp256r1 / prime256v1. n 必须与 bootloader uECC.c 的 N[] 一致。
@@ -309,7 +309,7 @@ def validate_image(image):
     linked = image_target_slot(image)
     if linked is None:
         reset = struct.unpack_from("<I", image, IMAGE_HEADER_SIZE + 4)[0]
-        raise RuntimeError("Reset Handler 0x%08X 不在 Slot A/B 内，请改 Target IROM1（A=0x08005100 / B=0x08010900）" % reset)
+        raise RuntimeError("Reset Handler 0x%08X 不在 Slot A/B 内，请改 Target IROM1（A=0x08007100 / B=0x08011900）" % reset)
     _log("镜像链接 Slot %s, 总长 %d" % (slot_name(linked), len(image)))
     return linked
 

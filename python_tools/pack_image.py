@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """把 Keil 裸 APP .bin 打成 256 字节 XATO 头 + 固件，供产线烧录或 OTA。
 
-产线：输出文件从槽起始地址烧录（Slot A = 0x08005000）。
+产线：输出文件从槽起始地址烧录（Slot A = 0x08007000）。
 OTA：也可把输出路径填进 zcanpro_ext_ota.py 的 FIRMWARE_PATH。
 
 依赖：标准库 + 同目录 zcanpro_ext_ota.py（不需要 ZCANPRO / cryptography）。
@@ -20,6 +20,8 @@ if HERE not in sys.path:
 from zcanpro_ext_ota import (  # noqa: E402
     IMAGE_HEADER_SIZE,
     SLOT_A,
+    SLOT_A_BASE,
+    SLOT_B_BASE,
     load_ec_private_key,
     pack_image_if_needed,
     slot_name,
@@ -60,7 +62,7 @@ def main(argv=None):
     with open(args.out, "wb") as f:
         f.write(image)
 
-    burn_addr = "0x08005000" if linked == SLOT_A else "0x08010800"
+    burn_addr = "0x%08X" % (SLOT_A_BASE if linked == SLOT_A else SLOT_B_BASE)
     print("输出: %s" % os.path.abspath(args.out))
     print("总长: %d  (头 %d + 固件 %d)" % (len(image), IMAGE_HEADER_SIZE, len(image) - IMAGE_HEADER_SIZE))
     print("链接: Slot %s  → 产线烧录地址 %s" % (slot_name(linked), burn_addr))

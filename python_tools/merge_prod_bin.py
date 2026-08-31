@@ -2,8 +2,8 @@
 """Merge bootloader.bin + app_slot_a.ota.bin into a single production bin.
 
 The merged image is laid out to match the AT32F426 Flash layout:
-  0x08000000  Bootloader  (20KB = 0x5000)
-  0x08005000  Slot A      (app_slot_a.ota.bin, includes 256B XATO header)
+  0x08000000  Bootloader  (28KB = 0x7000)
+  0x08007000  Slot A      (app_slot_a.ota.bin, includes 256B XATO header)
 
 Usage:
     python merge_prod_bin.py                          # use defaults
@@ -33,9 +33,10 @@ DEFAULT_OUT = os.path.join(
 )
 
 BOOT_BASE = 0x08000000
-BOOT_SIZE = 0x5000  # 20 KB reserved for bootloader
-SLOT_A_OFFSET = BOOT_SIZE  # Slot A starts at 0x5000 within merged image
-APP_BASE = BOOT_BASE + SLOT_A_OFFSET  # 0x08005000
+BOOT_SIZE = 0x7000  # 28 KB reserved for bootloader
+SLOT_A_SIZE = 0xA800  # 42 KB
+SLOT_A_OFFSET = BOOT_SIZE  # Slot A starts at 0x7000 within merged image
+APP_BASE = BOOT_BASE + SLOT_A_OFFSET  # 0x08007000
 
 
 def bin_to_ihex(data, base_addr):
@@ -104,10 +105,10 @@ def main(argv=None):
             )
         )
         return 1
-    if len(app_data) > 0xB800:
+    if len(app_data) > SLOT_A_SIZE:
         sys.stderr.write(
             "ERROR: Slot A image too large: {} bytes (max {})\n".format(
-                len(app_data), 0xB800
+                len(app_data), SLOT_A_SIZE
             )
         )
         return 1

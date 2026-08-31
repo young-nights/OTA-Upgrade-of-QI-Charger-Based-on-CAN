@@ -274,8 +274,8 @@ static uint32_t uds_parse_be(const uint8_t *p, uint8_t n)
  * @brief  erase all 2KB sectors of the target APP slot
  * @retval 0 on success, non-zero on error
  */
-/** @brief  AT32F426 Flash physical end address (256KB total) */
-#define FLASH_PHYSICAL_END_ADDR  0x08040000U
+/** @brief  AT32F426 Flash physical end (128KB: 0x08000000..0x0801FFFF) */
+#define FLASH_PHYSICAL_END_ADDR  0x08020000U
 
 static uint8_t erase_slot_flash(uint8_t slot)
 {
