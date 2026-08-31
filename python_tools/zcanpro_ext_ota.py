@@ -543,7 +543,11 @@ def run_ota(bus_id):
             seq = 1 if seq == 0xFF else seq + 1
             if off == size or (off % (TRANSFER_BLOCK_DATA * 16) == 0):
                 _log("  %d/%d" % (off, size))
-        _log("---- TransferExit（CRC/SHA/ECDSA，MCU 会先回 7F 37 78）----")
+        # Last 76 xx may still be on the wire. 0x37 with empty data is SID-only
+        # (ISO-TP 01 37). Give MCU a beat, keep Programming session alive.
+        time.sleep(0.08)
+        uds_try(bus_id, 0x3E, [0x00])
+        _log("---- TransferExit（先 7F 37 78，再 77；原始 CAN 才能看见 78）----")
         uds_req(bus_id, SID_RTE, [])
         _log("---- Reset ----")
         uds_ecu_reset(bus_id)

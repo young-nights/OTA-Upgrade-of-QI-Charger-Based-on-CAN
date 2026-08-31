@@ -436,10 +436,10 @@ static uint8_t  g_long_op_sid;
 static uint32_t g_long_op_last_78_ms;
 
 /**
- * @brief  keep SIT1145 in Normal and re-send NRC 0x78 every 2 s
- * @note   ECDSA and slot erase block the main loop, so the 500 ms keepalive
- *         and a single 0x78 cannot cover P2* (5 s). Host times out as
- *         "SID=0x37 no response until timeout".
+ * @brief  keep SIT1145 in Normal; re-send NRC 0x78 every 2 s during erase.
+ * @note   Do not call this from uECC_verify — that path already has a deep
+ *         stack. Sending CAN/SPI from inside point_mul HardFaults and the
+ *         host sees SID=0x37 timeout with no 77 (0x78 may be swallowed).
  */
 static void safe_mode_long_op_pump(void)
 {
@@ -451,7 +451,7 @@ static void safe_mode_long_op_pump(void)
   {
     g_long_op_last_78_ms = now;
     safe_mode_send_pending(g_long_op_sid);
-    (void)can_driver_wait_tx_idle(20U);
+    (void)can_driver_wait_tx_idle(50U);
   }
 }
 
@@ -459,16 +459,15 @@ static void safe_mode_begin_long_op(uint8_t service_id)
 {
   g_long_op_sid = service_id;
   safe_mode_send_pending(service_id);
-  (void)can_driver_wait_tx_idle(20U);
+  (void)can_driver_wait_tx_idle(50U);
   (void)sit1145_normal_mode_set();
   g_long_op_last_78_ms = timer_get_tick();
-  uECC_set_progress_cb(safe_mode_long_op_pump);
 }
 
 static void safe_mode_end_long_op(void)
 {
-  uECC_set_progress_cb((void (*)(void))0);
   (void)sit1145_normal_mode_set();
+  (void)can_driver_wait_tx_idle(50U);
 }
 
 /**
@@ -1151,6 +1150,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
       resp[1] = block_seq;
       safe_mode_send_response(resp, 2);
+      (void)can_driver_wait_tx_idle(20U);
       break;
     }
 
