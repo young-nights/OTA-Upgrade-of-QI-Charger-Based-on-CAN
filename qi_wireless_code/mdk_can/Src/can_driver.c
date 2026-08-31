@@ -76,9 +76,8 @@ static uint8_t rx_fifo_is_full(void)
 
 /**
  * @brief  initialize CAN1 peripheral in extended frame mode at 250kbps
- * @note   configures PA11(CAN_RX) and PA12(CAN_TX) with AF mux,
- *         sets up acceptance filter to accept all extended frames,
- *         enables RX and error interrupts.
+ * @note   PA11/PA12 AF, SIT1145 Normal, 250 kbps.
+ *         Filter 0: 0x18DA0D03; filter 1: 0x18DB33xx. RX and error IRQs.
  * @param  none
  * @retval none
  */

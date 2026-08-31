@@ -396,7 +396,7 @@
             <File>
               <FileName>system_at32f422_426.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\libraries\cmsis\device_support\system_at32f422_426.c</FilePath>
+              <FilePath>..\mdk_user\Src\system_at32f422_426.c</FilePath>
             </File>
           </Files>
         </Group>

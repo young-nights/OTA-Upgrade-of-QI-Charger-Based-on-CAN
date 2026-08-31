@@ -215,7 +215,8 @@ uint32_t ota_running_slot_base(void)
 {
   uint32_t vtor = SCB->VTOR;
 
-  if (vtor >= OTA_APP_B_BASE_ADDR)
+  /* VTOR is the code entry (header+256), not the slot header. */
+  if (vtor >= (OTA_APP_B_BASE_ADDR + OTA_IMAGE_HEADER_SIZE))
   {
     return OTA_APP_B_BASE_ADDR;
   }

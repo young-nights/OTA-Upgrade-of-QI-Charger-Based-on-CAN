@@ -55,9 +55,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
@@ -68,9 +66,7 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
@@ -81,9 +77,7 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
@@ -94,9 +88,7 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   *(volatile uint32_t *)0x20000000 = 0xFAUL;
-  while(1)
-  {
-  }
+  NVIC_SystemReset();
 }
 
 /**
