@@ -107,6 +107,8 @@ static uint8_t  g_dl_pad_len       = 0;
 static uint8_t  g_dl_erased        = 0;
 static uint32_t g_dl_expected_size = 0;
 static uint8_t  g_xfer_exit_pending = 0;
+static uint8_t  g_xfer_exit_busy    = 0;
+static uint8_t  g_pump_reentry      = 0;
 
 static void safe_mode_finish_transfer_exit(void);
 
@@ -439,23 +441,49 @@ static uint8_t  g_long_op_sid;
 static uint32_t g_long_op_last_78_ms;
 
 /**
- * @brief  keep SIT1145 in Normal; re-send NRC 0x78 every 2 s during erase.
- * @note   Do not call this from uECC_verify — that path already has a deep
- *         stack. Sending CAN/SPI from inside point_mul HardFaults and the
- *         host sees SID=0x37 timeout with no 77 (0x78 may be swallowed).
+ * @brief  During 0x37 verify the main loop is blocked. Keep SIT1145 in
+ *         Normal, re-send NRC 0x78 every 2 s (ISO 14229 P2*), and poll
+ *         CAN so a retried 0x37 / TesterPresent still get a response.
  */
 static void safe_mode_long_op_pump(void)
 {
-  uint32_t now = timer_get_tick();
+  uint32_t now;
 
-  (void)sit1145_normal_mode_set();
+  if (g_pump_reentry != 0U)
+  {
+    return;
+  }
+  g_pump_reentry = 1U;
+
+  now = timer_get_tick();
   g_s3_last_ms = now;
+
+#if (SAFE_MODE_SIT1145_KEEPALIVE_ENABLE != 0U)
+  if ((now - g_sit1145_keepalive_last_ms) >= SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS)
+  {
+    g_sit1145_keepalive_last_ms = now;
+    (void)sit1145_normal_mode_set();
+  }
+#else
+  (void)sit1145_normal_mode_set();
+#endif
+
   if ((now - g_long_op_last_78_ms) >= 2000U)
   {
     g_long_op_last_78_ms = now;
     safe_mode_send_pending(g_long_op_sid);
     (void)can_driver_wait_tx_idle(50U);
   }
+
+  /* Nested poll only while 0x37 verify owns the loop. Erase/0x27 already
+   * run inside can_driver_poll; re-entering UDS from there is unsafe. */
+  if (g_xfer_exit_busy != 0U)
+  {
+    can_driver_poll();
+    isotp_poll();
+  }
+
+  g_pump_reentry = 0U;
 }
 
 static void safe_mode_begin_long_op(uint8_t service_id)
@@ -491,6 +519,17 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
   g_s3_last_ms = timer_get_tick();
   service_id = data[0];
+
+  /* Verify blocks the main loop. Only TesterPresent is handled normally;
+   * a retried 0x37 (and any other SID) just refreshes NRC 0x78. */
+  if (g_xfer_exit_busy != 0U)
+  {
+    if (service_id != UDS_TESTER_PRESENT)
+    {
+      safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
+      return;
+    }
+  }
 
   switch (service_id)
   {
@@ -1176,7 +1215,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      if (g_xfer_exit_pending != 0U)
+      if ((g_xfer_exit_pending != 0U) || (g_xfer_exit_busy != 0U))
       {
         safe_mode_send_pending(service_id);
         break;
@@ -1204,9 +1243,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
 
       g_dl_active = 0;
+      g_long_op_sid = UDS_REQUEST_TRANSFER_EXIT;
+      g_long_op_last_78_ms = timer_get_tick();
       safe_mode_send_pending(service_id);
       (void)can_driver_wait_tx_idle(50U);
       (void)sit1145_normal_mode_set();
+      g_xfer_exit_busy = 1U;
       g_xfer_exit_pending = 1U;
       break;
     }
@@ -1230,32 +1272,50 @@ static void isotp_message_received(uint8_t *data, uint16_t len)
   uds_process_message(data, len);
 }
 
+static void safe_mode_xfer_exit_abort(uint8_t nrc)
+{
+  uECC_set_progress_cb((void (*)(void))0);
+  boot_verify_set_progress_cb((void (*)(void))0);
+  g_xfer_exit_busy = 0U;
+  g_xfer_exit_pending = 0U;
+  (void)sit1145_normal_mode_set();
+  safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, nrc);
+}
+
 static void safe_mode_finish_transfer_exit(void)
 {
   uint8_t resp[4];
   uint32_t computed_crc;
 
+  g_xfer_exit_busy = 1U;
+  g_long_op_sid = UDS_REQUEST_TRANSFER_EXIT;
+  g_long_op_last_78_ms = timer_get_tick();
+  uECC_set_progress_cb(safe_mode_long_op_pump);
+  boot_verify_set_progress_cb(safe_mode_long_op_pump);
+
   g_s3_last_ms = timer_get_tick();
   (void)sit1145_normal_mode_set();
+  safe_mode_long_op_pump();
 
   flash_unlock();
   if (program_image_flush() != 0U)
   {
     flash_lock();
-    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
     return;
   }
   flash_lock();
+  safe_mode_long_op_pump();
 
   if (g_dl_bytes_written < IMAGE_HEADER_SIZE)
   {
-    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
     return;
   }
 
   if ((g_dl_expected_size != 0U) && (g_dl_bytes_written != g_dl_expected_size))
   {
-    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
     return;
   }
 
@@ -1263,7 +1323,7 @@ static void safe_mode_finish_transfer_exit(void)
 
   if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
   {
-    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
     return;
   }
 
@@ -1292,12 +1352,17 @@ static void safe_mode_finish_transfer_exit(void)
     g_meta.trial_max_retries = TRIAL_MAX_RETRIES;
   }
 
+  safe_mode_long_op_pump();
   if (boot_metadata_save(&g_meta) != 0)
   {
-    safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+    safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
     return;
   }
 
+  uECC_set_progress_cb((void (*)(void))0);
+  boot_verify_set_progress_cb((void (*)(void))0);
+  g_xfer_exit_busy = 0U;
+  g_xfer_exit_pending = 0U;
   (void)sit1145_normal_mode_set();
   (void)can_driver_wait_tx_idle(50U);
   resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
@@ -1407,7 +1472,8 @@ void enter_safe_mode(void)
       safe_mode_finish_transfer_exit();
     }
 
-    if ((g_current_session != SESSION_DEFAULT) &&
+    if ((g_xfer_exit_busy == 0U) &&
+        (g_current_session != SESSION_DEFAULT) &&
         ((timer_get_tick() - g_s3_last_ms) >= UDS_S3_TIMEOUT_MS))
     {
       g_current_session = SESSION_DEFAULT;

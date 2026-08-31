@@ -346,12 +346,19 @@ def uds_init():
         "frame_type": 1,
         "trans_stmin_valid": 1,
         "trans_stmin": 1,
-        "enhanced_timeout_ms": 12000,
+        "enhanced_timeout_ms": 20000,
     })
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
 
-def uds_req(bus_id, sid, payload):
+def uds_req(bus_id, sid, payload, wait_pending_s=0):
+    """Send one UDS request.
+
+    Some ZCANPRO builds return 7F xx 78 from uds_request instead of waiting
+    P2* for the final response. For 0x37 pass wait_pending_s>0 to refresh
+    TransferExit until 77/0x72. Other SIDs keep wait_pending_s=0 so 0x31
+    erase is not re-issued while Flash is busy.
+    """
     if stopTask:
         raise RuntimeError("用户停止脚本")
     req = {
@@ -361,20 +368,31 @@ def uds_req(bus_id, sid, payload):
         "sid": sid,
         "data": list(payload),
     }
-    _log("[Tx] %02X %s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else "")))
-    resp = zcanpro.uds_request(bus_id, req)
-    data = list((resp or {}).get("data") or [])
-    if data:
-        _log("[Rx] " + _hex(data[:24]))
-    if len(data) >= 3 and data[0] == SID_NRC:
-        if data[2] == NRC_RCRRP:
-            raise RuntimeError("无应答 SID=0x%02X NRC 0x78 pending" % sid)
-        raise UdsNrcError(data[1], data[2])
-    if not resp or not resp.get("result"):
-        raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
-    if len(data) < 1 or data[0] != (sid + SID_PR):
-        raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
-    return data
+    t_end = time.time() + float(wait_pending_s)
+    logged_tx = False
+    while True:
+        if stopTask:
+            raise RuntimeError("用户停止脚本")
+        if not logged_tx:
+            _log("[Tx] %02X %s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else "")))
+            logged_tx = True
+        resp = zcanpro.uds_request(bus_id, req)
+        data = list((resp or {}).get("data") or [])
+        if data:
+            _log("[Rx] " + _hex(data[:24]))
+        if len(data) >= 3 and data[0] == SID_NRC:
+            if data[2] == NRC_RCRRP:
+                if wait_pending_s <= 0 or time.time() >= t_end:
+                    raise RuntimeError("无应答 SID=0x%02X NRC 0x78 pending" % sid)
+                _log("SID=0x%02X NRC 0x78，MCU 忙，继续等待" % sid)
+                time.sleep(1.0)
+                continue
+            raise UdsNrcError(data[1], data[2])
+        if not resp or not resp.get("result"):
+            raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
+        if len(data) < 1 or data[0] != (sid + SID_PR):
+            raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
+        return data
 
 
 def _is_timeout(exc):
@@ -402,13 +420,13 @@ def uds_req_retry(bus_id, sid, payload, retries=3):
 
 
 def transfer_exit(bus_id):
-    """0x37 with timeout retry. Replay 77 if MCU already finished (NRC 0x71)."""
+    """0x37: wait through NRC 0x78 (ECDSA). Replay 77 if MCU already finished."""
     last = None
     for i in range(3):
         if stopTask:
             raise RuntimeError("用户停止脚本")
         try:
-            return uds_req(bus_id, SID_RTE, [])
+            return uds_req(bus_id, SID_RTE, [], wait_pending_s=60)
         except UdsNrcError as e:
             if (e.nrc in (0x71, 0x24)) and (i > 0):
                 _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % e.nrc)
@@ -416,11 +434,10 @@ def transfer_exit(bus_id):
             raise
         except Exception as e:
             last = e
+            if not _is_timeout(e):
+                raise
             _log("0x37 第 %d/3 次无应答: %s" % (i + 1, e))
-            time.sleep(0.25)
-            alive = uds_try(bus_id, 0x3E, [0x00])
-            if alive is None:
-                _log("TesterPresent 也无应答（MCU 可能卡死/已复位）")
+            time.sleep(0.5)
     raise last
 
 

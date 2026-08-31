@@ -60,6 +60,23 @@ static const uint32_t g_pubkey_magic = ECDSA_PUBKEY_MAGIC;
 /** @brief  Last verification failure step (0=pass, 1=magic, 2=length, 3=CRC, 4=reset_handler, 5=pubkey, 6=ECDSA) */
 volatile uint8_t g_verify_fail_step = 0;
 
+static void (*g_verify_pump)(void) = 0;
+
+#define VERIFY_PUMP_CHUNK  256U
+
+void boot_verify_set_progress_cb(void (*cb)(void))
+{
+  g_verify_pump = cb;
+}
+
+static void verify_pump(void)
+{
+  if (g_verify_pump != 0)
+  {
+    g_verify_pump();
+  }
+}
+
 /* exported functions --------------------------------------------------------*/
 
 /**
@@ -122,8 +139,26 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
   }
 
   /* check 3: verify CRC32 of image data (data follows the header) */
-  image_data   = (const uint8_t *)(base_addr + IMAGE_HEADER_SIZE);
-  computed_crc = boot_crc32((const void *)image_data, header->image_length);
+  image_data = (const uint8_t *)(base_addr + IMAGE_HEADER_SIZE);
+  {
+    uint32_t crc = 0xFFFFFFFFU;
+    uint32_t ofs = 0U;
+    uint32_t n;
+
+    verify_pump();
+    while (ofs < header->image_length)
+    {
+      n = header->image_length - ofs;
+      if (n > VERIFY_PUMP_CHUNK)
+      {
+        n = VERIFY_PUMP_CHUNK;
+      }
+      crc = boot_crc32_continue(crc, (const void *)(image_data + ofs), n);
+      ofs += n;
+      verify_pump();
+    }
+    computed_crc = crc ^ 0xFFFFFFFFU;
+  }
 
   if (computed_crc != header->crc32)
   {
@@ -158,8 +193,28 @@ int8_t boot_verify_image(uint32_t base_addr, uint32_t slot_size)
       return -1;
     }
 
-    /* compute SHA-256 hash of the image data (excluding header) */
-    sha256_hash(image_data, header->image_length, image_hash);
+    /* compute SHA-256 hash of the image data (excluding header), sliced so
+     * Boot 0x37 can keep NRC 0x78 / SIT1145 / CAN RX alive. */
+    {
+      sha256_ctx_t ctx;
+      uint32_t ofs = 0U;
+      uint32_t n;
+
+      sha256_init(&ctx);
+      while (ofs < header->image_length)
+      {
+        n = header->image_length - ofs;
+        if (n > VERIFY_PUMP_CHUNK)
+        {
+          n = VERIFY_PUMP_CHUNK;
+        }
+        sha256_update(&ctx, (const void *)(image_data + ofs), n);
+        ofs += n;
+        verify_pump();
+      }
+      sha256_final(&ctx, image_hash);
+      verify_pump();
+    }
 
     /* verify ECDSA P-256 signature
      * public_key : 65-byte uncompressed SEC1 point (04 || x || y)

@@ -241,7 +241,8 @@ static void modmul(w256 r, const w256 a, const w256 b,
     }
 
     memcpy(r, acc, sizeof(w256));
-    while (bn_gte(r, mod)) {
+    /* Bound the subtract loop: a broken reduction must not hang 0x37. */
+    for (i = 0; i < 8 && bn_gte(r, mod); i++) {
         bn_sub(r, r, mod);
     }
 }

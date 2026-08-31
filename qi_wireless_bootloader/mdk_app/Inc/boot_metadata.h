@@ -155,6 +155,15 @@ uint32_t boot_metadata_slot_size(uint8_t slot);
  */
 uint32_t boot_crc32(const void *data, uint32_t length);
 
+/**
+ * @brief  continue an IEEE 802.3 CRC32 (running value, not final-xor'd)
+ * @param  crc: previous running CRC (start with 0xFFFFFFFF)
+ * @param  data: pointer to next bytes
+ * @param  length: number of bytes
+ * @retval updated running CRC (caller does `^ 0xFFFFFFFF` at the end)
+ */
+uint32_t boot_crc32_continue(uint32_t crc, const void *data, uint32_t length);
+
 #ifdef __cplusplus
 }
 #endif

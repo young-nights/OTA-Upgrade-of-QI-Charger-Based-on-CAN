@@ -241,7 +241,8 @@ static void modmul(w256 r, const w256 a, const w256 b,
     }
 
     memcpy(r, acc, sizeof(w256));
-    while (bn_gte(r, mod)) {
+    /* Bound the subtract loop: a broken reduction must not hang 0x37. */
+    for (i = 0; i < 8 && bn_gte(r, mod); i++) {
         bn_sub(r, r, mod);
     }
 }
@@ -263,8 +264,10 @@ static void modinv(w256 r, const w256 a,
                 modmul(res, res, base, R, mod);
             }
             modmul(base, base, base, R, mod);
+            if ((j & 7) == 7) {
+                progress();
+            }
         }
-        progress();
     }
     memcpy(r, res, sizeof(w256));
 }
@@ -434,8 +437,10 @@ static void point_mul(jpoint_t *r, const jpoint_t *p, const w256 k)
                     acc = tmp;
                 }
             }
+            if ((j & 7) == 0) {
+                progress();
+            }
         }
-        progress();
     }
     *r = acc;
 }
@@ -455,6 +460,8 @@ int uECC_verify(const uint8_t *public_key,
     w256 v;
 
     if (public_key[0] != 0x04) return 0;
+
+    progress();
 
     bytes_to_w256(r_val, signature);
     bytes_to_w256(s_val, signature + 32);

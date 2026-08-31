@@ -58,6 +58,12 @@ extern volatile uint8_t g_verify_fail_step;
 /** @brief  Get pointer to the ECDSA public key (symbol-based, no hard-coded addr) */
 const uint8_t *boot_verify_get_public_key(void);
 
+/**
+ * @brief  Optional pump during CRC/SHA slices (Boot 0x37 keeps CAN/SIT1145 alive).
+ *         Pass NULL to clear.
+ */
+void boot_verify_set_progress_cb(void (*cb)(void));
+
 /* exported types ------------------------------------------------------------*/
 
 /**

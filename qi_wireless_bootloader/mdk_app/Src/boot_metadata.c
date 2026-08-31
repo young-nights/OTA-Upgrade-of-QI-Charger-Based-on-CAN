@@ -189,10 +189,9 @@ static void meta_fill_defaults(ota_metadata_t *meta)
  * @param  length: number of bytes
  * @retval CRC32 value
  */
-uint32_t boot_crc32(const void *data, uint32_t length)
+uint32_t boot_crc32_continue(uint32_t crc, const void *data, uint32_t length)
 {
   const uint8_t *p = (const uint8_t *)data;
-  uint32_t crc = 0xFFFFFFFFU;
   uint32_t i;
   uint32_t j;
   uint32_t bit;
@@ -211,7 +210,12 @@ uint32_t boot_crc32(const void *data, uint32_t length)
     }
   }
 
-  return crc ^ 0xFFFFFFFFU;
+  return crc;
+}
+
+uint32_t boot_crc32(const void *data, uint32_t length)
+{
+  return boot_crc32_continue(0xFFFFFFFFU, data, length) ^ 0xFFFFFFFFU;
 }
 
 /**
