@@ -28,6 +28,7 @@
 #include "can_protocol.h"
 #include "can_driver.h"
 #include "timer_drv.h"
+#include "sit1145.h"
 #include <string.h>
 
 /* ========================================================================== */
@@ -157,6 +158,10 @@ void lifecycle_poll(void)
   {
     g_last_broadcast_tick = now;
     lifecycle_send(g_lifecycle_state);
+
+    /* SIT1145 keepalive: prevent transceiver from entering Standby.
+     * Bootloader does the same in safe_mode_long_op_pump() every 2s. */
+    (void)sit1145_normal_mode_set();
   }
 }
 
