@@ -464,7 +464,9 @@ def transfer_exit(bus_id):
     positive response — the script never sees the NRC 0x78.
     Fix: re-init UDS with 15s enhanced timeout so it returns fast.
     """
-    # Re-init UDS with short enhanced_timeout so NRC 0x78 returns quickly
+    # Re-init UDS with long enhanced_timeout so ZCANPRO waits through
+    # the entire ECDSA verification (2-10s). NRC 0x78 resets ZCANPRO's
+    # internal timer each time, so120s is more than enough.
     zcanpro.uds_init({
         "response_timeout_ms": 5000,
         "use_canfd": 0,
@@ -474,9 +476,9 @@ def transfer_exit(bus_id):
         "frame_type": 1,
         "trans_stmin_valid": 1,
         "trans_stmin": 1,
-        "enhanced_timeout_ms": 15000,
+        "enhanced_timeout_ms": 120000,
     })
-    _log("UDS 重新初始化 (enhanced_timeout=15s) 用于 0x37")
+    _log("UDS 重新初始化 (enhanced_timeout=120s) 用于 0x37")
 
     req = {
         "src_addr": UDS_REQ_ID,
