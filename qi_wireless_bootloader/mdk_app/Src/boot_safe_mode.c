@@ -508,7 +508,6 @@ static void safe_mode_end_long_op(void)
  * @retval none
  */
 static void safe_mode_xfer_exit_abort(uint8_t nrc);
-static void xfer_verify_pump(void);
 static void uds_process_message(uint8_t *data, uint16_t len)
 {
   uint8_t service_id;
@@ -1208,10 +1207,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
     case UDS_REQUEST_TRANSFER_EXIT:
     {
-      /* Verify synchronously, then send 77 directly.
-       * No NRC 0x78 — ZCANPRO blocks on it and never returns to Python.
-       * Use xfer_verify_pump for SIT1145 keepalive only (no CAN RX).
-       * CAN RX frames are buffered in FIFO and processed after we return. */
+      /* Do not CRC/SHA/ECDSA here. This runs inside can_driver_poll -> ISO-TP.
+       * Blocking kills SIT1145 keepalive; 77 is then sent with the transceiver
+       * already out of Normal and the host only sees SID=0x37 timeout. */
       if (g_current_session != SESSION_PROGRAMMING)
       {
         safe_mode_send_nrc(service_id, UDS_NRC_CONDITIONS_NOT_CORRECT);
@@ -1220,7 +1218,6 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
       if ((g_xfer_exit_pending != 0U) || (g_xfer_exit_busy != 0U))
       {
-        /* Already processing — should not happen, but send NRC 0x78 just in case */
         safe_mode_send_pending(service_id);
         break;
       }
@@ -1231,7 +1228,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
             (g_meta.trial_slot == g_dl_slot))
         {
           resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-          isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1);
+          safe_mode_send_response(resp, 1);
         }
         else
         {
@@ -1246,93 +1243,14 @@ static void uds_process_message(uint8_t *data, uint16_t len)
         break;
       }
 
-      /* --- Synchronous verify + write metadata + send 77 --- */
       g_dl_active = 0;
-      g_xfer_exit_busy = 1U;
-
-      /* Register lightweight pump: SIT1145 keepalive only, no CAN RX,
-       * no NRC 0x78.  We are inside can_driver_poll → ISO-TP callback;
-       * re-entering can_driver_poll here is unsafe. */
-      uECC_set_progress_cb(xfer_verify_pump);
-      boot_verify_set_progress_cb(xfer_verify_pump);
-
-      flash_unlock();
-      if (program_image_flush() != 0U)
-      {
-        flash_lock();
-        safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-      flash_lock();
-
-      if (g_dl_bytes_written < IMAGE_HEADER_SIZE)
-      {
-        safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      if ((g_dl_expected_size != 0U) && (g_dl_bytes_written != g_dl_expected_size))
-      {
-        safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      g_dl_erased = 0;
-
-      if (boot_verify_image(g_dl_slot_base, g_dl_slot_size) != 0)
-      {
-        safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      {
-        const image_header_t *hdr = boot_verify_get_header(g_dl_slot_base);
-        uint32_t computed_crc = hdr->crc32;
-
-        if (g_dl_slot == SLOT_A)
-        {
-          g_meta.slot_a_valid = 1;
-          g_meta.slot_a_crc32 = computed_crc;
-        }
-        else
-        {
-          g_meta.slot_b_valid = 1;
-          g_meta.slot_b_crc32 = computed_crc;
-        }
-        g_meta.ota_state         = OTA_STATE_IDLE;
-        g_meta.pending_slot      = g_dl_slot;
-        g_meta.trial_state       = TRIAL_STATE_PENDING;
-        g_meta.trial_slot        = g_dl_slot;
-        g_meta.trial_retry_count = 0;
-        if (g_meta.trial_max_retries == 0U)
-        {
-          g_meta.trial_max_retries = TRIAL_MAX_RETRIES;
-        }
-      }
-
-      if (boot_metadata_save(&g_meta) != 0)
-      {
-        safe_mode_xfer_exit_abort(UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
-        break;
-      }
-
-      uECC_set_progress_cb((void (*)(void))0);
-      boot_verify_set_progress_cb((void (*)(void))0);
-      g_xfer_exit_busy = 0U;
-      g_xfer_exit_pending = 0U;
+      g_long_op_sid = UDS_REQUEST_TRANSFER_EXIT;
+      g_long_op_last_78_ms = timer_get_tick();
+      safe_mode_send_pending(service_id);
+      (void)can_driver_wait_tx_idle(50U);
       (void)sit1145_normal_mode_set();
-      (void)can_driver_wait_tx_idle(50U);
-      resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
-      (void)can_driver_wait_tx_idle(50U); /* 等 E6 发完，腾出 TX buffer */
-      if (isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1) != 0)
-      {
-        /* 0x77 发送失败，重试一次 */
-        (void)can_driver_wait_tx_idle(50U);
-        (void)sit1145_normal_mode_set();
-        isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1);
-      }
-      (void)can_driver_wait_tx_idle(50U);
-      g_s3_last_ms = timer_get_tick();
+      g_xfer_exit_busy = 1U;
+      g_xfer_exit_pending = 1U;
       break;
     }
 
@@ -1365,23 +1283,7 @@ static void safe_mode_xfer_exit_abort(uint8_t nrc)
   safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, nrc);
 }
 
-/**
- * @brief  Lightweight progress callback for synchronous 0x37 verification.
- *         Keeps SIT1145 transceiver alive ONLY. Does NOT call
- *         can_driver_poll (unsafe: we are inside its call chain) and
- *         does NOT send NRC 0x78 (ZCANPRO blocks on it).
- */
-static void xfer_verify_pump(void)
-{
-  uint32_t now = timer_get_tick();
-  if ((now - g_sit1145_keepalive_last_ms) >= SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS)
-  {
-    g_sit1145_keepalive_last_ms = now;
-    (void)sit1145_normal_mode_set();
-  }
-}
-
-static void safe_mode_finish_transfer_exit(void)
+static void safe_mode_finish_transfer_exitxit(void)
 {
   uint8_t resp[4];
   uint32_t computed_crc;
