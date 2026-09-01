@@ -507,6 +507,9 @@ static void safe_mode_end_long_op(void)
  * @param  len:  payload length in bytes
  * @retval none
  */
+static void safe_mode_xfer_exit_abort(uint8_t nrc);
+static void xfer_step(uint8_t code);
+static void xfer_verify_pump(void);
 static void uds_process_message(uint8_t *data, uint16_t len)
 {
   uint8_t service_id;
