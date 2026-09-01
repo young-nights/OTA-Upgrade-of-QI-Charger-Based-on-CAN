@@ -453,25 +453,39 @@ def uds_req_retry(bus_id, sid, payload, retries=3, wait_pending_s=0):
 
 
 def transfer_exit(bus_id):
-    """0x37: wait through NRC 0x78 (ECDSA). Replay 77 if MCU already finished."""
-    last = None
-    for i in range(3):
+    """0x37: send with suppress_response so ZCANPRO does not wait.
+    Poll DID 0x2112 (OTA state) to confirm verify completed.
+    Bootloader does synchronous verify (2-10s) inside the 0x37 handler."""
+    req = {
+        "src_addr": UDS_REQ_ID,
+        "dst_addr": UDS_RESP_ID,
+        "suppress_response": 1,
+        "sid": SID_RTE,
+        "data": [],
+    }
+    _log("[Tx] 37 (suppress)")
+    try:
+        zcanpro.uds_request(bus_id, req)
+    except Exception as e:
+        _log("0x37 发送: %s" % e)
+
+    # Bootloader does synchronous verify inside the 0x37 handler (2-10s).
+    # Poll OTA state (DID 0x2112) until it returns 0x00 (IDLE) = verify done.
+    _log("等待 ECDSA 验证完成...")
+    t_end = time.time() + 30.0
+    while time.time() < t_end:
         if stopTask:
             raise RuntimeError("用户停止脚本")
         try:
-            return uds_req(bus_id, SID_RTE, [], wait_pending_s=60)
-        except UdsNrcError as e:
-            if (e.nrc in (0x71, 0x24)) and (i > 0):
-                _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % e.nrc)
-                return None
-            raise
+            rx = uds_req(bus_id, SID_RDBI, [0x21, 0x12])
+            if len(rx) >= 4 and rx[3] == 0x00:
+                _log("OTA state=IDLE, 验证完成")
+                return rx
+            _log("OTA state=0x%02X, 继续等待" % rx[3])
         except Exception as e:
-            last = e
-            if not _is_timeout(e):
-                raise
-            _log("0x37 第 %d/3 次无应答: %s" % (i + 1, e))
-            time.sleep(0.5)
-    raise last
+            _log("轮询 0x2112: %s" % e)
+        time.sleep(1.0)
+    raise RuntimeError("0x37 验证超时30s")
 
 
 def uds_try(bus_id, sid, payload):
