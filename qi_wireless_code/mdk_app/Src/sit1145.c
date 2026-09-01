@@ -218,6 +218,13 @@ uint8_t sit1145_init(void)
   /* ---- Step 1: Enable peripheral clocks ---- */
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
   crm_periph_clock_enable(CRM_GPIOB_PERIPH_CLOCK, TRUE);
+
+  /* SPI1 soft reset: toggle clock to clear any residual state left by
+   * bootloader (boot_jump_to_app disables CAN but not SPI).  Without
+   * this the first spi_xfer may read stale RXNE/TXE flags and the
+   * identification check (Step 6) can fail. */
+  crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, FALSE);
+  sit1145_delay_ms(1U);
   crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, TRUE);
 
   /* ---- Step 2: Configure SPI1 data pins (PA5=SCK, PA6=MISO, PA7=MOSI) ---- */

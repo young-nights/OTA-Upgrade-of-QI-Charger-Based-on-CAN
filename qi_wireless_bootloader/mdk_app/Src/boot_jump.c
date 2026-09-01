@@ -74,8 +74,13 @@ void boot_jump_to_app(uint32_t app_addr)
 
   __disable_irq();
 
+  /* disable CAN1 */
   can_reset(CAN1);
   crm_periph_clock_enable(CRM_CAN1_PERIPH_CLOCK, FALSE);
+
+  /* disable SPI1 (SIT1145 transceiver) so APP gets a clean slate */
+  spi_enable(SPI1, FALSE);
+  crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, FALSE);
 
   SysTick->CTRL = 0U;
   SysTick->LOAD = 0U;
