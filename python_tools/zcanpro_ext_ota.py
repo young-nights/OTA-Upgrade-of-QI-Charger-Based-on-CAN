@@ -453,85 +453,25 @@ def uds_req_retry(bus_id, sid, payload, retries=3, wait_pending_s=0):
 
 
 def transfer_exit(bus_id):
-    """0x37: re-init UDS with short enhanced_timeout so ZCANPRO returns
-    NRC 0x78 quickly, then loop ourselves until the real 77 arrives.
-
-    Bootloader does heavy ECDSA P-256 verify (~2-10s) during 0x37.
-    It sends NRC 0x78 (ResponsePending) repeatedly via pump.
-
-    Problem: ZCANPRO uds_request() handles NRC 0x78 internally via
-    enhanced_timeout_ms and blocks for120s waiting for the final
-    positive response — the script never sees the NRC 0x78.
-    Fix: re-init UDS with 15s enhanced timeout so it returns fast.
-    """
-    # Re-init UDS with long enhanced_timeout so ZCANPRO waits through
-    # the entire ECDSA verification (2-10s). NRC 0x78 resets ZCANPRO's
-    # internal timer each time, so120s is more than enough.
-    zcanpro.uds_init({
-        "response_timeout_ms": 5000,
-        "use_canfd": 0,
-        "canfd_brs": 0,
-        "trans_ver": 0,
-        "fill_byte": 0xCC,
-        "frame_type": 1,
-        "trans_stmin_valid": 1,
-        "trans_stmin": 1,
-        "enhanced_timeout_ms": 120000,
-    })
-    _log("UDS 重新初始化 (enhanced_timeout=120s) 用于 0x37")
-
-    req = {
-        "src_addr": UDS_REQ_ID,
-        "dst_addr": UDS_RESP_ID,
-        "suppress_response": 0,
-        "sid": SID_RTE,
-        "data": [],
-    }
-    _log("[Tx] 37")
+    """0x37: wait through NRC 0x78 (ECDSA). Replay 77 if MCU already finished."""
     last = None
-    t_end = time.time() + 120.0
-    while time.time() < t_end:
+    for i in range(3):
         if stopTask:
             raise RuntimeError("用户停止脚本")
         try:
-            resp = zcanpro.uds_request(bus_id, req)
-            data = list((resp or {}).get("data") or [])
-            if data:
-                _log("[Rx] " + _hex(data[:24]))
-            if len(data) >= 1 and data[0] == (SID_RTE + SID_PR):
-                # Restore normal UDS config
-                uds_init()
-                return data
-            if len(data) >= 3 and data[0] == SID_NRC:
-                if data[1] == SID_RTE and data[2] == NRC_RCRRP:
-                    _log("0x37 NRC 0x78，MCU 验证中，继续等待")
-                    time.sleep(0.5)
-                    continue
-                if data[1] == SID_RTE and data[2] in (0x71, 0x24):
-                    _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % data[2])
-                    uds_init()
-                    return None
-                uds_init()
-                raise UdsNrcError(data[1], data[2])
-            if not resp or not resp.get("result"):
-                _log("0x37 无应答，重试")
-                time.sleep(0.5)
-                continue
-            uds_init()
-            raise RuntimeError("0x37 非预期响应: " + _hex(data))
-        except UdsNrcError:
-            uds_init()
+            return uds_req(bus_id, SID_RTE, [], wait_pending_s=60)
+        except UdsNrcError as e:
+            if (e.nrc in (0x71, 0x24)) and (i > 0):
+                _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % e.nrc)
+                return None
             raise
         except Exception as e:
             last = e
-            if _is_timeout(e):
-                _log("0x37 超时，重试: %s" % e)
-                time.sleep(0.5)
-                continue
-            uds_init()
-            raise
-    uds_init()
-    raise last or RuntimeError("0x37 120s 无正响应")
+            if not _is_timeout(e):
+                raise
+            _log("0x37 第 %d/3 次无应答: %s" % (i + 1, e))
+            time.sleep(0.5)
+    raise last
 
 
 def uds_try(bus_id, sid, payload):
