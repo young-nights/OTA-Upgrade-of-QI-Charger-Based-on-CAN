@@ -453,23 +453,50 @@ def uds_req_retry(bus_id, sid, payload, retries=3, wait_pending_s=0):
 
 
 def transfer_exit(bus_id):
-    """0x37: wait through NRC 0x78 (ECDSA). Replay 77 if MCU already finished."""
+    """0x37: let ZCANPRO handle NRC 0x78 natively.
+
+    Bootloader does heavy ECDSA P-256 verify (~2-10s) during 0x37.
+    It sends NRC 0x78 (ResponsePending) repeatedly. ZCANPRO's uds_request()
+    handles NRC 0x78 internally via enhanced_timeout_ms (120s).
+
+    DO NOT wrap in _uds_request_hard thread — the70s hard timeout abandons
+    the thread inside the C extension, creating a zombie that interferes
+    with subsequent uds_request() calls.
+    """
+    req = {
+        "src_addr": UDS_REQ_ID,
+        "dst_addr": UDS_RESP_ID,
+        "suppress_response": 0,
+        "sid": SID_RTE,
+        "data": [],
+    }
+    _log("[Tx] 37")
     last = None
     for i in range(3):
         if stopTask:
             raise RuntimeError("用户停止脚本")
         try:
-            return uds_req(bus_id, SID_RTE, [], wait_pending_s=60)
-        except UdsNrcError as e:
-            if (e.nrc in (0x71, 0x24)) and (i > 0):
-                _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % e.nrc)
-                return None
+            resp = zcanpro.uds_request(bus_id, req)
+            data = list((resp or {}).get("data") or [])
+            if data:
+                _log("[Rx] " + _hex(data[:24]))
+            if len(data) >= 1 and data[0] == (SID_RTE + SID_PR):
+                return data
+            if len(data) >= 3 and data[0] == SID_NRC:
+                if data[1] == SID_RTE and data[2] in (0x71, 0x24):
+                    _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % data[2])
+                    return None
+                raise UdsNrcError(data[1], data[2])
+            if not resp or not resp.get("result"):
+                raise RuntimeError("0x37 无应答: %s" % ((resp or {}).get("result_msg", "")))
+            raise RuntimeError("0x37 非预期响应: " + _hex(data))
+        except UdsNrcError:
             raise
         except Exception as e:
             last = e
             if not _is_timeout(e):
                 raise
-            _log("0x37 第 %d/3 次无应答: %s" % (i + 1, e))
+            _log("0x37 第 %d/3 次超时: %s" % (i + 1, e))
             time.sleep(0.5)
     raise last
 
