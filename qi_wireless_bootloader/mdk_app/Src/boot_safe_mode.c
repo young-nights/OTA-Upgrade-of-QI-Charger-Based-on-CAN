@@ -1283,7 +1283,7 @@ static void safe_mode_xfer_exit_abort(uint8_t nrc)
   safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, nrc);
 }
 
-static void safe_mode_finish_transfer_exitxit(void)
+static void safe_mode_finish_transfer_exit(void)
 {
   uint8_t resp[4];
   uint32_t computed_crc;
