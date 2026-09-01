@@ -1233,7 +1233,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
             (g_meta.trial_slot == g_dl_slot))
         {
           resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-          safe_mode_send_response(resp, 1);
+          isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1);
         }
         else
         {
@@ -1330,9 +1330,16 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       g_xfer_exit_pending = 0U;
       (void)sit1145_normal_mode_set();
       (void)can_driver_wait_tx_idle(50U);
-      xfer_step(0xE6U); /* 发 0x77 */
       resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
-      safe_mode_send_response(resp, 1);
+      xfer_step(0xE6U); /* 发 0x77 指示 */
+      (void)can_driver_wait_tx_idle(50U); /* 等 E6 发完，腾出 TX buffer */
+      if (isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1) != 0)
+      {
+        /* 0x77 发送失败，重试一次 */
+        (void)can_driver_wait_tx_idle(50U);
+        (void)sit1145_normal_mode_set();
+        isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1);
+      }
       (void)can_driver_wait_tx_idle(50U);
       xfer_step(0xE7U); /* 完成 */
       g_s3_last_ms = timer_get_tick();
@@ -1492,7 +1499,7 @@ static void safe_mode_finish_transfer_exit(void)
   (void)can_driver_wait_tx_idle(50U);
   xfer_step(0xE6U); /* 发 0x77 */
   resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
-  safe_mode_send_response(resp, 1);
+  isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1);
   (void)can_driver_wait_tx_idle(50U);
   xfer_step(0xE7U); /* 完成 */
   g_s3_last_ms = timer_get_tick();
