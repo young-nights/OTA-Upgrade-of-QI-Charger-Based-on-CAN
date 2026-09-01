@@ -42,25 +42,20 @@ def sha256_hash(data):
     return hashlib.sha256(data).digest()
 
 
-def sign_with_openssl(seed_bytes, private_key_path):
-    """Sign using OpenSSL CLI (no pip dependency).
-
-    Uses 'dgst -sha256 -sign' which hashes the raw input with SHA-256
-    then signs with the ECDSA private key.  This matches MCU behavior:
-      MCU: uECC_verify(pubkey, SHA256(firmware), sig)
-      Here: SHA256(seed_bytes) signed by private key
-    """
+def sign_with_openssl(seed_hash, private_key_path):
+    """Sign using OpenSSL CLI (no pip dependency)."""
     tmpdir = tempfile.mkdtemp(prefix="sign_")
     try:
-        seed_path = os.path.join(tmpdir, "seed.bin")
-        with open(seed_path, "wb") as f:
-            f.write(seed_bytes)
+        hash_path = os.path.join(tmpdir, "hash.bin")
+        with open(hash_path, "wb") as f:
+            f.write(seed_hash)
 
         result = subprocess.Popen(
             [
-                "openssl", "dgst", "-sha256",
-                "-sign", private_key_path,
-                seed_path,
+                "openssl", "pkeyutl", "-sign",
+                "-inkey", private_key_path,
+                "-in", hash_path,
+                "-pkeyopt", "digest:sha256",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -113,10 +108,8 @@ def der_to_p1363(der_sig):
     idx += 1
     s_bytes = der_sig[idx:idx + s_len]
 
-    # Take last 32 bytes: strips leading 0x00 padding from DER integer encoding
-    # (rjust would NOT truncate a 33-byte value, causing >64 byte signatures)
-    r = r_bytes[-32:]
-    s = s_bytes[-32:]
+    r = r_bytes.rjust(32, b"\x00")
+    s = s_bytes.rjust(32, b"\x00")
     return r + s
 
 
@@ -298,10 +291,10 @@ def main(argv=None):
     print("")
 
     try:
-        sig = sign_with_openssl(seed_bytes, args.key)
+        sig = sign_with_openssl(seed_hash, args.key)
     except Exception:
         try:
-            sig = sign_with_ecdsa_lib(seed_bytes, args.key)
+            sig = sign_with_ecdsa_lib(seed_hash, args.key)
         except ImportError:
             sys.stderr.write(
                 "ERROR: Neither OpenSSL CLI nor ecdsa library available.\n"
