@@ -506,7 +506,7 @@ def send_security_key(bus_id, sig):
         off += len(piece)
         seq += 1
     _log("27 03 已送 64 字节 / %d 帧" % (seq - 1))
-    uds_req_retry(bus_id, SID_SA, [0x02], wait_pending_s=60, retries=3)
+    uds_req(bus_id, SID_SA, [0x02], wait_pending_s=60)
 
 
 def uds_ecu_reset(bus_id):
