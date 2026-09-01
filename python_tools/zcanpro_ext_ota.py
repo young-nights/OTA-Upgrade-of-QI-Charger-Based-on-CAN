@@ -14,7 +14,6 @@ import struct
 import hashlib
 import binascii
 import zlib
-import threading
 
 try:
     import zcanpro
@@ -339,7 +338,7 @@ def pack_image_if_needed(fw_path, priv, version="1.0.0"):
 
 def uds_init():
     zcanpro.uds_init({
-        "response_timeout_ms": 30000,
+        "response_timeout_ms": 3000,
         "use_canfd": 0,
         "canfd_brs": 0,
         "trans_ver": 0,
@@ -347,48 +346,12 @@ def uds_init():
         "frame_type": 1,
         "trans_stmin_valid": 1,
         "trans_stmin": 1,
-        "enhanced_timeout_ms": 30000,
+        "enhanced_timeout_ms": 5000,
     })
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
 
-def _uds_request_hard(bus_id, req, hard_timeout_s):
-    """Call zcanpro.uds_request in a thread with a hard timeout.
-
-    Some ZCANPRO builds block indefinitely inside uds_request() when the
-    MCU sends NRC 0x78 (ResponsePending).  The Python-side wait_pending_s
-    loop never sees the return value.  This wrapper kills the blocking call
-    after hard_timeout_s seconds so the caller can retry.
-    """
-    result = [None]
-    error = [None]
-
-    def _call():
-        try:
-            result[0] = zcanpro.uds_request(bus_id, req)
-        except Exception as e:
-            error[0] = e
-
-    t = threading.Thread(target=_call, daemon=True)
-    t.start()
-    t.join(timeout=hard_timeout_s)
-    if t.is_alive():
-        # Thread still blocked — cannot interrupt zcanpro C extension,
-        # but we abandon it and raise so the outer loop can retry.
-        raise RuntimeError("ZCANPRO uds_request 阻塞超时 (%ds)" % hard_timeout_s)
-    if error[0] is not None:
-        raise error[0]
-    return result[0]
-
-
-def uds_req(bus_id, sid, payload, wait_pending_s=0):
-    """Send one UDS request.
-
-    Some ZCANPRO builds return 7F xx 78 from uds_request instead of waiting
-    P2* for the final response. For 0x37 pass wait_pending_s>0 to refresh
-    TransferExit until 77/0x72. Other SIDs keep wait_pending_s=0 so 0x31
-    erase is not re-issued while Flash is busy.
-    """
+def uds_req(bus_id, sid, payload):
     if stopTask:
         raise RuntimeError("用户停止脚本")
     req = {
@@ -398,94 +361,20 @@ def uds_req(bus_id, sid, payload, wait_pending_s=0):
         "sid": sid,
         "data": list(payload),
     }
-    # Hard timeout = wait_pending_s + 10s buffer for ZCANPRO internal handling.
-    # Minimum 15s so normal requests (no pending) get enough headroom.
-    hard_timeout = max(15, wait_pending_s + 10)
-    t_end = time.time() + float(wait_pending_s)
-    logged_tx = False
-    while True:
-        if stopTask:
-            raise RuntimeError("用户停止脚本")
-        if not logged_tx:
-            _log("[Tx] %02X %s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else "")))
-            logged_tx = True
-        resp = _uds_request_hard(bus_id, req, hard_timeout)
-        data = list((resp or {}).get("data") or [])
-        if data:
-            _log("[Rx] " + _hex(data[:24]))
-        if len(data) >= 3 and data[0] == SID_NRC:
-            if data[2] == NRC_RCRRP:
-                if wait_pending_s <= 0 or time.time() >= t_end:
-                    raise RuntimeError("无应答 SID=0x%02X NRC 0x78 pending" % sid)
-                _log("SID=0x%02X NRC 0x78，MCU 忙，继续等待" % sid)
-                time.sleep(1.0)
-                continue
-            raise UdsNrcError(data[1], data[2])
-        if not resp or not resp.get("result"):
-            raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
-        if len(data) < 1 or data[0] != (sid + SID_PR):
-            raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
-        return data
-
-
-def _is_timeout(exc):
-    msg = str(exc)
-    low = msg.lower()
-    return ("无应答" in msg) or ("timeout" in low) or ("no response" in low)
-
-
-def uds_req_retry(bus_id, sid, payload, retries=3, wait_pending_s=0):
-    """Retry on timeout only. NRC is not retried (except 0x78 via _is_timeout)."""
-    last = None
-    n = retries if retries > 0 else 1
-    for i in range(n):
-        try:
-            return uds_req(bus_id, sid, payload, wait_pending_s=wait_pending_s)
-        except UdsNrcError:
-            raise
-        except Exception as e:
-            last = e
-            if (not _is_timeout(e)) or (i + 1 >= n):
-                raise
-            _log("SID=0x%02X 超时，重发 %d/%d: %s" % (sid, i + 1, n - 1, e))
-            time.sleep(0.1)
-    raise last
-
-
-def transfer_exit(bus_id):
-    """0x37: send with suppress_response so ZCANPRO does not wait.
-    Poll DID 0x2112 (OTA state) to confirm verify completed.
-    Bootloader does synchronous verify (2-10s) inside the 0x37 handler."""
-    req = {
-        "src_addr": UDS_REQ_ID,
-        "dst_addr": UDS_RESP_ID,
-        "suppress_response": 1,
-        "sid": SID_RTE,
-        "data": [],
-    }
-    _log("[Tx] 37 (suppress)")
-    try:
-        zcanpro.uds_request(bus_id, req)
-    except Exception as e:
-        _log("0x37 发送: %s" % e)
-
-    # Bootloader does synchronous verify inside the 0x37 handler (2-10s).
-    # Poll OTA state (DID 0x2112) until it returns 0x00 (IDLE) = verify done.
-    _log("等待 ECDSA 验证完成...")
-    t_end = time.time() + 30.0
-    while time.time() < t_end:
-        if stopTask:
-            raise RuntimeError("用户停止脚本")
-        try:
-            rx = uds_req(bus_id, SID_RDBI, [0x21, 0x12])
-            if len(rx) >= 4 and rx[3] == 0x00:
-                _log("OTA state=IDLE, 验证完成")
-                return rx
-            _log("OTA state=0x%02X, 继续等待" % rx[3])
-        except Exception as e:
-            _log("轮询 0x2112: %s" % e)
-        time.sleep(1.0)
-    raise RuntimeError("0x37 验证超时30s")
+    _log("[Tx] %02X %s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else "")))
+    resp = zcanpro.uds_request(bus_id, req)
+    data = list((resp or {}).get("data") or [])
+    if data:
+        _log("[Rx] " + _hex(data[:24]))
+    if len(data) >= 3 and data[0] == SID_NRC:
+        if data[2] == NRC_RCRRP:
+            raise RuntimeError("SID=0x%02X 只收到 NRC 0x78，ZCANPRO 未等到最终响应" % sid)
+        raise UdsNrcError(data[1], data[2])
+    if not resp or not resp.get("result"):
+        raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
+    if len(data) < 1 or data[0] != (sid + SID_PR):
+        raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
+    return data
 
 
 def uds_try(bus_id, sid, payload):
@@ -504,11 +393,7 @@ def read_did_u8(bus_id, did):
 
 
 def send_security_key(bus_id, sig):
-    """Send 64-byte P1363 signature as 16 single-frame 0x27 0x03 chunks, then 0x27 0x02.
-
-    A one-shot ISO-TP `27 02` + 64B is easy for ZCANPRO to pad with fill_byte (0xCC).
-    MCU still sees len>=66 and returns NRC 0x35 (invalid key) instead of 0x13.
-    """
+    """Send 64-byte P1363 signature as 16 single-frame 0x27 0x03 chunks, then 0x27 0x02."""
     sig = _to_bytes(sig)
     if len(sig) != 64:
         raise RuntimeError("ECDSA 签名须 64 字节, 实际 %d" % len(sig))
@@ -516,56 +401,15 @@ def send_security_key(bus_id, sig):
     off = 0
     while off < 64:
         piece = sig[off:off + SA_SIG_CHUNK]
-        uds_req_retry(bus_id, SID_SA, [0x03, seq] + _to_list(piece), retries=3)
+        uds_req(bus_id, SID_SA, [0x03, seq] + _to_list(piece))
         off += len(piece)
         seq += 1
     _log("27 03 已送 64 字节 / %d 帧" % (seq - 1))
-    uds_req(bus_id, SID_SA, [0x02], wait_pending_s=60)
-
-
-def uds_ecu_reset(bus_id):
-    """HardReset. MCU may drop 51 01 if it resets immediately; do not require a response."""
-    req = {
-        "src_addr": UDS_REQ_ID,
-        "dst_addr": UDS_RESP_ID,
-        "suppress_response": 1,
-        "sid": SID_ER,
-        "data": [0x81],
-    }
-    _log("[Tx] 11 81 (suppress)")
-    try:
-        zcanpro.uds_request(bus_id, req)
-    except Exception as e:
-        _log("可忽略: " + str(e))
+    uds_req(bus_id, SID_SA, [0x02])
 
 
 def confirm_app_after_reset(bus_id):
-    """ECU reset tears down ISO-TP. Re-init UDS and poll until APP answers."""
-    try:
-        zcanpro.uds_deinit()
-    except Exception:
-        pass
-    time.sleep(0.5)
-    uds_init()
-
-    last_err = None
-    t0 = time.time()
-    rx = None
-    while time.time() - t0 < 10.0:
-        if stopTask:
-            raise RuntimeError("用户停止脚本")
-        try:
-            rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
-            break
-        except Exception as e:
-            last_err = e
-            _log("等待复位完成: " + str(e))
-            time.sleep(0.4)
-    if rx is None:
-        raise RuntimeError(
-            "复位后 10s 无 0x22 F195（Boot/APP 都应能应答）。"
-            "看原始 CAN 有无帧；无帧则 MCU 未起来。最后错误: %s" % last_err
-        )
+    rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
     _log("版本: " + _hex(rx[3:]))
     try:
         uds_req(bus_id, SID_RD, [0x00])
@@ -594,17 +438,12 @@ def run_ota(bus_id):
             _log("---- APP 进 Boot ----")
             uds_try(bus_id, SID_DSC, [0x02])
             time.sleep(0.05)
-            uds_ecu_reset(bus_id)
+            uds_try(bus_id, SID_ER, [0x01])
             t0 = time.time()
-            while time.time() - t0 < 2.0:
+            while time.time() - t0 < 2.5:
                 if stopTask:
                     raise RuntimeError("用户停止脚本")
                 time.sleep(0.1)
-            try:
-                zcanpro.uds_deinit()
-            except Exception:
-                pass
-            uds_init()
         _log("---- Programming ----")
         uds_req(bus_id, SID_DSC, [0x02])
         _log("---- SecurityAccess ----")
@@ -649,17 +488,17 @@ def run_ota(bus_id):
             if stopTask:
                 raise RuntimeError("用户停止")
             chunk = image[off:off + TRANSFER_BLOCK_DATA]
-            uds_req_retry(bus_id, SID_TD, [seq] + _to_list(chunk), retries=3)
+            uds_req(bus_id, SID_TD, [seq] + _to_list(chunk))
             off += len(chunk)
             seq = 1 if seq == 0xFF else seq + 1
             if off == size or (off % (TRANSFER_BLOCK_DATA * 16) == 0):
                 _log("  %d/%d" % (off, size))
         _log("---- TransferExit ----")
-        transfer_exit(bus_id)
+        uds_req(bus_id, SID_RTE, [])
         _log("---- Reset ----")
-        uds_ecu_reset(bus_id)
+        uds_try(bus_id, SID_ER, [0x01])
         t0 = time.time()
-        while time.time() - t0 < 1.5:
+        while time.time() - t0 < 3.0:
             if stopTask:
                 raise RuntimeError("用户停止脚本")
             time.sleep(0.1)
