@@ -63,7 +63,7 @@ static void lifecycle_send(uint8_t state)
 
   memset(data, 0, sizeof(data));
   data[0] = state;
-  /* byte 1-7: reserved, all zeros */
+  data[1] = 0x41U;  /* 'A' = APP identity marker, distinguish from Boot (0x42) */
 
   can_driver_send(CAN_ID_LIFECYCLE_BROADCAST, data, 8);
 }

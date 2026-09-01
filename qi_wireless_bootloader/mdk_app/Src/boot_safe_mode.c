@@ -1384,7 +1384,7 @@ static void safe_mode_probe_poll(void)
   g_probe_last_ms = now;
 
   data[0] = SAFE_MODE_PROBE_STATE;
-  data[1] = 0xB0U;
+  data[1] = 0x42U;  /* 'B' = Boot identity marker, distinguish from APP (0x41) */
   data[2] = 0x07U;
   data[3] = 0x00U;
   data[4] = 0x00U;
