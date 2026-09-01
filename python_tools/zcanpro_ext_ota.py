@@ -472,7 +472,8 @@ def transfer_exit(bus_id):
     }
     _log("[Tx] 37")
     last = None
-    for i in range(3):
+    t_end = time.time() + 120.0  # MCU ECDSA verify can take up to ~10s, give 120s
+    while time.time() < t_end:
         if stopTask:
             raise RuntimeError("用户停止脚本")
         try:
@@ -483,22 +484,29 @@ def transfer_exit(bus_id):
             if len(data) >= 1 and data[0] == (SID_RTE + SID_PR):
                 return data
             if len(data) >= 3 and data[0] == SID_NRC:
+                if data[1] == SID_RTE and data[2] == NRC_RCRRP:
+                    _log("0x37 NRC 0x78，MCU 验证中，继续等待")
+                    time.sleep(1.0)
+                    continue
                 if data[1] == SID_RTE and data[2] in (0x71, 0x24):
                     _log("0x37 NRC 0x%02X，视为已结束传输，继续复位" % data[2])
                     return None
                 raise UdsNrcError(data[1], data[2])
             if not resp or not resp.get("result"):
-                raise RuntimeError("0x37 无应答: %s" % ((resp or {}).get("result_msg", "")))
+                _log("0x37 无应答，重试")
+                time.sleep(1.0)
+                continue
             raise RuntimeError("0x37 非预期响应: " + _hex(data))
         except UdsNrcError:
             raise
         except Exception as e:
             last = e
-            if not _is_timeout(e):
-                raise
-            _log("0x37 第 %d/3 次超时: %s" % (i + 1, e))
-            time.sleep(0.5)
-    raise last
+            if _is_timeout(e):
+                _log("0x37 超时，重试: %s" % e)
+                time.sleep(1.0)
+                continue
+            raise
+    raise last or RuntimeError("0x37 120s 无正响应")
 
 
 def uds_try(bus_id, sid, payload):
