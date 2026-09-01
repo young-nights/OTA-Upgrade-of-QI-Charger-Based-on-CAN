@@ -1206,6 +1206,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
     case UDS_REQUEST_TRANSFER_EXIT:
     {
+      xfer_step(0xD0U); /* 0x37 handler 入口 */
       /* Verify synchronously, then send 77 directly.
        * No NRC 0x78 — ZCANPRO blocks on it and never returns to Python.
        * Use xfer_verify_pump for SIT1145 keepalive only (no CAN RX).
