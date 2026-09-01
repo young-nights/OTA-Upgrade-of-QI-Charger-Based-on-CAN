@@ -14,6 +14,7 @@ import struct
 import hashlib
 import binascii
 import zlib
+import threading
 
 try:
     import zcanpro
@@ -351,6 +352,35 @@ def uds_init():
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
 
+def _uds_request_hard(bus_id, req, hard_timeout_s):
+    """Call zcanpro.uds_request in a thread with a hard timeout.
+
+    Some ZCANPRO builds block indefinitely inside uds_request() when the
+    MCU sends NRC 0x78 (ResponsePending).  The Python-side wait_pending_s
+    loop never sees the return value.  This wrapper kills the blocking call
+    after hard_timeout_s seconds so the caller can retry.
+    """
+    result = [None]
+    error = [None]
+
+    def _call():
+        try:
+            result[0] = zcanpro.uds_request(bus_id, req)
+        except Exception as e:
+            error[0] = e
+
+    t = threading.Thread(target=_call, daemon=True)
+    t.start()
+    t.join(timeout=hard_timeout_s)
+    if t.is_alive():
+        # Thread still blocked — cannot interrupt zcanpro C extension,
+        # but we abandon it and raise so the outer loop can retry.
+        raise RuntimeError("ZCANPRO uds_request 阻塞超时 (%ds)" % hard_timeout_s)
+    if error[0] is not None:
+        raise error[0]
+    return result[0]
+
+
 def uds_req(bus_id, sid, payload, wait_pending_s=0):
     """Send one UDS request.
 
@@ -368,6 +398,9 @@ def uds_req(bus_id, sid, payload, wait_pending_s=0):
         "sid": sid,
         "data": list(payload),
     }
+    # Hard timeout = wait_pending_s + 10s buffer for ZCANPRO internal handling.
+    # Minimum 15s so normal requests (no pending) get enough headroom.
+    hard_timeout = max(15, wait_pending_s + 10)
     t_end = time.time() + float(wait_pending_s)
     logged_tx = False
     while True:
@@ -376,7 +409,7 @@ def uds_req(bus_id, sid, payload, wait_pending_s=0):
         if not logged_tx:
             _log("[Tx] %02X %s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else "")))
             logged_tx = True
-        resp = zcanpro.uds_request(bus_id, req)
+        resp = _uds_request_hard(bus_id, req, hard_timeout)
         data = list((resp or {}).get("data") or [])
         if data:
             _log("[Rx] " + _hex(data[:24]))
