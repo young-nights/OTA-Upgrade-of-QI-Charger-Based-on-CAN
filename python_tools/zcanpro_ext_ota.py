@@ -339,7 +339,7 @@ def pack_image_if_needed(fw_path, priv, version="1.0.0"):
 
 def uds_init():
     zcanpro.uds_init({
-        "response_timeout_ms": 5000,
+        "response_timeout_ms": 30000,
         "use_canfd": 0,
         "canfd_brs": 0,
         "trans_ver": 0,
