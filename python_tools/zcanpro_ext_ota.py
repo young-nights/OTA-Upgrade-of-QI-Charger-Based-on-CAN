@@ -401,13 +401,13 @@ def _is_timeout(exc):
     return ("无应答" in msg) or ("timeout" in low) or ("no response" in low)
 
 
-def uds_req_retry(bus_id, sid, payload, retries=3):
+def uds_req_retry(bus_id, sid, payload, retries=3, wait_pending_s=0):
     """Retry on timeout only. NRC is not retried (except 0x78 via _is_timeout)."""
     last = None
     n = retries if retries > 0 else 1
     for i in range(n):
         try:
-            return uds_req(bus_id, sid, payload)
+            return uds_req(bus_id, sid, payload, wait_pending_s=wait_pending_s)
         except UdsNrcError:
             raise
         except Exception as e:
@@ -469,11 +469,11 @@ def send_security_key(bus_id, sig):
     off = 0
     while off < 64:
         piece = sig[off:off + SA_SIG_CHUNK]
-        uds_req(bus_id, SID_SA, [0x03, seq] + _to_list(piece))
+        uds_req_retry(bus_id, SID_SA, [0x03, seq] + _to_list(piece), retries=3)
         off += len(piece)
         seq += 1
     _log("27 03 已送 64 字节 / %d 帧" % (seq - 1))
-    uds_req(bus_id, SID_SA, [0x02], wait_pending_s=30)
+    uds_req_retry(bus_id, SID_SA, [0x02], wait_pending_s=60, retries=3)
 
 
 def uds_ecu_reset(bus_id):
