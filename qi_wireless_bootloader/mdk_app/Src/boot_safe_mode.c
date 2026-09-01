@@ -1356,7 +1356,14 @@ static void isotp_message_received(uint8_t *data, uint16_t len)
 }
 
 static void safe_mode_xfer_exit_abort(uint8_t nrc)
-
+{
+  uECC_set_progress_cb((void (*)(void))0);
+  boot_verify_set_progress_cb((void (*)(void))0);
+  g_xfer_exit_busy = 0U;
+  g_xfer_exit_pending = 0U;
+  (void)sit1145_normal_mode_set();
+  safe_mode_send_nrc(UDS_REQUEST_TRANSFER_EXIT, nrc);
+}
 
 /**
  * @brief  Lightweight progress callback for synchronous 0x37 verification.
@@ -1364,6 +1371,7 @@ static void safe_mode_xfer_exit_abort(uint8_t nrc)
  *         can_driver_poll (unsafe: we are inside its call chain) and
  *         does NOT send NRC 0x78 (ZCANPRO blocks on it).
  */
+static void xfer_verify_pump(void)
 {
   uint32_t now = timer_get_tick();
   if ((now - g_sit1145_keepalive_last_ms) >= SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS)
