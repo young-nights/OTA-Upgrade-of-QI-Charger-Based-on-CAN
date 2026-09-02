@@ -456,12 +456,15 @@ static void safe_mode_send_nrc(uint8_t service_id, uint8_t nrc)
  */
 static void safe_mode_send_pending(uint8_t service_id)
 {
-  uint8_t resp[3];
-  resp[0] = UDS_NEGATIVE_RESPONSE;
-  resp[1] = service_id;
-  resp[2] = UDS_NRC_RESPONSE_PENDING;  /* 0x78 */
-  /* non-blocking send: do not wait for TX idle; main loop must not stall */
-  isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 3);
+  /* Non-blocking single-frame 0x78: use can_driver_send directly.
+   * isotp_tx_send retries for 1s on bus-off, which stalls the main loop. */
+  uint8_t sf[8];
+  sf[0] = 0x03U;  /* ISO-TP SF, DLC=3 */
+  sf[1] = UDS_NEGATIVE_RESPONSE;
+  sf[2] = service_id;
+  sf[3] = UDS_NRC_RESPONSE_PENDING;  /* 0x78 */
+  sf[4] = 0xCCU; sf[5] = 0xCCU; sf[6] = 0xCCU; sf[7] = 0xCCU;
+  (void)can_driver_send(SAFE_MODE_CAN_ID_RESPONSE, sf, 8);
 }
 
 static uint8_t  g_long_op_sid;
@@ -500,15 +503,8 @@ static void safe_mode_long_op_pump(void)
     g_long_op_last_78_ms = now;
     (void)safe_mode_can_busoff_recover();
     (void)sit1145_normal_mode_set();
-    /* non-blocking: just try once; if bus-off, recovery above handles it */
-    {
-      uint8_t nrc_buf[3];
-      nrc_buf[0] = UDS_NEGATIVE_RESPONSE;
-      nrc_buf[1] = g_long_op_sid;
-      nrc_buf[2] = UDS_NRC_RESPONSE_PENDING;
-      isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, nrc_buf, 3);
-    }
-    (void)can_driver_wait_tx_idle(20U);
+    safe_mode_send_pending(g_long_op_sid);
+    (void)can_driver_wait_tx_idle(10U);
   }
 
   /* Nested poll only while 0x37 verify owns the loop. Erase/0x27 already
@@ -1408,14 +1404,8 @@ static void safe_mode_finish_transfer_exit(void)
     (void)safe_mode_can_busoff_recover();
     (void)sit1145_normal_mode_set();
     (void)can_driver_wait_tx_idle(50U);
-    {
-      uint8_t nrc_buf[3];
-      nrc_buf[0] = UDS_NEGATIVE_RESPONSE;
-      nrc_buf[1] = UDS_REQUEST_TRANSFER_EXIT;
-      nrc_buf[2] = UDS_NRC_RESPONSE_PENDING;
-      isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, nrc_buf, 3);
-    }
-    (void)can_driver_wait_tx_idle(20U);
+    safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
+    (void)can_driver_wait_tx_idle(10U);
     (void)sit1145_normal_mode_set();
     resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
     for (n = 0U; n < 5U; n++)
