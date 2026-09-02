@@ -123,6 +123,35 @@ static void safe_mode_finish_transfer_exit(void);
 #define SAFE_MODE_PROBE_PERIOD_MS  500U
 #define SAFE_MODE_PROBE_STATE      0x00U
 
+static uint8_t safe_mode_can_busoff_recover(void)
+{
+  uint32_t start;
+  uint8_t n;
+
+  for (n = 0U; n < 3U; n++)
+  {
+    if (can_busoff_get(CAN1) == RESET)
+    {
+      return 1U;
+    }
+    can_busoff_reset(CAN1);
+    start = timer_get_tick();
+    while ((timer_get_tick() - start) < 5U)
+    {
+      if (can_busoff_get(CAN1) == RESET)
+      {
+        return 1U;
+      }
+    }
+  }
+  /* last resort: re-init CAN controller */
+  can_software_reset(CAN1, TRUE);
+  can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
+  can_software_reset(CAN1, FALSE);
+  (void)sit1145_normal_mode_set();
+  return (can_busoff_get(CAN1) == RESET) ? 1U : 0U;
+}
+
 static void safe_mode_long_op_pump(void);
 static void safe_mode_begin_long_op(uint8_t service_id);
 static void safe_mode_end_long_op(void);
@@ -471,6 +500,8 @@ static void safe_mode_long_op_pump(void)
   if ((now - g_long_op_last_78_ms) >= 2000U)
   {
     g_long_op_last_78_ms = now;
+    (void)safe_mode_can_busoff_recover();
+    (void)sit1145_normal_mode_set();
     safe_mode_send_pending(g_long_op_sid);
     (void)can_driver_wait_tx_idle(50U);
   }
@@ -1246,9 +1277,11 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       g_dl_active = 0;
       g_long_op_sid = UDS_REQUEST_TRANSFER_EXIT;
       g_long_op_last_78_ms = timer_get_tick();
+      /* Flash writes may have left CAN in bus-off; recover before sending 0x78 */
+      (void)safe_mode_can_busoff_recover();
+      (void)sit1145_normal_mode_set();
       safe_mode_send_pending(service_id);
       (void)can_driver_wait_tx_idle(50U);
-      (void)sit1145_normal_mode_set();
       g_xfer_exit_busy = 1U;
       g_xfer_exit_pending = 1U;
       break;
@@ -1367,6 +1400,7 @@ static void safe_mode_finish_transfer_exit(void)
    * P2* with 0x78, then retry 0x77. Host timeout is otherwise intermittent. */
   {
     uint8_t n;
+    (void)safe_mode_can_busoff_recover();
     (void)sit1145_normal_mode_set();
     (void)can_driver_wait_tx_idle(50U);
     safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
