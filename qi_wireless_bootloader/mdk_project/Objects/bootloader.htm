@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\bootloader.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\bootloader.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Tue Sep  1 13:22:51 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Wed Sep  2 14:28:40 2026
 <BR><P>
 <H3>Maximum Stack Usage =       2448 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -322,15 +322,15 @@ Global Symbols
 <P><STRONG><a name="[b8]"></a>memcmp</STRONG> (Thumb, 88 bytes, Stack size 8 bytes, memcmp.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = memcmp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[51]"></a>__aeabi_memcpy</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_memcpy_v6.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
-<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
-<LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<P><STRONG><a name="[52]"></a>__aeabi_memcpy</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_memcpy_v6.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
+<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 
 <P><STRONG><a name="[41]"></a>__rt_memcpy</STRONG> (Thumb, 138 bytes, Stack size 0 bytes, rt_memcpy_v6.o(.text), UNUSED)
@@ -343,9 +343,9 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_memcpy4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_memcpy
-<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
 </UL>
 
 <P><STRONG><a name="[dd]"></a>__aeabi_memcpy8</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
@@ -359,12 +359,12 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_memset
 </UL>
-<BR>[Called By]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<BR>[Called By]<UL><LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 </UL>
 
-<P><STRONG><a name="[53]"></a>__aeabi_memclr</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
+<P><STRONG><a name="[54]"></a>__aeabi_memclr</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
 </UL>
 
 <P><STRONG><a name="[e0]"></a>__rt_memclr</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr.o(.text), UNUSED)
@@ -377,11 +377,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset
 </UL>
 
-<P><STRONG><a name="[8a]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<P><STRONG><a name="[8b]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
@@ -494,556 +494,557 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_at32f422_426.o(RESET)
 </UL>
-<P><STRONG><a name="[56]"></a>boot_crc32_continue</STRONG> (Thumb, 54 bytes, Stack size 16 bytes, boot_metadata.o(.text.boot_crc32_continue))
+<P><STRONG><a name="[57]"></a>boot_crc32_continue</STRONG> (Thumb, 54 bytes, Stack size 16 bytes, boot_metadata.o(.text.boot_crc32_continue))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = boot_crc32_continue
 </UL>
-<BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[4d]"></a>boot_jump_to_app</STRONG> (Thumb, 176 bytes, Stack size 24 bytes, boot_jump.o(.text.boot_jump_to_app))
+<P><STRONG><a name="[4d]"></a>boot_jump_to_app</STRONG> (Thumb, 204 bytes, Stack size 24 bytes, boot_jump.o(.text.boot_jump_to_app))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = boot_jump_to_app &rArr; can_reset
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_reset
+<BR>[Calls]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_enable
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_reset
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_clock_enable
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[b6]"></a>boot_jump_vectors_ok</STRONG> (Thumb, 64 bytes, Stack size 0 bytes, boot_jump.o(.text.boot_jump_vectors_ok))
-<BR><BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<BR><BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 </UL>
 
-<P><STRONG><a name="[50]"></a>boot_metadata_init</STRONG> (Thumb, 450 bytes, Stack size 24 bytes, boot_metadata.o(.text.boot_metadata_init))
+<P><STRONG><a name="[51]"></a>boot_metadata_init</STRONG> (Thumb, 450 bytes, Stack size 24 bytes, boot_metadata.o(.text.boot_metadata_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40 + Unknown Stack Size
 <LI>Call Chain = boot_metadata_init &rArr; meta_write_to_flash
 </UL>
-<BR>[Calls]<UL><LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
+<BR>[Calls]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
+<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[54]"></a>boot_metadata_save</STRONG> (Thumb, 104 bytes, Stack size 16 bytes, boot_metadata.o(.text.boot_metadata_save))
+<P><STRONG><a name="[55]"></a>boot_metadata_save</STRONG> (Thumb, 104 bytes, Stack size 16 bytes, boot_metadata.o(.text.boot_metadata_save))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = boot_metadata_save &rArr; meta_write_to_flash
 </UL>
-<BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
+<BR>[Calls]<UL><LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 <LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[8d]"></a>boot_metadata_slot_addr</STRONG> (Thumb, 34 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_addr))
+<P><STRONG><a name="[8e]"></a>boot_metadata_slot_addr</STRONG> (Thumb, 34 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_addr))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 <LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[8e]"></a>boot_metadata_slot_size</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_size))
+<P><STRONG><a name="[8f]"></a>boot_metadata_slot_size</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_size))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 </UL>
 
-<P><STRONG><a name="[88]"></a>boot_verify_get_header</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_header))
-<BR><BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<P><STRONG><a name="[89]"></a>boot_verify_get_header</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_header))
+<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[8b]"></a>boot_verify_get_public_key</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_public_key))
+<P><STRONG><a name="[8c]"></a>boot_verify_get_public_key</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_public_key))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
-<P><STRONG><a name="[55]"></a>boot_verify_image</STRONG> (Thumb, 342 bytes, Stack size 176 bytes, boot_verify.o(.text.boot_verify_image))
+<P><STRONG><a name="[56]"></a>boot_verify_image</STRONG> (Thumb, 342 bytes, Stack size 176 bytes, boot_verify.o(.text.boot_verify_image))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2360 + Unknown Stack Size
 <LI>Call Chain = boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
-<LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
-<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_init
-<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
-<LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_crc32_continue
+<BR>[Calls]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
+<LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
+<LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_init
+<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_crc32_continue
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[83]"></a>boot_verify_set_progress_cb</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_set_progress_cb))
-<BR><BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<P><STRONG><a name="[84]"></a>boot_verify_set_progress_cb</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_set_progress_cb))
+<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[67]"></a>can_bittime_default_para_init</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_bittime_default_para_init))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[68]"></a>can_bittime_default_para_init</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_bittime_default_para_init))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[68]"></a>can_bittime_set</STRONG> (Thumb, 134 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_bittime_set))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[69]"></a>can_bittime_set</STRONG> (Thumb, 134 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_bittime_set))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[5c]"></a>can_busoff_get</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_busoff_get))
+<P><STRONG><a name="[5d]"></a>can_busoff_get</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_busoff_get))
 <BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
 </UL>
 
-<P><STRONG><a name="[5d]"></a>can_busoff_reset</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_busoff_reset))
+<P><STRONG><a name="[5e]"></a>can_busoff_reset</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_busoff_reset))
 <BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
 </UL>
 
 <P><STRONG><a name="[4a]"></a>can_driver_err_irq_handler</STRONG> (Thumb, 116 bytes, Stack size 8 bytes, can_driver.o(.text.can_driver_err_irq_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = can_driver_err_irq_handler
 </UL>
-<BR>[Calls]<UL><LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_reset
-<LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_get
-<LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_clear
-<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_get
+<BR>[Calls]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_reset
+<LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_get
+<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_clear
+<LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_get
 </UL>
 <BR>[Called By]<UL><LI><a href="#[29]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_ERR_IRQHandler
 </UL>
 
-<P><STRONG><a name="[5f]"></a>can_driver_init</STRONG> (Thumb, 326 bytes, Stack size 120 bytes, can_driver.o(.text.can_driver_init))
+<P><STRONG><a name="[60]"></a>can_driver_init</STRONG> (Thumb, 424 bytes, Stack size 120 bytes, can_driver.o(.text.can_driver_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 232<LI>Call Chain = can_driver_init &rArr; sit1145_init &rArr; sit1145_read_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_irq_enable
-<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_interrupt_enable
-<LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_filter_enable
-<LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_filter_set
-<LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_filter_default_para_init
-<LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_bittime_set
-<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_bittime_default_para_init
-<LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_mode_set
-<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_software_reset
+<BR>[Calls]<UL><LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_irq_enable
+<LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_interrupt_enable
+<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_filter_enable
+<LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_filter_set
+<LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_filter_default_para_init
+<LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_bittime_set
+<LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_bittime_default_para_init
+<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_mode_set
+<LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_software_reset
 <LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_reset
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_pin_mux_config
-<LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_init
-<LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_default_para_init
-<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_can_clock_select
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_pin_mux_config
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_init
+<LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_default_para_init
+<LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_can_clock_select
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_clock_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[7f]"></a>can_driver_poll</STRONG> (Thumb, 162 bytes, Stack size 48 bytes, can_driver.o(.text.can_driver_poll))
+<P><STRONG><a name="[80]"></a>can_driver_poll</STRONG> (Thumb, 162 bytes, Stack size 48 bytes, can_driver.o(.text.can_driver_poll))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = can_driver_poll
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[92]"></a>can_driver_recv</STRONG> (Thumb, 140 bytes, Stack size 8 bytes, can_driver.o(.text.can_driver_recv))
+<P><STRONG><a name="[93]"></a>can_driver_recv</STRONG> (Thumb, 140 bytes, Stack size 8 bytes, can_driver.o(.text.can_driver_recv))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = can_driver_recv
 </UL>
-<BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
 </UL>
 
-<P><STRONG><a name="[7c]"></a>can_driver_register_rx_callback</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, can_driver.o(.text.can_driver_register_rx_callback))
-<BR><BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<P><STRONG><a name="[7d]"></a>can_driver_register_rx_callback</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, can_driver.o(.text.can_driver_register_rx_callback))
+<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[4b]"></a>can_driver_rx_irq_handler</STRONG> (Thumb, 222 bytes, Stack size 128 bytes, can_driver.o(.text.can_driver_rx_irq_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = can_driver_rx_irq_handler &rArr; can_rxbuf_read
 </UL>
-<BR>[Calls]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_clear
-<LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_rxbuf_release
-<LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_rxbuf_read
-<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_get
+<BR>[Calls]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_clear
+<LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_rxbuf_release
+<LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_rxbuf_read
+<LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_flag_get
 </UL>
 <BR>[Called By]<UL><LI><a href="#[25]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX_IRQHandler
 </UL>
 
-<P><STRONG><a name="[70]"></a>can_driver_send</STRONG> (Thumb, 128 bytes, Stack size 128 bytes, can_driver.o(.text.can_driver_send))
+<P><STRONG><a name="[71]"></a>can_driver_send</STRONG> (Thumb, 128 bytes, Stack size 128 bytes, can_driver.o(.text.can_driver_send))
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = can_driver_send &rArr; can_txbuf_write
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_txbuf_transmit
-<LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_txbuf_write
-<LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_stb_status_get
-<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_transmit_status_get
+<BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
+<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_txbuf_transmit
+<LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_txbuf_write
+<LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_stb_status_get
+<LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_transmit_status_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 </UL>
 
-<P><STRONG><a name="[75]"></a>can_driver_wait_tx_idle</STRONG> (Thumb, 60 bytes, Stack size 40 bytes, can_driver.o(.text.can_driver_wait_tx_idle))
+<P><STRONG><a name="[76]"></a>can_driver_wait_tx_idle</STRONG> (Thumb, 60 bytes, Stack size 40 bytes, can_driver.o(.text.can_driver_wait_tx_idle))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = can_driver_wait_tx_idle
 </UL>
-<BR>[Calls]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_transmit_status_get
+<BR>[Calls]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_transmit_status_get
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[69]"></a>can_filter_default_para_init</STRONG> (Thumb, 46 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_filter_default_para_init))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[6a]"></a>can_filter_default_para_init</STRONG> (Thumb, 46 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_filter_default_para_init))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[6b]"></a>can_filter_enable</STRONG> (Thumb, 58 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_filter_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[6c]"></a>can_filter_enable</STRONG> (Thumb, 58 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_filter_enable))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[6a]"></a>can_filter_set</STRONG> (Thumb, 242 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_filter_set))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[6b]"></a>can_filter_set</STRONG> (Thumb, 242 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_filter_set))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[5e]"></a>can_flag_clear</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_flag_clear))
+<P><STRONG><a name="[5f]"></a>can_flag_clear</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_flag_clear))
 <BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
 <LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_rx_irq_handler
 </UL>
 
-<P><STRONG><a name="[5b]"></a>can_flag_get</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_flag_get))
+<P><STRONG><a name="[5c]"></a>can_flag_get</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_flag_get))
 <BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
 <LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_rx_irq_handler
 </UL>
 
-<P><STRONG><a name="[6c]"></a>can_interrupt_enable</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_interrupt_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[6d]"></a>can_interrupt_enable</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_interrupt_enable))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[66]"></a>can_mode_set</STRONG> (Thumb, 158 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_mode_set))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[67]"></a>can_mode_set</STRONG> (Thumb, 158 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_mode_set))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
 <P><STRONG><a name="[4e]"></a>can_reset</STRONG> (Thumb, 42 bytes, Stack size 8 bytes, at32f422_426_can.o(.text.can_reset))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = can_reset
 </UL>
-<BR>[Calls]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_reset
+<BR>[Calls]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_reset
 </UL>
 <BR>[Called By]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_to_app
-<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[6e]"></a>can_rxbuf_read</STRONG> (Thumb, 220 bytes, Stack size 16 bytes, at32f422_426_can.o(.text.can_rxbuf_read))
+<P><STRONG><a name="[6f]"></a>can_rxbuf_read</STRONG> (Thumb, 220 bytes, Stack size 16 bytes, at32f422_426_can.o(.text.can_rxbuf_read))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = can_rxbuf_read
 </UL>
 <BR>[Called By]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_rx_irq_handler
 </UL>
 
-<P><STRONG><a name="[6f]"></a>can_rxbuf_release</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_rxbuf_release))
+<P><STRONG><a name="[70]"></a>can_rxbuf_release</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_rxbuf_release))
 <BR><BR>[Called By]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_rx_irq_handler
 </UL>
 
-<P><STRONG><a name="[65]"></a>can_software_reset</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_software_reset))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[66]"></a>can_software_reset</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_software_reset))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[72]"></a>can_stb_status_get</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_stb_status_get))
-<BR><BR>[Called By]<UL><LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<P><STRONG><a name="[73]"></a>can_stb_status_get</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_stb_status_get))
+<BR><BR>[Called By]<UL><LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 
-<P><STRONG><a name="[71]"></a>can_transmit_status_get</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_transmit_status_get))
-<BR><BR>[Called By]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
-<LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<P><STRONG><a name="[72]"></a>can_transmit_status_get</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_transmit_status_get))
+<BR><BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 
-<P><STRONG><a name="[74]"></a>can_txbuf_transmit</STRONG> (Thumb, 86 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_txbuf_transmit))
-<BR><BR>[Called By]<UL><LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<P><STRONG><a name="[75]"></a>can_txbuf_transmit</STRONG> (Thumb, 86 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_txbuf_transmit))
+<BR><BR>[Called By]<UL><LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 
-<P><STRONG><a name="[73]"></a>can_txbuf_write</STRONG> (Thumb, 262 bytes, Stack size 16 bytes, at32f422_426_can.o(.text.can_txbuf_write))
+<P><STRONG><a name="[74]"></a>can_txbuf_write</STRONG> (Thumb, 262 bytes, Stack size 16 bytes, at32f422_426_can.o(.text.can_txbuf_write))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = can_txbuf_write
 </UL>
-<BR>[Called By]<UL><LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<BR>[Called By]<UL><LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 
 <P><STRONG><a name="[ae]"></a>crm_ahb_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_ahb_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[b1]"></a>crm_apb1_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb1_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[b0]"></a>crm_apb2_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb2_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[af]"></a>crm_apb3_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb3_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[b2]"></a>crm_auto_step_mode_enable</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_auto_step_mode_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[60]"></a>crm_can_clock_select</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_can_clock_select))
-<BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[61]"></a>crm_can_clock_select</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_can_clock_select))
+<BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
 <P><STRONG><a name="[ab]"></a>crm_clock_source_enable</STRONG> (Thumb, 106 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_clock_source_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[7a]"></a>crm_flag_clear</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_flag_clear))
-<BR><BR>[Called By]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
+<P><STRONG><a name="[7b]"></a>crm_flag_clear</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_flag_clear))
+<BR><BR>[Called By]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
 </UL>
 
-<P><STRONG><a name="[79]"></a>crm_flag_get</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_flag_get))
-<BR><BR>[Called By]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
-<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[7a]"></a>crm_flag_get</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_flag_get))
+<BR><BR>[Called By]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
+<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[ac]"></a>crm_hext_stable_wait</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_hext_stable_wait))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[4f]"></a>crm_periph_clock_enable</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_periph_clock_enable))
 <BR><BR>[Called By]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_to_app
-<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
-<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[77]"></a>crm_periph_reset</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_periph_reset))
+<P><STRONG><a name="[78]"></a>crm_periph_reset</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_periph_reset))
 <BR><BR>[Called By]<UL><LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_reset
 </UL>
 
 <P><STRONG><a name="[ad]"></a>crm_pll_config</STRONG> (Thumb, 92 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_pll_config))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[aa]"></a>crm_reset</STRONG> (Thumb, 82 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_reset))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[b3]"></a>crm_sysclk_switch</STRONG> (Thumb, 58 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[b4]"></a>crm_sysclk_switch_status_get</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch_status_get))
-<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 <LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
 </UL>
 
-<P><STRONG><a name="[78]"></a>detect_boot_reason</STRONG> (Thumb, 68 bytes, Stack size 24 bytes, boot_trial.o(.text.detect_boot_reason))
+<P><STRONG><a name="[79]"></a>detect_boot_reason</STRONG> (Thumb, 68 bytes, Stack size 24 bytes, boot_trial.o(.text.detect_boot_reason))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = detect_boot_reason
 </UL>
-<BR>[Calls]<UL><LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_clear
-<LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_get
+<BR>[Calls]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_clear
+<LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_get
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[7b]"></a>enter_safe_mode</STRONG> (Thumb, 976 bytes, Stack size 8 bytes, boot_safe_mode.o(.text.enter_safe_mode))
+<P><STRONG><a name="[7c]"></a>enter_safe_mode</STRONG> (Thumb, 976 bytes, Stack size 8 bytes, boot_safe_mode.o(.text.enter_safe_mode))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2368 + Unknown Stack Size
 <LI>Call Chain = enter_safe_mode &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_header
-<LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
-<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_set_progress_cb
-<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_set_progress_cb
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
-<LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
-<LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_poll
-<LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_init
+<BR>[Calls]<UL><LI><a href="#[89]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_header
+<LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_set_progress_cb
+<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_set_progress_cb
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
+<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
+<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_poll
+<LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_init
 <LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
-<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
-<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
-<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
-<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
-<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_register_rx_callback
-<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
+<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
+<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
+<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
+<LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
+<LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_register_rx_callback
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[86]"></a>flash_lock</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_lock))
+<P><STRONG><a name="[87]"></a>flash_lock</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_lock))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[8f]"></a>flash_sector_erase</STRONG> (Thumb, 130 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_sector_erase))
+<P><STRONG><a name="[90]"></a>flash_sector_erase</STRONG> (Thumb, 130 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_sector_erase))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
 
-<P><STRONG><a name="[84]"></a>flash_unlock</STRONG> (Thumb, 30 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_unlock))
+<P><STRONG><a name="[85]"></a>flash_unlock</STRONG> (Thumb, 30 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_unlock))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[85]"></a>flash_word_program</STRONG> (Thumb, 122 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_word_program))
+<P><STRONG><a name="[86]"></a>flash_word_program</STRONG> (Thumb, 122 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_word_program))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[a1]"></a>gpio_bits_reset</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_reset))
+<P><STRONG><a name="[a2]"></a>gpio_bits_reset</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_reset))
 <BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
 <LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[a0]"></a>gpio_bits_set</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_set))
+<P><STRONG><a name="[a1]"></a>gpio_bits_set</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_set))
 <BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
 <LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[61]"></a>gpio_default_para_init</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_default_para_init))
-<BR><BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
-<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<P><STRONG><a name="[62]"></a>gpio_default_para_init</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_default_para_init))
+<BR><BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[62]"></a>gpio_init</STRONG> (Thumb, 116 bytes, Stack size 20 bytes, at32f422_426_gpio.o(.text.gpio_init))
+<P><STRONG><a name="[63]"></a>gpio_init</STRONG> (Thumb, 116 bytes, Stack size 20 bytes, at32f422_426_gpio.o(.text.gpio_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = gpio_init
 </UL>
-<BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
-<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[63]"></a>gpio_pin_mux_config</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, at32f422_426_gpio.o(.text.gpio_pin_mux_config))
+<P><STRONG><a name="[64]"></a>gpio_pin_mux_config</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, at32f422_426_gpio.o(.text.gpio_pin_mux_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = gpio_pin_mux_config
 </UL>
-<BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
-<LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[7d]"></a>isotp_init</STRONG> (Thumb, 60 bytes, Stack size 0 bytes, isotp.o(.text.isotp_init))
-<BR><BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<P><STRONG><a name="[7e]"></a>isotp_init</STRONG> (Thumb, 60 bytes, Stack size 0 bytes, isotp.o(.text.isotp_init))
+<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[80]"></a>isotp_poll</STRONG> (Thumb, 42 bytes, Stack size 8 bytes, isotp.o(.text.isotp_poll))
+<P><STRONG><a name="[81]"></a>isotp_poll</STRONG> (Thumb, 42 bytes, Stack size 8 bytes, isotp.o(.text.isotp_poll))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = isotp_poll
 </UL>
-<BR>[Calls]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<BR>[Calls]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[90]"></a>isotp_rx_process</STRONG> (Thumb, 500 bytes, Stack size 32 bytes, isotp.o(.text.isotp_rx_process))
+<P><STRONG><a name="[91]"></a>isotp_rx_process</STRONG> (Thumb, 500 bytes, Stack size 32 bytes, isotp.o(.text.isotp_rx_process))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
-<BR>[Calls]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<BR>[Calls]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
-<BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 <LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 </UL>
 
-<P><STRONG><a name="[87]"></a>isotp_tx_send</STRONG> (Thumb, 546 bytes, Stack size 64 bytes, isotp.o(.text.isotp_tx_send))
+<P><STRONG><a name="[88]"></a>isotp_tx_send</STRONG> (Thumb, 546 bytes, Stack size 64 bytes, isotp.o(.text.isotp_tx_send))
 <BR><BR>[Stack]<UL><LI>Max Depth = 304<LI>Call Chain = isotp_tx_send &rArr; isotp_wait_cts &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
-<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
+<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[3b]"></a>main</STRONG> (Thumb, 204 bytes, Stack size 8 bytes, main.o(.text.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2392 + Unknown Stack Size
 <LI>Call Chain = main &rArr; try_boot_slot &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
+<BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
 <LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_to_app
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;select_boot_slot
-<LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
-<LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
-<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
-<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
-<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;select_boot_slot
+<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
+<LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
+<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
 
-<P><STRONG><a name="[6d]"></a>nvic_irq_enable</STRONG> (Thumb, 116 bytes, Stack size 16 bytes, at32f422_426_misc.o(.text.nvic_irq_enable))
+<P><STRONG><a name="[6e]"></a>nvic_irq_enable</STRONG> (Thumb, 116 bytes, Stack size 16 bytes, at32f422_426_misc.o(.text.nvic_irq_enable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = nvic_irq_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[98]"></a>nvic_priority_group_config</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, at32f422_426_misc.o(.text.nvic_priority_group_config))
+<P><STRONG><a name="[99]"></a>nvic_priority_group_config</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, at32f422_426_misc.o(.text.nvic_priority_group_config))
 <BR><BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[9a]"></a>process_trial_state</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, boot_trial.o(.text.process_trial_state))
+<P><STRONG><a name="[9b]"></a>process_trial_state</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, boot_trial.o(.text.process_trial_state))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = process_trial_state &rArr; boot_metadata_save &rArr; meta_write_to_flash
 </UL>
-<BR>[Calls]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
+<BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[9b]"></a>select_boot_slot</STRONG> (Thumb, 30 bytes, Stack size 0 bytes, boot_trial.o(.text.select_boot_slot))
+<P><STRONG><a name="[9c]"></a>select_boot_slot</STRONG> (Thumb, 30 bytes, Stack size 0 bytes, boot_trial.o(.text.select_boot_slot))
 <BR><BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[59]"></a>sha256_final</STRONG> (Thumb, 130 bytes, Stack size 24 bytes, sha256.o(.text.sha256_final))
+<P><STRONG><a name="[5a]"></a>sha256_final</STRONG> (Thumb, 130 bytes, Stack size 24 bytes, sha256.o(.text.sha256_final))
 <BR><BR>[Stack]<UL><LI>Max Depth = 352 + Unknown Stack Size
 <LI>Call Chain = sha256_final &rArr; sha256_transform
 </UL>
-<BR>[Calls]<UL><LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
+<BR>[Calls]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
-<LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[8c]"></a>sha256_hash</STRONG> (Thumb, 154 bytes, Stack size 136 bytes, sha256.o(.text.sha256_hash))
+<P><STRONG><a name="[8d]"></a>sha256_hash</STRONG> (Thumb, 154 bytes, Stack size 136 bytes, sha256.o(.text.sha256_hash))
 <BR><BR>[Stack]<UL><LI>Max Depth = 488 + Unknown Stack Size
 <LI>Call Chain = sha256_hash &rArr; sha256_final &rArr; sha256_transform
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
-<LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
+<BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
+<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
-<P><STRONG><a name="[57]"></a>sha256_init</STRONG> (Thumb, 86 bytes, Stack size 16 bytes, sha256.o(.text.sha256_init))
+<P><STRONG><a name="[58]"></a>sha256_init</STRONG> (Thumb, 86 bytes, Stack size 16 bytes, sha256.o(.text.sha256_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = sha256_init
 </UL>
-<BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[58]"></a>sha256_update</STRONG> (Thumb, 140 bytes, Stack size 24 bytes, sha256.o(.text.sha256_update))
+<P><STRONG><a name="[59]"></a>sha256_update</STRONG> (Thumb, 140 bytes, Stack size 24 bytes, sha256.o(.text.sha256_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 352<LI>Call Chain = sha256_update &rArr; sha256_transform
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
+<BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
 </UL>
-<BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[64]"></a>sit1145_init</STRONG> (Thumb, 568 bytes, Stack size 80 bytes, sit1145.o(.text.sit1145_init))
+<P><STRONG><a name="[65]"></a>sit1145_init</STRONG> (Thumb, 568 bytes, Stack size 80 bytes, sit1145.o(.text.sit1145_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = sit1145_init &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
 <LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
-<LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_enable
-<LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_init
-<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_default_para_init
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_pin_mux_config
-<LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_init
-<LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_default_para_init
+<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_enable
+<LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_init
+<LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_default_para_init
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
+<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
+<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_pin_mux_config
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_init
+<LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_default_para_init
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_clock_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+<BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[81]"></a>sit1145_normal_mode_set</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, sit1145.o(.text.sit1145_normal_mode_set))
+<P><STRONG><a name="[82]"></a>sit1145_normal_mode_set</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, sit1145.o(.text.sit1145_normal_mode_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
@@ -1051,7 +1052,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[a5]"></a>sit1145_read_reg</STRONG> (Thumb, 216 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_read_reg))
@@ -1060,11 +1061,11 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_flag_get
 <LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_receive
 <LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_transmit
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
+<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
 <P><STRONG><a name="[a6]"></a>sit1145_write_reg</STRONG> (Thumb, 212 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_write_reg))
@@ -1073,19 +1074,20 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_flag_get
 <LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_receive
 <LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_transmit
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
+<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
 </UL>
-<BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
-</UL>
-
-<P><STRONG><a name="[a2]"></a>spi_default_para_init</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_default_para_init))
-<BR><BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[a4]"></a>spi_enable</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<P><STRONG><a name="[a3]"></a>spi_default_para_init</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_default_para_init))
+<BR><BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+</UL>
+
+<P><STRONG><a name="[50]"></a>spi_enable</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_enable))
+<BR><BR>[Called By]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_to_app
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
 <P><STRONG><a name="[a9]"></a>spi_i2s_data_receive</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_data_receive))
@@ -1103,11 +1105,11 @@ Global Symbols
 <LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 </UL>
 
-<P><STRONG><a name="[a3]"></a>spi_init</STRONG> (Thumb, 268 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_init))
-<BR><BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
+<P><STRONG><a name="[a4]"></a>spi_init</STRONG> (Thumb, 268 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_init))
+<BR><BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[97]"></a>system_clock_config</STRONG> (Thumb, 150 bytes, Stack size 8 bytes, at32f422_426_clock.o(.text.system_clock_config))
+<P><STRONG><a name="[98]"></a>system_clock_config</STRONG> (Thumb, 150 bytes, Stack size 8 bytes, at32f422_426_clock.o(.text.system_clock_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = system_clock_config &rArr; system_core_clock_update
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
@@ -1121,7 +1123,7 @@ Global Symbols
 <LI><a href="#[ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_ahb_div_set
 <LI><a href="#[ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_clock_source_enable
 <LI><a href="#[ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_hext_stable_wait
-<LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_get
+<LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_get
 <LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_reset
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_clock_enable
 </UL>
@@ -1133,28 +1135,28 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch_status_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[99]"></a>timer_drv_init</STRONG> (Thumb, 110 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_drv_init))
+<P><STRONG><a name="[9a]"></a>timer_drv_init</STRONG> (Thumb, 110 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_drv_init))
 <BR><BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[76]"></a>timer_get_tick</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_get_tick))
-<BR><BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
-<LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
+<P><STRONG><a name="[77]"></a>timer_get_tick</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_get_tick))
+<BR><BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
 <LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
-<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
 </UL>
 
-<P><STRONG><a name="[7e]"></a>timer_poll</STRONG> (Thumb, 64 bytes, Stack size 24 bytes, timer_drv.o(.text.timer_poll))
+<P><STRONG><a name="[7f]"></a>timer_poll</STRONG> (Thumb, 64 bytes, Stack size 24 bytes, timer_drv.o(.text.timer_poll))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = timer_poll
 </UL>
-<BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[4c]"></a>timer_tick_inc</STRONG> (Thumb, 74 bytes, Stack size 8 bytes, timer_drv.o(.text.timer_tick_inc))
@@ -1163,36 +1165,36 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysTick_Handler
 </UL>
 
-<P><STRONG><a name="[9c]"></a>try_boot_slot</STRONG> (Thumb, 96 bytes, Stack size 24 bytes, boot_trial.o(.text.try_boot_slot))
+<P><STRONG><a name="[9d]"></a>try_boot_slot</STRONG> (Thumb, 96 bytes, Stack size 24 bytes, boot_trial.o(.text.try_boot_slot))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2384 + Unknown Stack Size
 <LI>Call Chain = try_boot_slot &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
+<BR>[Calls]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
 <LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_vectors_ok
-<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
+<LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[82]"></a>uECC_set_progress_cb</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, uecc.o(.text.uECC_set_progress_cb))
-<BR><BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<P><STRONG><a name="[83]"></a>uECC_set_progress_cb</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, uecc.o(.text.uECC_set_progress_cb))
+<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[5a]"></a>uECC_verify</STRONG> (Thumb, 666 bytes, Stack size 904 bytes, uecc.o(.text.uECC_verify))
+<P><STRONG><a name="[5b]"></a>uECC_verify</STRONG> (Thumb, 666 bytes, Stack size 904 bytes, uecc.o(.text.uECC_verify))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2184 + Unknown Stack Size
 <LI>Call Chain = uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;memcmp
-<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
-<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
-<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
+<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
 <LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;bytes_to_w256
 </UL>
-<BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
@@ -1214,22 +1216,22 @@ Local Symbols
 <LI><a href="#[2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HardFault_Handler
 </UL>
 
-<P><STRONG><a name="[52]"></a>meta_write_to_flash</STRONG> (Thumb, 86 bytes, Stack size 16 bytes, boot_metadata.o(.text.meta_write_to_flash))
+<P><STRONG><a name="[53]"></a>meta_write_to_flash</STRONG> (Thumb, 86 bytes, Stack size 16 bytes, boot_metadata.o(.text.meta_write_to_flash))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = meta_write_to_flash
 </UL>
-<BR>[Calls]<UL><LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
-<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
-<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
+<BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
+<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
+<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
 </UL>
-<BR>[Called By]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
+<BR>[Called By]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
 </UL>
 
 <P><STRONG><a name="[2d]"></a>safe_mode_can_rx_handler</STRONG> (Thumb, 44 bytes, Stack size 0 bytes, boot_safe_mode.o(.text.safe_mode_can_rx_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = safe_mode_can_rx_handler &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
-<BR>[Calls]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<BR>[Calls]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
 </UL>
@@ -1237,134 +1239,134 @@ Local Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 2448 + Unknown Stack Size
 <LI>Call Chain = isotp_message_received &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
-<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
-<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
-<LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_public_key
-<LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
-<LI><a href="#[89]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SystemReset
+<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_public_key
+<LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
+<LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SystemReset
 <LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
-<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
-<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
-<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
-<LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
-<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
+<LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
+<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
+<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
+<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
+<LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
 </UL>
 <P><STRONG><a name="[2f]"></a>safe_mode_long_op_pump</STRONG> (Thumb, 162 bytes, Stack size 24 bytes, boot_safe_mode.o(.text.safe_mode_long_op_pump))
 <BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = safe_mode_long_op_pump &rArr; isotp_tx_send &rArr; isotp_wait_cts &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
-<BR>[Calls]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
-<LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
-<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
-<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<BR>[Calls]<UL><LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
+<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
+<LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
+<LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
 </UL>
-<P><STRONG><a name="[89]"></a>__NVIC_SystemReset</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, boot_safe_mode.o(.text.__NVIC_SystemReset))
+<P><STRONG><a name="[8a]"></a>__NVIC_SystemReset</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, boot_safe_mode.o(.text.__NVIC_SystemReset))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
-<P><STRONG><a name="[9e]"></a>sha256_transform</STRONG> (Thumb, 312 bytes, Stack size 328 bytes, sha256.o(.text.sha256_transform))
+<P><STRONG><a name="[9f]"></a>sha256_transform</STRONG> (Thumb, 312 bytes, Stack size 328 bytes, sha256.o(.text.sha256_transform))
 <BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = sha256_transform
 </UL>
-<BR>[Called By]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
-<LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
-<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
+<LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
+<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
 </UL>
 
 <P><STRONG><a name="[b7]"></a>bytes_to_w256</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, uecc.o(.text.bytes_to_w256))
-<BR><BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR><BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[9f]"></a>sinv</STRONG> (Thumb, 220 bytes, Stack size 112 bytes, uecc.o(.text.sinv))
+<P><STRONG><a name="[a0]"></a>sinv</STRONG> (Thumb, 220 bytes, Stack size 112 bytes, uecc.o(.text.sinv))
 <BR><BR>[Stack]<UL><LI>Max Depth = 392 + Unknown Stack Size
 <LI>Call Chain = sinv &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<BR>[Calls]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[94]"></a>modmul</STRONG> (Thumb, 558 bytes, Stack size 280 bytes, uecc.o(.text.modmul))
+<P><STRONG><a name="[95]"></a>modmul</STRONG> (Thumb, 558 bytes, Stack size 280 bytes, uecc.o(.text.modmul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 280 + Unknown Stack Size
 <LI>Call Chain = modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 </UL>
-<BR>[Called By]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
-<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
-<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR>[Called By]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
+<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[9d]"></a>point_mul</STRONG> (Thumb, 156 bytes, Stack size 232 bytes, uecc.o(.text.point_mul))
+<P><STRONG><a name="[9e]"></a>point_mul</STRONG> (Thumb, 156 bytes, Stack size 232 bytes, uecc.o(.text.point_mul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1280 + Unknown Stack Size
 <LI>Call Chain = point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[93]"></a>jp_add</STRONG> (Thumb, 1138 bytes, Stack size 496 bytes, uecc.o(.text.jp_add))
+<P><STRONG><a name="[94]"></a>jp_add</STRONG> (Thumb, 1138 bytes, Stack size 496 bytes, uecc.o(.text.jp_add))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1048 + Unknown Stack Size
 <LI>Call Chain = jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
-<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[96]"></a>jp_to_affine</STRONG> (Thumb, 364 bytes, Stack size 152 bytes, uecc.o(.text.jp_to_affine))
+<P><STRONG><a name="[97]"></a>jp_to_affine</STRONG> (Thumb, 364 bytes, Stack size 152 bytes, uecc.o(.text.jp_to_affine))
 <BR><BR>[Stack]<UL><LI>Max Depth = 432 + Unknown Stack Size
 <LI>Call Chain = jp_to_affine &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<BR>[Calls]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
+<BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[95]"></a>jp_double</STRONG> (Thumb, 1650 bytes, Stack size 272 bytes, uecc.o(.text.jp_double))
+<P><STRONG><a name="[96]"></a>jp_double</STRONG> (Thumb, 1650 bytes, Stack size 272 bytes, uecc.o(.text.jp_double))
 <BR><BR>[Stack]<UL><LI>Max Depth = 552 + Unknown Stack Size
 <LI>Call Chain = jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
-<BR>[Called By]<UL><LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<BR>[Called By]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
 </UL>
 
-<P><STRONG><a name="[91]"></a>isotp_wait_cts</STRONG> (Thumb, 266 bytes, Stack size 64 bytes, isotp.o(.text.isotp_wait_cts))
+<P><STRONG><a name="[92]"></a>isotp_wait_cts</STRONG> (Thumb, 266 bytes, Stack size 64 bytes, isotp.o(.text.isotp_wait_cts))
 <BR><BR>[Stack]<UL><LI>Max Depth = 240<LI>Call Chain = isotp_wait_cts &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
-<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
-<LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_recv
+<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_recv
 </UL>
-<BR>[Called By]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<BR>[Called By]<UL><LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 </UL>
 <P>
 <H3>
