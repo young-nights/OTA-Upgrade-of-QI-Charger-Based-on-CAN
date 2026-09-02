@@ -338,7 +338,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>BOOT_JUMP_METHOD = 1</Define>
               <Undefine></Undefine>
               <IncludePath>..\libraries\cmsis\core_support;..\libraries\cmsis\device_support;..\libraries\drivers\inc;..\mdk_app\Inc;..\mdk_can\Inc;..\mdk_user\Inc</IncludePath>
             </VariousControls>

@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\bootloader.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\bootloader.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Wed Sep  2 14:28:40 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Wed Sep  2 21:24:41 2026
 <BR><P>
 <H3>Maximum Stack Usage =       2448 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -72,6 +72,7 @@ Function Pointers
  <LI><a href="#[2e]">isotp_message_received</a> from boot_safe_mode.o(.text.isotp_message_received) referenced 2 times from boot_safe_mode.o(.text.enter_safe_mode)
  <LI><a href="#[2d]">safe_mode_can_rx_handler</a> from boot_safe_mode.o(.text.safe_mode_can_rx_handler) referenced 2 times from boot_safe_mode.o(.text.enter_safe_mode)
  <LI><a href="#[2f]">safe_mode_long_op_pump</a> from boot_safe_mode.o(.text.safe_mode_long_op_pump) referenced 2 times from boot_safe_mode.o(.text.enter_safe_mode)
+ <LI><a href="#[2f]">safe_mode_long_op_pump</a> from boot_safe_mode.o(.text.safe_mode_long_op_pump) referenced 2 times from boot_safe_mode.o(.text.isotp_message_received)
 </UL>
 <P>
 <H3>
@@ -91,9 +92,9 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry
 </UL>
 
-<P><STRONG><a name="[b9]"></a>__scatterload_rt2_thumb_only</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __scatter.o(!!!scatter), UNUSED)
+<P><STRONG><a name="[ba]"></a>__scatterload_rt2_thumb_only</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __scatter.o(!!!scatter), UNUSED)
 
-<P><STRONG><a name="[ba]"></a>__scatterload_null</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __scatter.o(!!!scatter), UNUSED)
+<P><STRONG><a name="[bb]"></a>__scatterload_null</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __scatter.o(!!!scatter), UNUSED)
 
 <P><STRONG><a name="[33]"></a>__scatterload_copy</STRONG> (Thumb, 26 bytes, Stack size unknown bytes, __scatter_copy.o(!!handler_copy), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload_copy
@@ -101,7 +102,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload_copy
 </UL>
 
-<P><STRONG><a name="[bb]"></a>__scatterload_zeroinit</STRONG> (Thumb, 28 bytes, Stack size unknown bytes, __scatter_zi.o(!!handler_zi), UNUSED)
+<P><STRONG><a name="[bc]"></a>__scatterload_zeroinit</STRONG> (Thumb, 28 bytes, Stack size unknown bytes, __scatter_zi.o(!!handler_zi), UNUSED)
 
 <P><STRONG><a name="[39]"></a>__rt_lib_init</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit.o(.ARM.Collect$$libinit$$00000000))
 <BR><BR>[Called By]<UL><LI><a href="#[38]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_li
@@ -111,72 +112,72 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[35]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fp_init
 </UL>
 
-<P><STRONG><a name="[bc]"></a>__rt_lib_init_alloca_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000030))
+<P><STRONG><a name="[bd]"></a>__rt_lib_init_alloca_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000030))
 
-<P><STRONG><a name="[bd]"></a>__rt_lib_init_argv_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000002E))
+<P><STRONG><a name="[be]"></a>__rt_lib_init_argv_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000002E))
 
-<P><STRONG><a name="[be]"></a>__rt_lib_init_atexit_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000001D))
+<P><STRONG><a name="[bf]"></a>__rt_lib_init_atexit_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000001D))
 
-<P><STRONG><a name="[bf]"></a>__rt_lib_init_clock_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000023))
+<P><STRONG><a name="[c0]"></a>__rt_lib_init_clock_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000023))
 
-<P><STRONG><a name="[c0]"></a>__rt_lib_init_cpp_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000034))
+<P><STRONG><a name="[c1]"></a>__rt_lib_init_cpp_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000034))
 
-<P><STRONG><a name="[c1]"></a>__rt_lib_init_exceptions_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000032))
+<P><STRONG><a name="[c2]"></a>__rt_lib_init_exceptions_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000032))
 
-<P><STRONG><a name="[c2]"></a>__rt_lib_init_fp_trap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000021))
+<P><STRONG><a name="[c3]"></a>__rt_lib_init_fp_trap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000021))
 
-<P><STRONG><a name="[c3]"></a>__rt_lib_init_getenv_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000025))
+<P><STRONG><a name="[c4]"></a>__rt_lib_init_getenv_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000025))
 
-<P><STRONG><a name="[c4]"></a>__rt_lib_init_heap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000000C))
+<P><STRONG><a name="[c5]"></a>__rt_lib_init_heap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000000C))
 
-<P><STRONG><a name="[c5]"></a>__rt_lib_init_lc_collate_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000013))
+<P><STRONG><a name="[c6]"></a>__rt_lib_init_lc_collate_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000013))
 
-<P><STRONG><a name="[c6]"></a>__rt_lib_init_lc_ctype_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000015))
+<P><STRONG><a name="[c7]"></a>__rt_lib_init_lc_ctype_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000015))
 
-<P><STRONG><a name="[c7]"></a>__rt_lib_init_lc_monetary_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000017))
+<P><STRONG><a name="[c8]"></a>__rt_lib_init_lc_monetary_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000017))
 
-<P><STRONG><a name="[c8]"></a>__rt_lib_init_lc_numeric_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000019))
+<P><STRONG><a name="[c9]"></a>__rt_lib_init_lc_numeric_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000019))
 
-<P><STRONG><a name="[c9]"></a>__rt_lib_init_lc_time_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000001B))
+<P><STRONG><a name="[ca]"></a>__rt_lib_init_lc_time_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000001B))
 
-<P><STRONG><a name="[ca]"></a>__rt_lib_init_preinit_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000006))
+<P><STRONG><a name="[cb]"></a>__rt_lib_init_preinit_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000006))
 
-<P><STRONG><a name="[cb]"></a>__rt_lib_init_rand_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000010))
+<P><STRONG><a name="[cc]"></a>__rt_lib_init_rand_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000010))
 
-<P><STRONG><a name="[cc]"></a>__rt_lib_init_relocate_pie_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000004))
+<P><STRONG><a name="[cd]"></a>__rt_lib_init_relocate_pie_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000004))
 
-<P><STRONG><a name="[cd]"></a>__rt_lib_init_return</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000035))
+<P><STRONG><a name="[ce]"></a>__rt_lib_init_return</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000035))
 
-<P><STRONG><a name="[ce]"></a>__rt_lib_init_signal_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000001F))
+<P><STRONG><a name="[cf]"></a>__rt_lib_init_signal_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000001F))
 
-<P><STRONG><a name="[cf]"></a>__rt_lib_init_stdio_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000027))
+<P><STRONG><a name="[d0]"></a>__rt_lib_init_stdio_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$00000027))
 
-<P><STRONG><a name="[d0]"></a>__rt_lib_init_user_alloc_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000000E))
+<P><STRONG><a name="[d1]"></a>__rt_lib_init_user_alloc_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libinit2.o(.ARM.Collect$$libinit$$0000000E))
 
 <P><STRONG><a name="[3e]"></a>__rt_lib_shutdown</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown.o(.ARM.Collect$$libshutdown$$00000000))
 <BR><BR>[Called By]<UL><LI><a href="#[3d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_exit_ls
 </UL>
 
-<P><STRONG><a name="[d1]"></a>__rt_lib_shutdown_cpp_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000002))
+<P><STRONG><a name="[d2]"></a>__rt_lib_shutdown_cpp_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000002))
 
-<P><STRONG><a name="[d2]"></a>__rt_lib_shutdown_fp_trap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000007))
+<P><STRONG><a name="[d3]"></a>__rt_lib_shutdown_fp_trap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000007))
 
-<P><STRONG><a name="[d3]"></a>__rt_lib_shutdown_heap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000F))
+<P><STRONG><a name="[d4]"></a>__rt_lib_shutdown_heap_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000F))
 
-<P><STRONG><a name="[d4]"></a>__rt_lib_shutdown_return</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000010))
+<P><STRONG><a name="[d5]"></a>__rt_lib_shutdown_return</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000010))
 
-<P><STRONG><a name="[d5]"></a>__rt_lib_shutdown_signal_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000A))
+<P><STRONG><a name="[d6]"></a>__rt_lib_shutdown_signal_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000A))
 
-<P><STRONG><a name="[d6]"></a>__rt_lib_shutdown_stdio_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000004))
+<P><STRONG><a name="[d7]"></a>__rt_lib_shutdown_stdio_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$00000004))
 
-<P><STRONG><a name="[d7]"></a>__rt_lib_shutdown_user_alloc_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000C))
+<P><STRONG><a name="[d8]"></a>__rt_lib_shutdown_user_alloc_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000C))
 
 <P><STRONG><a name="[31]"></a>__rt_entry</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry.o(.ARM.Collect$$rtentry$$00000000))
 <BR><BR>[Called By]<UL><LI><a href="#[2c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__main
 <LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload_rt2
 </UL>
 
-<P><STRONG><a name="[d8]"></a>__rt_entry_presh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000002))
+<P><STRONG><a name="[d9]"></a>__rt_entry_presh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000002))
 
 <P><STRONG><a name="[36]"></a>__rt_entry_sh</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry4.o(.ARM.Collect$$rtentry$$00000004))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8 + Unknown Stack Size
@@ -189,7 +190,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_lib_init
 </UL>
 
-<P><STRONG><a name="[d9]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
+<P><STRONG><a name="[da]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[3a]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2392 + Unknown Stack Size
@@ -199,7 +200,7 @@ Global Symbols
 <LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[da]"></a>__rt_entry_postli_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000C))
+<P><STRONG><a name="[db]"></a>__rt_entry_postli_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000C))
 
 <P><STRONG><a name="[48]"></a>__rt_exit</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rtexit.o(.ARM.Collect$$rtexit$$00000000))
 <BR><BR>[Called By]<UL><LI><a href="#[3c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;exit
@@ -209,7 +210,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[3e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_lib_shutdown
 </UL>
 
-<P><STRONG><a name="[db]"></a>__rt_exit_prels_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rtexit2.o(.ARM.Collect$$rtexit$$00000002))
+<P><STRONG><a name="[dc]"></a>__rt_exit_prels_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rtexit2.o(.ARM.Collect$$rtexit$$00000002))
 
 <P><STRONG><a name="[3f]"></a>__rt_exit_exit</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rtexit2.o(.ARM.Collect$$rtexit$$00000004))
 <BR><BR>[Calls]<UL><LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_sys_exit
@@ -319,7 +320,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[37]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__user_setup_stackheap
 </UL>
 
-<P><STRONG><a name="[b8]"></a>memcmp</STRONG> (Thumb, 88 bytes, Stack size 8 bytes, memcmp.o(.text))
+<P><STRONG><a name="[b9]"></a>memcmp</STRONG> (Thumb, 88 bytes, Stack size 8 bytes, memcmp.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = memcmp
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
@@ -327,7 +328,7 @@ Global Symbols
 
 <P><STRONG><a name="[52]"></a>__aeabi_memcpy</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_memcpy_v6.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 <LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
 <LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
@@ -337,22 +338,22 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
 </UL>
 
-<P><STRONG><a name="[dc]"></a>_memcpy_lastbytes</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_v6.o(.text), UNUSED)
+<P><STRONG><a name="[dd]"></a>_memcpy_lastbytes</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_v6.o(.text), UNUSED)
 
 <P><STRONG><a name="[42]"></a>__aeabi_memcpy4</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_memcpy4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_memcpy
-<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
 </UL>
 
-<P><STRONG><a name="[dd]"></a>__aeabi_memcpy8</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
+<P><STRONG><a name="[de]"></a>__aeabi_memcpy8</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
 
-<P><STRONG><a name="[de]"></a>__rt_memcpy_w</STRONG> (Thumb, 100 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
+<P><STRONG><a name="[df]"></a>__rt_memcpy_w</STRONG> (Thumb, 100 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
 
-<P><STRONG><a name="[df]"></a>_memcpy_lastbytes_aligned</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_w.o(.text), UNUSED)
+<P><STRONG><a name="[e0]"></a>_memcpy_lastbytes_aligned</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_w.o(.text), UNUSED)
 
 <P><STRONG><a name="[43]"></a>__aeabi_memset</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, aeabi_memset.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = __aeabi_memset &rArr; _memset &rArr; _memset_w
@@ -367,7 +368,7 @@ Global Symbols
 <LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
 </UL>
 
-<P><STRONG><a name="[e0]"></a>__rt_memclr</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr.o(.text), UNUSED)
+<P><STRONG><a name="[e1]"></a>__rt_memclr</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr.o(.text), UNUSED)
 
 <P><STRONG><a name="[44]"></a>_memset</STRONG> (Thumb, 64 bytes, Stack size 0 bytes, rt_memclr.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = _memset &rArr; _memset_w
@@ -377,17 +378,17 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset
 </UL>
 
-<P><STRONG><a name="[8b]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<P><STRONG><a name="[8c]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
-<P><STRONG><a name="[e1]"></a>__aeabi_memclr8</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text), UNUSED)
+<P><STRONG><a name="[e2]"></a>__aeabi_memclr8</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text), UNUSED)
 
-<P><STRONG><a name="[e2]"></a>__rt_memclr_w</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text), UNUSED)
+<P><STRONG><a name="[e3]"></a>__rt_memclr_w</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text), UNUSED)
 
 <P><STRONG><a name="[45]"></a>_memset_w</STRONG> (Thumb, 74 bytes, Stack size 4 bytes, rt_memclr_w.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = _memset_w
@@ -395,11 +396,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_memset
 </UL>
 
-<P><STRONG><a name="[e3]"></a>__use_two_region_memory</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[e4]"></a>__use_two_region_memory</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[e4]"></a>__rt_heap_escrow$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[e5]"></a>__rt_heap_escrow$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[e5]"></a>__rt_heap_expand$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[e6]"></a>__rt_heap_expand$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
 <P><STRONG><a name="[37]"></a>__user_setup_stackheap</STRONG> (Thumb, 74 bytes, Stack size 8 bytes, sys_stackheap_outer.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8 + Unknown Stack Size
@@ -420,23 +421,23 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
 
-<P><STRONG><a name="[e6]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[e7]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[46]"></a>__user_perproc_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[37]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__user_setup_stackheap
 </UL>
 
-<P><STRONG><a name="[e7]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[e8]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[40]"></a>_sys_exit</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, sys_exit.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_exit_exit
 </UL>
 
-<P><STRONG><a name="[e8]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[e9]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[e9]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[ea]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[ea]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
+<P><STRONG><a name="[eb]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
 
 <P><STRONG><a name="[4]"></a>BusFault_Handler</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_int.o(.text.BusFault_Handler))
 <BR><BR>[Calls]<UL><LI><a href="#[49]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SystemReset
@@ -500,7 +501,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[4d]"></a>boot_jump_to_app</STRONG> (Thumb, 204 bytes, Stack size 24 bytes, boot_jump.o(.text.boot_jump_to_app))
+<P><STRONG><a name="[4d]"></a>boot_jump_to_app</STRONG> (Thumb, 196 bytes, Stack size 24 bytes, boot_jump.o(.text.boot_jump_to_app))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = boot_jump_to_app &rArr; can_reset
 </UL>
 <BR>[Calls]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_enable
@@ -510,8 +511,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[b6]"></a>boot_jump_vectors_ok</STRONG> (Thumb, 64 bytes, Stack size 0 bytes, boot_jump.o(.text.boot_jump_vectors_ok))
-<BR><BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<P><STRONG><a name="[b7]"></a>boot_jump_vectors_ok</STRONG> (Thumb, 64 bytes, Stack size 0 bytes, boot_jump.o(.text.boot_jump_vectors_ok))
+<BR><BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 </UL>
 
 <P><STRONG><a name="[51]"></a>boot_metadata_init</STRONG> (Thumb, 450 bytes, Stack size 24 bytes, boot_metadata.o(.text.boot_metadata_init))
@@ -531,28 +532,28 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 <LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[8e]"></a>boot_metadata_slot_addr</STRONG> (Thumb, 34 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_addr))
+<P><STRONG><a name="[8f]"></a>boot_metadata_slot_addr</STRONG> (Thumb, 34 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_addr))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 <LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[8f]"></a>boot_metadata_slot_size</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_size))
+<P><STRONG><a name="[90]"></a>boot_metadata_slot_size</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, boot_metadata.o(.text.boot_metadata_slot_size))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 </UL>
 
 <P><STRONG><a name="[89]"></a>boot_verify_get_header</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_header))
 <BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[8c]"></a>boot_verify_get_public_key</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_public_key))
+<P><STRONG><a name="[8d]"></a>boot_verify_get_public_key</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, boot_verify.o(.text.boot_verify_get_public_key))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
@@ -567,7 +568,7 @@ Global Symbols
 <LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_crc32_continue
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
@@ -584,11 +585,13 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[5d]"></a>can_busoff_get</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_busoff_get))
-<BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
+<BR><BR>[Called By]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
+<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
 </UL>
 
 <P><STRONG><a name="[5e]"></a>can_busoff_reset</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_can.o(.text.can_busoff_reset))
-<BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
+<BR><BR>[Called By]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
+<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_err_irq_handler
 </UL>
 
 <P><STRONG><a name="[4a]"></a>can_driver_err_irq_handler</STRONG> (Thumb, 116 bytes, Stack size 8 bytes, can_driver.o(.text.can_driver_err_irq_handler))
@@ -622,7 +625,8 @@ Global Symbols
 <LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_can_clock_select
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_clock_enable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<BR>[Called By]<UL><LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[80]"></a>can_driver_poll</STRONG> (Thumb, 162 bytes, Stack size 48 bytes, can_driver.o(.text.can_driver_poll))
@@ -632,10 +636,10 @@ Global Symbols
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[93]"></a>can_driver_recv</STRONG> (Thumb, 140 bytes, Stack size 8 bytes, can_driver.o(.text.can_driver_recv))
+<P><STRONG><a name="[94]"></a>can_driver_recv</STRONG> (Thumb, 140 bytes, Stack size 8 bytes, can_driver.o(.text.can_driver_recv))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = can_driver_recv
 </UL>
-<BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<BR>[Called By]<UL><LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
 </UL>
 
 <P><STRONG><a name="[7d]"></a>can_driver_register_rx_callback</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, can_driver.o(.text.can_driver_register_rx_callback))
@@ -662,8 +666,11 @@ Global Symbols
 <LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_stb_status_get
 <LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_transmit_status_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
+<LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
+<LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[76]"></a>can_driver_wait_tx_idle</STRONG> (Thumb, 60 bytes, Stack size 40 bytes, can_driver.o(.text.can_driver_wait_tx_idle))
@@ -749,32 +756,32 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 
-<P><STRONG><a name="[ae]"></a>crm_ahb_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_ahb_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[af]"></a>crm_ahb_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_ahb_div_set))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[b1]"></a>crm_apb1_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb1_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[b2]"></a>crm_apb1_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb1_div_set))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[b0]"></a>crm_apb2_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb2_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[b1]"></a>crm_apb2_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb2_div_set))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[af]"></a>crm_apb3_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb3_div_set))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[b0]"></a>crm_apb3_div_set</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_apb3_div_set))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[b2]"></a>crm_auto_step_mode_enable</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_auto_step_mode_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[b3]"></a>crm_auto_step_mode_enable</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_auto_step_mode_enable))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[61]"></a>crm_can_clock_select</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_can_clock_select))
 <BR><BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[ab]"></a>crm_clock_source_enable</STRONG> (Thumb, 106 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_clock_source_enable))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[ac]"></a>crm_clock_source_enable</STRONG> (Thumb, 106 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_clock_source_enable))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[7b]"></a>crm_flag_clear</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_flag_clear))
@@ -783,16 +790,16 @@ Global Symbols
 
 <P><STRONG><a name="[7a]"></a>crm_flag_get</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_flag_get))
 <BR><BR>[Called By]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
-<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[ac]"></a>crm_hext_stable_wait</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_hext_stable_wait))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[ad]"></a>crm_hext_stable_wait</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_hext_stable_wait))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
 <P><STRONG><a name="[4f]"></a>crm_periph_clock_enable</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_periph_clock_enable))
 <BR><BR>[Called By]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_to_app
-<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
@@ -801,21 +808,21 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_reset
 </UL>
 
-<P><STRONG><a name="[ad]"></a>crm_pll_config</STRONG> (Thumb, 92 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_pll_config))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[ae]"></a>crm_pll_config</STRONG> (Thumb, 92 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_pll_config))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[aa]"></a>crm_reset</STRONG> (Thumb, 82 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_reset))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[ab]"></a>crm_reset</STRONG> (Thumb, 82 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_reset))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[b3]"></a>crm_sysclk_switch</STRONG> (Thumb, 58 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<P><STRONG><a name="[b4]"></a>crm_sysclk_switch</STRONG> (Thumb, 58 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[b4]"></a>crm_sysclk_switch_status_get</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch_status_get))
-<BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
-<LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
+<P><STRONG><a name="[b5]"></a>crm_sysclk_switch_status_get</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, at32f422_426_crm.o(.text.crm_sysclk_switch_status_get))
+<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
 </UL>
 
 <P><STRONG><a name="[79]"></a>detect_boot_reason</STRONG> (Thumb, 68 bytes, Stack size 24 bytes, boot_trial.o(.text.detect_boot_reason))
@@ -827,8 +834,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[7c]"></a>enter_safe_mode</STRONG> (Thumb, 976 bytes, Stack size 8 bytes, boot_safe_mode.o(.text.enter_safe_mode))
-<BR><BR>[Stack]<UL><LI>Max Depth = 2368 + Unknown Stack Size
+<P><STRONG><a name="[7c]"></a>enter_safe_mode</STRONG> (Thumb, 1060 bytes, Stack size 16 bytes, boot_safe_mode.o(.text.enter_safe_mode))
+<BR><BR>[Stack]<UL><LI>Max Depth = 2376 + Unknown Stack Size
 <LI>Call Chain = enter_safe_mode &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[89]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_header
@@ -840,6 +847,7 @@ Global Symbols
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_poll
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_init
+<LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
 <LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
@@ -849,6 +857,7 @@ Global Symbols
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
 <LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_register_rx_callback
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -860,7 +869,7 @@ Global Symbols
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[90]"></a>flash_sector_erase</STRONG> (Thumb, 130 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_sector_erase))
+<P><STRONG><a name="[91]"></a>flash_sector_erase</STRONG> (Thumb, 130 bytes, Stack size 0 bytes, at32f422_426_flash.o(.text.flash_sector_erase))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 <LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;meta_write_to_flash
 </UL>
@@ -877,15 +886,15 @@ Global Symbols
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[a2]"></a>gpio_bits_reset</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_reset))
-<BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<P><STRONG><a name="[a3]"></a>gpio_bits_reset</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_reset))
+<BR><BR>[Called By]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[a1]"></a>gpio_bits_set</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_set))
-<BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<P><STRONG><a name="[a2]"></a>gpio_bits_set</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_gpio.o(.text.gpio_bits_set))
+<BR><BR>[Called By]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
@@ -921,13 +930,13 @@ Global Symbols
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[91]"></a>isotp_rx_process</STRONG> (Thumb, 500 bytes, Stack size 32 bytes, isotp.o(.text.isotp_rx_process))
+<P><STRONG><a name="[92]"></a>isotp_rx_process</STRONG> (Thumb, 500 bytes, Stack size 32 bytes, isotp.o(.text.isotp_rx_process))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
 <LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
-<BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<BR>[Called By]<UL><LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 <LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_rx_handler
 </UL>
@@ -937,13 +946,12 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
 <LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
-<BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
-<LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
+<BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
@@ -953,16 +961,16 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
 <LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_to_app
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;select_boot_slot
-<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
+<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;try_boot_slot
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;select_boot_slot
+<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;process_trial_state
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 <LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;detect_boot_reason
 <LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_init
-<LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
-<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
-<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
+<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_drv_init
+<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_priority_group_config
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
@@ -973,11 +981,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[99]"></a>nvic_priority_group_config</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, at32f422_426_misc.o(.text.nvic_priority_group_config))
+<P><STRONG><a name="[9a]"></a>nvic_priority_group_config</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, at32f422_426_misc.o(.text.nvic_priority_group_config))
 <BR><BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[9b]"></a>process_trial_state</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, boot_trial.o(.text.process_trial_state))
+<P><STRONG><a name="[9c]"></a>process_trial_state</STRONG> (Thumb, 124 bytes, Stack size 0 bytes, boot_trial.o(.text.process_trial_state))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = process_trial_state &rArr; boot_metadata_save &rArr; meta_write_to_flash
 </UL>
 <BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
@@ -985,7 +993,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[9c]"></a>select_boot_slot</STRONG> (Thumb, 30 bytes, Stack size 0 bytes, boot_trial.o(.text.select_boot_slot))
+<P><STRONG><a name="[9d]"></a>select_boot_slot</STRONG> (Thumb, 30 bytes, Stack size 0 bytes, boot_trial.o(.text.select_boot_slot))
 <BR><BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
@@ -994,18 +1002,18 @@ Global Symbols
 <LI>Call Chain = sha256_final &rArr; sha256_transform
 </UL>
 <BR>[Calls]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
-<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[8d]"></a>sha256_hash</STRONG> (Thumb, 154 bytes, Stack size 136 bytes, sha256.o(.text.sha256_hash))
+<P><STRONG><a name="[8e]"></a>sha256_hash</STRONG> (Thumb, 154 bytes, Stack size 136 bytes, sha256.o(.text.sha256_hash))
 <BR><BR>[Stack]<UL><LI>Max Depth = 488 + Unknown Stack Size
 <LI>Call Chain = sha256_hash &rArr; sha256_final &rArr; sha256_transform
 </UL>
 <BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
 <LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
@@ -1021,7 +1029,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 352<LI>Call Chain = sha256_update &rArr; sha256_transform
 </UL>
 <BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
-<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_transform
 </UL>
 <BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
@@ -1029,13 +1037,13 @@ Global Symbols
 <P><STRONG><a name="[65]"></a>sit1145_init</STRONG> (Thumb, 568 bytes, Stack size 80 bytes, sit1145.o(.text.sit1145_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = sit1145_init &rArr; sit1145_read_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<BR>[Calls]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 <LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_enable
-<LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_init
-<LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_default_para_init
-<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
+<LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_init
+<LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_default_para_init
+<LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_pin_mux_config
 <LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_init
 <LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_default_para_init
@@ -1047,41 +1055,41 @@ Global Symbols
 <P><STRONG><a name="[82]"></a>sit1145_normal_mode_set</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, sit1145.o(.text.sit1145_normal_mode_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<BR>[Calls]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
-<P><STRONG><a name="[a5]"></a>sit1145_read_reg</STRONG> (Thumb, 216 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_read_reg))
+<P><STRONG><a name="[a6]"></a>sit1145_read_reg</STRONG> (Thumb, 216 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_read_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = sit1145_read_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_flag_get
-<LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_receive
-<LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_transmit
-<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
+<BR>[Calls]<UL><LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_flag_get
+<LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_receive
+<LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_transmit
+<LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
 </UL>
 <BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[a6]"></a>sit1145_write_reg</STRONG> (Thumb, 212 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_write_reg))
+<P><STRONG><a name="[a7]"></a>sit1145_write_reg</STRONG> (Thumb, 212 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_write_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = sit1145_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_flag_get
-<LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_receive
-<LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_transmit
-<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
+<BR>[Calls]<UL><LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_flag_get
+<LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_receive
+<LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_i2s_data_transmit
+<LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_reset
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_bits_set
 </UL>
 <BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[a3]"></a>spi_default_para_init</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_default_para_init))
+<P><STRONG><a name="[a4]"></a>spi_default_para_init</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_default_para_init))
 <BR><BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
@@ -1090,63 +1098,64 @@ Global Symbols
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[a9]"></a>spi_i2s_data_receive</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_data_receive))
-<BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<P><STRONG><a name="[aa]"></a>spi_i2s_data_receive</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_data_receive))
+<BR><BR>[Called By]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 </UL>
 
-<P><STRONG><a name="[a8]"></a>spi_i2s_data_transmit</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_data_transmit))
-<BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<P><STRONG><a name="[a9]"></a>spi_i2s_data_transmit</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_data_transmit))
+<BR><BR>[Called By]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 </UL>
 
-<P><STRONG><a name="[a7]"></a>spi_i2s_flag_get</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_flag_get))
-<BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
-<LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<P><STRONG><a name="[a8]"></a>spi_i2s_flag_get</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_i2s_flag_get))
+<BR><BR>[Called By]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
 </UL>
 
-<P><STRONG><a name="[a4]"></a>spi_init</STRONG> (Thumb, 268 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_init))
+<P><STRONG><a name="[a5]"></a>spi_init</STRONG> (Thumb, 268 bytes, Stack size 0 bytes, at32f422_426_spi.o(.text.spi_init))
 <BR><BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
-<P><STRONG><a name="[98]"></a>system_clock_config</STRONG> (Thumb, 150 bytes, Stack size 8 bytes, at32f422_426_clock.o(.text.system_clock_config))
+<P><STRONG><a name="[99]"></a>system_clock_config</STRONG> (Thumb, 150 bytes, Stack size 8 bytes, at32f422_426_clock.o(.text.system_clock_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = system_clock_config &rArr; system_core_clock_update
 </UL>
-<BR>[Calls]<UL><LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
-<LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_auto_step_mode_enable
-<LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch_status_get
-<LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch
-<LI><a href="#[ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_pll_config
-<LI><a href="#[af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_apb3_div_set
-<LI><a href="#[b0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_apb2_div_set
-<LI><a href="#[b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_apb1_div_set
-<LI><a href="#[ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_ahb_div_set
-<LI><a href="#[ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_clock_source_enable
-<LI><a href="#[ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_hext_stable_wait
+<BR>[Calls]<UL><LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_core_clock_update
+<LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_auto_step_mode_enable
+<LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch_status_get
+<LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch
+<LI><a href="#[ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_pll_config
+<LI><a href="#[b0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_apb3_div_set
+<LI><a href="#[b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_apb2_div_set
+<LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_apb1_div_set
+<LI><a href="#[af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_ahb_div_set
+<LI><a href="#[ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_clock_source_enable
+<LI><a href="#[ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_hext_stable_wait
 <LI><a href="#[7a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_flag_get
-<LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_reset
+<LI><a href="#[ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_reset
 <LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_periph_clock_enable
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[b5]"></a>system_core_clock_update</STRONG> (Thumb, 224 bytes, Stack size 16 bytes, system_at32f422_426.o(.text.system_core_clock_update))
+<P><STRONG><a name="[b6]"></a>system_core_clock_update</STRONG> (Thumb, 224 bytes, Stack size 16 bytes, system_at32f422_426.o(.text.system_core_clock_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = system_core_clock_update
 </UL>
-<BR>[Calls]<UL><LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch_status_get
+<BR>[Calls]<UL><LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crm_sysclk_switch_status_get
 </UL>
-<BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
+<BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_clock_config
 </UL>
 
-<P><STRONG><a name="[9a]"></a>timer_drv_init</STRONG> (Thumb, 110 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_drv_init))
+<P><STRONG><a name="[9b]"></a>timer_drv_init</STRONG> (Thumb, 110 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_drv_init))
 <BR><BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[77]"></a>timer_get_tick</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, timer_drv.o(.text.timer_get_tick))
-<BR><BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
-<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<BR><BR>[Called By]<UL><LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_wait_cts
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
+<LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
 <LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
@@ -1165,34 +1174,35 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysTick_Handler
 </UL>
 
-<P><STRONG><a name="[9d]"></a>try_boot_slot</STRONG> (Thumb, 96 bytes, Stack size 24 bytes, boot_trial.o(.text.try_boot_slot))
+<P><STRONG><a name="[9e]"></a>try_boot_slot</STRONG> (Thumb, 96 bytes, Stack size 24 bytes, boot_trial.o(.text.try_boot_slot))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2384 + Unknown Stack Size
 <LI>Call Chain = try_boot_slot &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
-<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
-<LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_vectors_ok
+<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
+<LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_jump_vectors_ok
 <LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
+<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[83]"></a>uECC_set_progress_cb</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, uecc.o(.text.uECC_set_progress_cb))
-<BR><BR>[Called By]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
 
 <P><STRONG><a name="[5b]"></a>uECC_verify</STRONG> (Thumb, 666 bytes, Stack size 904 bytes, uecc.o(.text.uECC_verify))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2184 + Unknown Stack Size
 <LI>Call Chain = uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;memcmp
-<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
-<LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;bytes_to_w256
+<BR>[Calls]<UL><LI><a href="#[b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;memcmp
+<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
+<LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;bytes_to_w256
 </UL>
 <BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
@@ -1202,9 +1212,9 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[34]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_lib_init_fp_1
 </UL>
 
-<P><STRONG><a name="[eb]"></a>__fplib_config_fpu_vfp</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
+<P><STRONG><a name="[ec]"></a>__fplib_config_fpu_vfp</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
 
-<P><STRONG><a name="[ec]"></a>__fplib_config_pureend_doubles</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
+<P><STRONG><a name="[ed]"></a>__fplib_config_pureend_doubles</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
 <P>
 <H3>
 Local Symbols
@@ -1220,7 +1230,7 @@ Local Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = meta_write_to_flash
 </UL>
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
 <LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
 </UL>
@@ -1231,140 +1241,158 @@ Local Symbols
 <P><STRONG><a name="[2d]"></a>safe_mode_can_rx_handler</STRONG> (Thumb, 44 bytes, Stack size 0 bytes, boot_safe_mode.o(.text.safe_mode_can_rx_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = safe_mode_can_rx_handler &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
-<BR>[Calls]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<BR>[Calls]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
 </UL>
-<P><STRONG><a name="[2e]"></a>isotp_message_received</STRONG> (Thumb, 3544 bytes, Stack size 88 bytes, boot_safe_mode.o(.text.isotp_message_received))
+<P><STRONG><a name="[2e]"></a>isotp_message_received</STRONG> (Thumb, 3696 bytes, Stack size 88 bytes, boot_safe_mode.o(.text.isotp_message_received))
 <BR><BR>[Stack]<UL><LI>Max Depth = 2448 + Unknown Stack Size
 <LI>Call Chain = isotp_message_received &rArr; boot_verify_image &rArr; uECC_verify &rArr; point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
-<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_public_key
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_get_public_key
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
+<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_set_progress_cb
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
-<LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SystemReset
+<LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__NVIC_SystemReset
+<LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
 <LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
-<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
+<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_size
 <LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_save
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
+<LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_metadata_slot_addr
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_word_program
-<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
+<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_sector_erase
 <LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_lock
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_unlock
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
 </UL>
-<P><STRONG><a name="[2f]"></a>safe_mode_long_op_pump</STRONG> (Thumb, 162 bytes, Stack size 24 bytes, boot_safe_mode.o(.text.safe_mode_long_op_pump))
-<BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = safe_mode_long_op_pump &rArr; isotp_tx_send &rArr; isotp_wait_cts &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
+<P><STRONG><a name="[2f]"></a>safe_mode_long_op_pump</STRONG> (Thumb, 176 bytes, Stack size 24 bytes, boot_safe_mode.o(.text.safe_mode_long_op_pump))
+<BR><BR>[Stack]<UL><LI>Max Depth = 272<LI>Call Chain = safe_mode_long_op_pump &rArr; safe_mode_can_busoff_recover &rArr; can_driver_init &rArr; sit1145_init &rArr; sit1145_read_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
-<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
+<BR>[Calls]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
+<LI><a href="#[8a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_can_busoff_recover
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_poll
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_wait_tx_idle
+<LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_send
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
 </UL>
-<BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
+<BR>[Address Reference Count : 2]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
+<LI> boot_safe_mode.o(.text.isotp_message_received)
 </UL>
-<P><STRONG><a name="[8a]"></a>__NVIC_SystemReset</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, boot_safe_mode.o(.text.__NVIC_SystemReset))
+<P><STRONG><a name="[8a]"></a>safe_mode_can_busoff_recover</STRONG> (Thumb, 84 bytes, Stack size 16 bytes, boot_safe_mode.o(.text.safe_mode_can_busoff_recover))
+<BR><BR>[Stack]<UL><LI>Max Depth = 248<LI>Call Chain = safe_mode_can_busoff_recover &rArr; can_driver_init &rArr; sit1145_init &rArr; sit1145_read_reg
+</UL>
+<BR>[Calls]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_reset
+<LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_get
+<LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
+</UL>
+<BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
+<LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
+<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+</UL>
+
+<P><STRONG><a name="[8b]"></a>__NVIC_SystemReset</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, boot_safe_mode.o(.text.__NVIC_SystemReset))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 </UL>
 
-<P><STRONG><a name="[9f]"></a>sha256_transform</STRONG> (Thumb, 312 bytes, Stack size 328 bytes, sha256.o(.text.sha256_transform))
+<P><STRONG><a name="[a0]"></a>sha256_transform</STRONG> (Thumb, 312 bytes, Stack size 328 bytes, sha256.o(.text.sha256_transform))
 <BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = sha256_transform
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_final
 <LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_update
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sha256_hash
 </UL>
 
-<P><STRONG><a name="[b7]"></a>bytes_to_w256</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, uecc.o(.text.bytes_to_w256))
+<P><STRONG><a name="[b8]"></a>bytes_to_w256</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, uecc.o(.text.bytes_to_w256))
 <BR><BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[a0]"></a>sinv</STRONG> (Thumb, 220 bytes, Stack size 112 bytes, uecc.o(.text.sinv))
+<P><STRONG><a name="[a1]"></a>sinv</STRONG> (Thumb, 220 bytes, Stack size 112 bytes, uecc.o(.text.sinv))
 <BR><BR>[Stack]<UL><LI>Max Depth = 392 + Unknown Stack Size
 <LI>Call Chain = sinv &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<BR>[Calls]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[95]"></a>modmul</STRONG> (Thumb, 558 bytes, Stack size 280 bytes, uecc.o(.text.modmul))
+<P><STRONG><a name="[96]"></a>modmul</STRONG> (Thumb, 558 bytes, Stack size 280 bytes, uecc.o(.text.modmul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 280 + Unknown Stack Size
 <LI>Call Chain = modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 </UL>
-<BR>[Called By]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
+<BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_to_affine
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sinv
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[9e]"></a>point_mul</STRONG> (Thumb, 156 bytes, Stack size 232 bytes, uecc.o(.text.point_mul))
+<P><STRONG><a name="[9f]"></a>point_mul</STRONG> (Thumb, 156 bytes, Stack size 232 bytes, uecc.o(.text.point_mul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1280 + Unknown Stack Size
 <LI>Call Chain = point_mul &rArr; jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
-<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[94]"></a>jp_add</STRONG> (Thumb, 1138 bytes, Stack size 496 bytes, uecc.o(.text.jp_add))
+<P><STRONG><a name="[95]"></a>jp_add</STRONG> (Thumb, 1138 bytes, Stack size 496 bytes, uecc.o(.text.jp_add))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1048 + Unknown Stack Size
 <LI>Call Chain = jp_add &rArr; jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<BR>[Calls]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
-<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_double
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[97]"></a>jp_to_affine</STRONG> (Thumb, 364 bytes, Stack size 152 bytes, uecc.o(.text.jp_to_affine))
+<P><STRONG><a name="[98]"></a>jp_to_affine</STRONG> (Thumb, 364 bytes, Stack size 152 bytes, uecc.o(.text.jp_to_affine))
 <BR><BR>[Stack]<UL><LI>Max Depth = 432 + Unknown Stack Size
 <LI>Call Chain = jp_to_affine &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<BR>[Calls]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uECC_verify
 </UL>
 
-<P><STRONG><a name="[96]"></a>jp_double</STRONG> (Thumb, 1650 bytes, Stack size 272 bytes, uecc.o(.text.jp_double))
+<P><STRONG><a name="[97]"></a>jp_double</STRONG> (Thumb, 1650 bytes, Stack size 272 bytes, uecc.o(.text.jp_double))
 <BR><BR>[Stack]<UL><LI>Max Depth = 552 + Unknown Stack Size
 <LI>Call Chain = jp_double &rArr; modmul
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
+<BR>[Calls]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;modmul
 </UL>
-<BR>[Called By]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
+<BR>[Called By]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;jp_add
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;point_mul
 </UL>
 
-<P><STRONG><a name="[92]"></a>isotp_wait_cts</STRONG> (Thumb, 266 bytes, Stack size 64 bytes, isotp.o(.text.isotp_wait_cts))
+<P><STRONG><a name="[93]"></a>isotp_wait_cts</STRONG> (Thumb, 266 bytes, Stack size 64 bytes, isotp.o(.text.isotp_wait_cts))
 <BR><BR>[Stack]<UL><LI>Max Depth = 240<LI>Call Chain = isotp_wait_cts &rArr; isotp_rx_process &rArr; can_driver_send &rArr; can_txbuf_write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
-<LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_rx_process
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_get_tick
-<LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_recv
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_recv
 </UL>
 <BR>[Called By]<UL><LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_tx_send
 </UL>
