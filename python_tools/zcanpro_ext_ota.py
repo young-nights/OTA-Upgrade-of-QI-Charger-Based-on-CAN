@@ -346,7 +346,7 @@ def uds_init():
         "frame_type": 1,
         "trans_stmin_valid": 1,
         "trans_stmin": 1,
-        "enhanced_timeout_ms": 5000,
+        "enhanced_timeout_ms": 30000,
     })
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
