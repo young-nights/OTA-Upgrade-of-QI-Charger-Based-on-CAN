@@ -120,8 +120,9 @@ void can_driver_init(void)
     (void)sit1145_init();
   }
 
-  /* reset CAN peripheral */
+  /* CRM reset leaves CTRLSTAT.RESET=1; config bits are only writable then */
   can_reset(CAN1);
+  can_software_reset(CAN1, TRUE);
 
   /* set CAN to normal communication mode */
   can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
@@ -160,7 +161,10 @@ void can_driver_init(void)
   can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
 
-  /* enable RX interrupt and error interrupt */
+  /* leave software reset so the controller actually participates on the bus */
+  can_software_reset(CAN1, FALSE);
+
+  /* enable RX interrupt and error interrupt after leaving reset */
   can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);
   can_interrupt_enable(CAN1, CAN_EIE_INT, TRUE);
 

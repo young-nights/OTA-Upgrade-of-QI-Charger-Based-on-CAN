@@ -436,16 +436,31 @@ def run_ota(bus_id):
     try:
         if RESET_APP_TO_BOOT:
             _log("---- APP 进 Boot ----")
-            uds_try(bus_id, SID_DSC, [0x02])
+            try:
+                uds_req(bus_id, SID_DSC, [0x02])
+            except Exception as e:
+                _log("APP 10 02 失败，仍继续: " + str(e))
             time.sleep(0.05)
             uds_try(bus_id, SID_ER, [0x01])
             t0 = time.time()
-            while time.time() - t0 < 2.5:
+            while time.time() - t0 < 4.0:
                 if stopTask:
                     raise RuntimeError("用户停止脚本")
                 time.sleep(0.1)
         _log("---- Programming ----")
-        uds_req(bus_id, SID_DSC, [0x02])
+        last_err = None
+        for attempt in range(1, 9):
+            try:
+                uds_req(bus_id, SID_DSC, [0x02])
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                _log("Programming 10 02 第 %d/8 次失败: %s" % (attempt, e))
+                if attempt < 8:
+                    time.sleep(0.5)
+        if last_err is not None:
+            raise last_err
         _log("---- SecurityAccess ----")
         rx = uds_req(bus_id, SID_SA, [0x01])
         if len(rx) < 6:
