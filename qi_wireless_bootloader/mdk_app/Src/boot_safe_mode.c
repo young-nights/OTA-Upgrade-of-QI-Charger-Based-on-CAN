@@ -136,7 +136,7 @@ static uint8_t safe_mode_can_busoff_recover(void)
     }
     can_busoff_reset(CAN1);
     start = timer_get_tick();
-    while ((timer_get_tick() - start) < 5U)
+    while ((timer_get_tick() - start) < 10U)
     {
       if (can_busoff_get(CAN1) == RESET)
       {
@@ -144,11 +144,8 @@ static uint8_t safe_mode_can_busoff_recover(void)
       }
     }
   }
-  /* last resort: re-init CAN controller */
-  can_software_reset(CAN1, TRUE);
-  can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
-  can_software_reset(CAN1, FALSE);
-  (void)sit1145_normal_mode_set();
+  /* last resort: full re-init (restores bit timing + filters) */
+  can_driver_init();
   return (can_busoff_get(CAN1) == RESET) ? 1U : 0U;
 }
 
