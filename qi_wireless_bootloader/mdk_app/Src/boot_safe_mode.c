@@ -1401,21 +1401,32 @@ static void safe_mode_finish_transfer_exit(void)
    * P2* with 0x78, then retry 0x77. Host timeout is otherwise intermittent. */
   {
     uint8_t n;
+    /* Metadata save stalls CPU; CAN is bus-off. Full recovery + non-blocking 0x77. */
     (void)safe_mode_can_busoff_recover();
     (void)sit1145_normal_mode_set();
-    (void)can_driver_wait_tx_idle(50U);
+    (void)can_driver_wait_tx_idle(20U);
     safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
     (void)can_driver_wait_tx_idle(10U);
-    (void)sit1145_normal_mode_set();
-    resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
-    for (n = 0U; n < 5U; n++)
+    /* Non-blocking 0x77: build ISO-TP SF and send via can_driver_send directly.
+     * isotp_tx_send blocks 1s on bus-off; that kills the main loop. */
     {
-      if (isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1) == 0)
+      uint8_t sf77[8];
+      uint8_t attempt;
+      sf77[0] = 0x01U;  /* ISO-TP SF, DLC=1 */
+      sf77[1] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
+      sf77[2] = 0xCCU; sf77[3] = 0xCCU; sf77[4] = 0xCCU;
+      sf77[5] = 0xCCU; sf77[6] = 0xCCU; sf77[7] = 0xCCU;
+      for (attempt = 0U; attempt < 10U; attempt++)
       {
-        (void)can_driver_wait_tx_idle(50U);
-        break;
+        if (can_driver_send(SAFE_MODE_CAN_ID_RESPONSE, sf77, 8) == 0)
+        {
+          (void)can_driver_wait_tx_idle(20U);
+          break;
+        }
+        /* bus-off: recover and retry */
+        (void)safe_mode_can_busoff_recover();
+        (void)sit1145_normal_mode_set();
       }
-      (void)sit1145_normal_mode_set();
     }
   }
   g_xfer_exit_busy = 0U;
