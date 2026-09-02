@@ -460,7 +460,8 @@ static void safe_mode_send_pending(uint8_t service_id)
   resp[0] = UDS_NEGATIVE_RESPONSE;
   resp[1] = service_id;
   resp[2] = UDS_NRC_RESPONSE_PENDING;  /* 0x78 */
-  safe_mode_send_response(resp, 3);
+  /* non-blocking send: do not wait for TX idle; main loop must not stall */
+  isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 3);
 }
 
 static uint8_t  g_long_op_sid;
@@ -499,8 +500,15 @@ static void safe_mode_long_op_pump(void)
     g_long_op_last_78_ms = now;
     (void)safe_mode_can_busoff_recover();
     (void)sit1145_normal_mode_set();
-    safe_mode_send_pending(g_long_op_sid);
-    (void)can_driver_wait_tx_idle(50U);
+    /* non-blocking: just try once; if bus-off, recovery above handles it */
+    {
+      uint8_t nrc_buf[3];
+      nrc_buf[0] = UDS_NEGATIVE_RESPONSE;
+      nrc_buf[1] = g_long_op_sid;
+      nrc_buf[2] = UDS_NRC_RESPONSE_PENDING;
+      isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, nrc_buf, 3);
+    }
+    (void)can_driver_wait_tx_idle(20U);
   }
 
   /* Nested poll only while 0x37 verify owns the loop. Erase/0x27 already
@@ -1400,8 +1408,14 @@ static void safe_mode_finish_transfer_exit(void)
     (void)safe_mode_can_busoff_recover();
     (void)sit1145_normal_mode_set();
     (void)can_driver_wait_tx_idle(50U);
-    safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
-    (void)can_driver_wait_tx_idle(50U);
+    {
+      uint8_t nrc_buf[3];
+      nrc_buf[0] = UDS_NEGATIVE_RESPONSE;
+      nrc_buf[1] = UDS_REQUEST_TRANSFER_EXIT;
+      nrc_buf[2] = UDS_NRC_RESPONSE_PENDING;
+      isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, nrc_buf, 3);
+    }
+    (void)can_driver_wait_tx_idle(20U);
     (void)sit1145_normal_mode_set();
     resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
     for (n = 0U; n < 5U; n++)
