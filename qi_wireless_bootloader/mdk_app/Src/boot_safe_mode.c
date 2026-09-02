@@ -521,9 +521,11 @@ static void safe_mode_long_op_pump(void)
 static void safe_mode_begin_long_op(uint8_t service_id)
 {
   g_long_op_sid = service_id;
-  safe_mode_send_pending(service_id);
-  (void)can_driver_wait_tx_idle(50U);
+  (void)safe_mode_can_busoff_recover();
   (void)sit1145_normal_mode_set();
+  safe_mode_send_pending(service_id);
+  /* Must wait for TX to actually leave the CAN controller before Flash stalls CPU */
+  (void)can_driver_wait_tx_idle(50U);
   g_long_op_last_78_ms = timer_get_tick();
 }
 
@@ -843,25 +845,35 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
         safe_mode_begin_long_op(service_id);
 
+        /* ECDSA verify takes 100-500ms; pump must keep SIT1145 alive and
+         * send periodic 0x78. Without this callback, uECC_verify blocks
+         * the main loop and the transceiver drops to Standby. */
+        uECC_set_progress_cb(safe_mode_long_op_pump);
+
         if (verify_security_ecdsa_signature())
         {
+          uECC_set_progress_cb((void (*)(void))0);
           g_security_unlocked = 1;
           g_security_fail_count = 0;
           g_seed_generated = 0;
           g_sa_sig_bytes_received = 0;
 
+          (void)safe_mode_can_busoff_recover();
           safe_mode_end_long_op();
           resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
           resp[1] = sub_func;
           safe_mode_send_response(resp, 2);
+          (void)can_driver_wait_tx_idle(50U);
         }
         else
         {
+          uECC_set_progress_cb((void (*)(void))0);
           g_security_unlocked = 0;
           g_security_fail_count++;
           g_seed_generated = 0;
           g_sa_sig_bytes_received = 0;
 
+          (void)safe_mode_can_busoff_recover();
           if (g_security_fail_count >= SECURITY_MAX_FAILURES)
           {
             g_security_lockout_until_ms = timer_get_tick() + SECURITY_LOCKOUT_MS;
@@ -873,6 +885,7 @@ static void uds_process_message(uint8_t *data, uint16_t len)
             safe_mode_end_long_op();
             safe_mode_send_nrc(service_id, UDS_NRC_INVALID_KEY);
           }
+          (void)can_driver_wait_tx_idle(50U);
         }
       }
       else
@@ -1067,12 +1080,16 @@ static void uds_process_message(uint8_t *data, uint16_t len)
 
         dl_reset_state();
 
-        safe_mode_end_long_op();
+        /* Flash erase may have caused bus-off; recover before responding */
+        (void)safe_mode_can_busoff_recover();
+        (void)sit1145_normal_mode_set();
+        (void)can_driver_wait_tx_idle(20U);
         resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
         resp[1] = data[1];
         resp[2] = data[2];
         resp[3] = data[3];
         safe_mode_send_response(resp, 4);
+        (void)can_driver_wait_tx_idle(50U);
       }
       else if (data[1] == 0x01U && routine_id == 0xFF01U)
       {
