@@ -409,8 +409,29 @@ def send_security_key(bus_id, sig):
 
 
 def confirm_app_after_reset(bus_id):
-    rx = uds_req(bus_id, SID_RDBI, [0xF1, 0x95])
-    _log("版本: " + _hex(rx[3:]))
+    """Wait for MCU after 0x11. Do not use DID 0xF195: APP/Boot pad 32 bytes (ISO-TP FF)."""
+    last_err = None
+    rx = None
+    t0 = time.time()
+    while time.time() - t0 < 8.0:
+        if stopTask:
+            raise RuntimeError("用户停止脚本")
+        try:
+            rx = uds_req(bus_id, SID_RDBI, [0x21, 0x13])
+            last_err = None
+            break
+        except Exception as e:
+            last_err = e
+            _log("复位后 22 2113 等待: " + str(e))
+            time.sleep(0.4)
+    if last_err is not None:
+        raise RuntimeError("复位后无 UDS（跳转失败或 APP CAN 未起来）: " + str(last_err))
+    _log("复位后 DID 0x2113 slot=" + _hex((rx or [])[3:4]))
+    try:
+        fw = uds_req(bus_id, SID_RDBI, [0x20, 0x10])
+        _log("DID 0x2010 fw_type=" + _hex(fw[3:4]))
+    except UdsNrcError as e:
+        _log("DID 0x2010 NRC 0x%02X（Boot 无此 DID）" % e.nrc)
     try:
         uds_req(bus_id, SID_RD, [0x00])
     except UdsNrcError as e:
@@ -513,7 +534,7 @@ def run_ota(bus_id):
         _log("---- Reset ----")
         uds_try(bus_id, SID_ER, [0x01])
         t0 = time.time()
-        while time.time() - t0 < 3.0:
+        while time.time() - t0 < 5.0:
             if stopTask:
                 raise RuntimeError("用户停止脚本")
             time.sleep(0.1)
