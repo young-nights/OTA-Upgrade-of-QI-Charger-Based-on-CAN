@@ -1,0 +1,138 @@
+# 官方 IAP 例程 vs 自定义 Bootloader 对比
+
+> 对比来源：`K:\at32f422_426_usart_iap_demo\source_code` vs `ota-upgrade-of-qi-charger-based-on-can\qi_wireless_bootloader`
+> 更新：2026-09-02
+
+---
+
+## 1. 通信总线
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| 总线 | UART (USART1 115200) | CAN 2.0B 250kbps 扩展帧 (29-bit ID) |
+| 协议 | 私有协议（`0x5A` 头 + 累加校验和） | ISO 14229 UDS + ISO 15765-2 ISO-TP |
+| 传输层 | 字节流，无分段 | ISO-TP SF/FF/CF/FC，支持多帧流控 |
+| 物理层 | 直接 GPIO（PA9/PA10） | SIT1145 CAN 收发器 + SPI1 控制 |
+| 多节点 | ❌ 点对点 | ✅ 多节点总线，ID 寻址 |
+
+---
+
+## 2. 升级触发机制
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| APP→Boot 触发 | APP 收到 `0x5A 0xA5` → 写 `0x41544B38` 到 flag 区（`APP_START_ADDR - 0x800`） → NVIC 复位 | APP 收到 UDS `0x11 0x01` → 写 metadata `ota_state=DOWNLOADING` → NVIC 复位 |
+| Boot 入口判断 | 读 flag 区，`== 0x41544B38` 则进升级流程 | 读 metadata，`ota_state==DOWNLOADING` 则进 safe mode |
+| 跳 APP 条件 | `(*(uint32_t*)(APP_START_ADDR+4) & 0xFF000000) == 0x08000000` | `boot_verify_image()`（magic + length + CRC + SHA-256 + ECDSA） + `boot_jump_vectors_ok()` |
+| APP 侧配合 | APP 需实现 `iap_command_handle()` 监听 `0x5AA5` 并写 flag | APP 只需调 `ota_trigger_prepare()` 写 metadata |
+| 主机侧工具 | PC 串口工具发 `0x5A 0x01` 启动升级 | ZCANPRO UDS 脚本发 `0x10 0x02` + `0x11 0x01` |
+
+---
+
+## 3. Flash 布局
+
+| 区域 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| Boot 区 | `0x08000000 ~ 0x08003FFF`（16KB） | `0x08000000 ~ 0x08006FFF`（28KB） |
+| 升级 flag | `0x08003800`（Boot 前一个扇区，2KB） | metadata `0x0801C000` + backup `0x0801C800`（各 2KB） |
+| APP 区 | 单槽 `0x08004000` 起（全部剩余空间） | 双槽：A=`0x08007000`（42KB）、B=`0x08011800`（42KB） |
+| APP 入口 | `0x08004000` | Slot A: `0x08007100`（+256B header）、Slot B: `0x08011900` |
+| NVM 配置 | 无 | `0x0801E000 ~ 0x0801FFFF`（8KB） |
+| Device Info | 无 | `0x0801D000`（4KB，SN 等） |
+| 镜像头 | 无 | 256B XATO 头（magic + length + CRC32 + ECDSA 签名 + 版本 + 时间戳） |
+
+---
+
+## 4. 数据传输协议
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| 帧格式 | `[0x31][4B addr][2048B data][1B checksum]` | UDS `0x34` RequestDownload + `0x36` TransferData（128B/帧） + `0x37` TransferExit |
+| 每次传输量 | 2048 字节（一个 Flash 扇区） | 128 字节（可配置 `TRANSFER_BLOCK_DATA`） |
+| 校验 | 单字节累加和 | CRC32（镜像完整性） + SHA-256（签名哈希） + ECDSA P-256（来源验证） |
+| 流控 | 无（发完等 ACK） | ISO-TP FC（Block Size / STmin，支持慢速接收方） |
+| 应答 | `0xCC 0xDD` 成功 / `0xEE 0xFF` 失败 | UDS 正响应 `SID+0x40` 或 NRC `0x7F`（含 `0x78` ResponsePending） |
+| 错误处理 | 失败重置状态机 | NRC 分类（`0x11`/`0x13`/`0x22`/`0x24`/`0x31`/`0x33`/`0x35`/`0x72`/`0x73`） |
+
+---
+
+## 5. 安全机制
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| 签名校验 | ❌ 无 | ✅ ECDSA P-256（uECC 软件库，65B 公钥 + 64B 签名） |
+| 哈希校验 | ❌ 无 | ✅ SHA-256（镜像数据哈希） |
+| CRC 校验 | ❌ 无（仅 1B 累加和） | ✅ CRC32（IEEE 802.3） |
+| 安全访问 | ❌ 无 | ✅ UDS `0x27`（seed + ECDSA 签名验证，3 次失败锁 30s） |
+| 地址范围检查 | 简单：`addr >= APP_START_ADDR && addr < FLASH_END` | 完整：slot 边界检查 + Reset Handler 必须在 slot 内 + 镜像长度 ≤ slot 大小 |
+| 重放保护 | ❌ 无 | ✅ 签名绑定镜像内容（每次打包不同） |
+
+---
+
+## 6. 可靠性设计
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| 双槽 A/B | ❌ 单槽覆盖（升级失败则变砖） | ✅ 两个独立 slot，互相备份 |
+| Metadata 备份 | ❌ 单一 flag 扇区 | ✅ Primary + Backup 双份，带 CRC32 校验 |
+| Trial Boot | ❌ 无 | ✅ `PENDING→ACTIVE→CONFIRMED` 状态机，超时自动回滚 |
+| Safe Mode | ❌ 无（验证失败死循环） | ✅ 验证失败进 safe mode，允许重新下载 |
+| Bus-Off 恢复 | N/A（UART 无此问题） | ✅ 自动检测 + `can_driver_init()` 完整重建（含 bit timing + filter） |
+| Flash 写保护 | 仅地址范围检查 | 验签后才擦写 + slot 选择保护（不擦当前运行 slot） |
+| 电源异常恢复 | ❌ 无 | ✅ metadata 双备份 + trial 重试计数 |
+
+---
+
+## 7. APP 侧配合
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| 跳转前操作 | 禁用 TMR3/USART1/GPIOA + 清 NVIC | 禁用 CAN1/SPI1/SysTick + 清全部 NVIC + 清 CONTROL + 设 VTOR |
+| VTOR 处理 | 未设置（APP 自行处理） | Boot 设 `SCB->VTOR = app_addr`，APP 重设 `SCB->VTOR = &__Vectors` |
+| APP 入口 | `__set_MSP(*(uint32_t*)app_addr)` + 函数指针跳转 | `msr msp` + `bx` 内联汇编（更底层，无 C 调用约定依赖） |
+| OTA 触发 | APP 收到 `0x5AA5` → 写 flag → NVIC 复位 | APP UDS `0x11 0x01` → `ota_trigger_prepare()` 写 metadata → NVIC 复位 |
+| APP 验证 | Boot 不验证 APP 内容 | Boot 对 APP 做完整验签（magic + length + CRC + SHA-256 + ECDSA） |
+| 版本管理 | 无 | DID `0xF195`（32B ASCII 版本号，写在镜像头里） |
+
+---
+
+## 8. 代码规模
+
+| 维度 | 官方 IAP | 自定义 Bootloader |
+|------|----------|-------------------|
+| Boot 源文件 | 7 个（iap/flash/usart/tmr/main/clock/int） | ~15 个（boot_safe_mode/boot_verify/boot_jump/boot_metadata/boot_trial/can_driver/isotp/sit1145/sha256/uECC/...） |
+| Boot 编译大小 | ~4KB（预估） | ~21KB（编译产物） |
+| 核心逻辑复杂度 | 低（`iap.c` 状态机 ~200 行） | 高（`boot_safe_mode.c` ~1500 行，含 UDS 全量服务 + ECDSA + Flash 管理） |
+| 依赖库 | 仅 AT32 BSP | AT32 BSP + uECC + SHA-256 + ISO-TP |
+
+---
+
+## 9. 设计哲学对比
+
+| | 官方 IAP | 自定义 Bootloader |
+|---|---|---|
+| **定位** | 开发调试、简单场景 | 生产级车载/产线 OTA |
+| **安全等级** | 零安全（无签名、无加密） | 高安全（ECDSA + SHA-256 + 安全访问） |
+| **容错能力** | 低（单槽覆盖，失败变砖） | 高（双槽 + trial boot + 自动回滚 + safe mode） |
+| **协议标准** | 私有协议 | ISO 14229 UDS + ISO 15765-2 ISO-TP |
+| **可维护性** | 简单但不可扩展 | 模块化，可扩展（新增 UDS 服务、新增 slot） |
+
+---
+
+## 10. 官方例程值得借鉴的点
+
+1. **`app_load` 禁用外设再跳转**：你的 `boot_jump_to_app` 已经做了，而且更彻底（清 NVIC + CONTROL + VTOR）
+2. **`0xFF000000` 掩码快速判断 Reset Handler 合法性**：你的 `boot_jump_vectors_ok` 做了更严格的范围检查（SP 对齐 + Reset Handler 在 slot 内）
+3. **2KB 一次写入 + checksum**：简单高效，如果 OTA 场景不需要签名验证，可以降级用这个模式加快传输速度
+4. **升级 flag 用专用扇区**：你的 metadata 双备份方案更可靠，但官方的单扇区方案更简单
+
+---
+
+## 11. 关键差异总结
+
+```
+官方 IAP:  16KB Boot + 单槽 APP + UART + 私有协议 + 无安全 + 无容错
+自定义:    28KB Boot + 双槽 A/B + CAN + UDS 标准 + ECDSA 签名 + trial boot + 自动回滚
+```
+
+**结论**：官方 IAP 是最小可用方案，适合开发阶段快速迭代。自定义 Bootloader 是生产级方案，适合车载/产线批量 OTA。两者不可互相替代，但自定义方案在每个维度都更完善。
