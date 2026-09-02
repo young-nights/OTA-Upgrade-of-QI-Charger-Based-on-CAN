@@ -143,8 +143,9 @@ void can_driver_init(void)
   can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
   can_filter_struct.mask_para.id_type    = TRUE;
   can_filter_struct.mask_para.frame_type = TRUE;
-  can_filter_struct.mask_para.data_length = 0U;
-  can_filter_struct.mask_para.recv_frame = FALSE;
+  /* CAST ACF: mask 1=don't care. data_length 0 only accepts DLC=0 and drops UDS SF. */
+  can_filter_struct.mask_para.data_length = 0x0FU;
+  can_filter_struct.mask_para.recv_frame = TRUE;
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
 
@@ -156,8 +157,8 @@ void can_driver_init(void)
   can_filter_struct.mask_para.id         = 0x1FFFFF00U;
   can_filter_struct.mask_para.id_type    = TRUE;
   can_filter_struct.mask_para.frame_type = TRUE;
-  can_filter_struct.mask_para.data_length = 0U;
-  can_filter_struct.mask_para.recv_frame = FALSE;
+  can_filter_struct.mask_para.data_length = 0x0FU;
+  can_filter_struct.mask_para.recv_frame = TRUE;
   can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
 

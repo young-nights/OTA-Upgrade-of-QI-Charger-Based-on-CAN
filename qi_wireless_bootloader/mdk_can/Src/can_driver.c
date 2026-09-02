@@ -132,15 +132,33 @@ void can_driver_init(void)
   can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
   can_bittime_set(CAN1, &can_bittime_struct);
 
-  /* Filter 0: accept classic extended data frames.
+  /* Filter 0: physical UDS request 0x18DA0D03 (exact 29-bit ID).
    * CAST ACF: mask bit 1 = don't care, 0 = must match code.
-   * Default mask (id=0xFFFFFFFF, dlc=0xF) accepts any ID/DLC.
-   * Do not set mask.id or data_length to 0 — that would only pass ID=0, DLC=0. */
+   * data_length must stay 0xF; 0 only accepts DLC=0 and drops UDS SF. */
   can_filter_default_para_init(&can_filter_struct);
+  can_filter_struct.code_para.id         = CAN_ID_UDS_REQUEST;
   can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
   can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
+  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0x0FU;
+  can_filter_struct.mask_para.recv_frame = TRUE;
   can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
   can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
+
+  /* Filter 1: functional UDS 0x18DB33xx (SA ignored) */
+  can_filter_default_para_init(&can_filter_struct);
+  can_filter_struct.code_para.id         = 0x18DB3300U;
+  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
+  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
+  can_filter_struct.mask_para.id         = 0x1FFFFF00U;
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0x0FU;
+  can_filter_struct.mask_para.recv_frame = TRUE;
+  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
+  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
 
   /* leave software reset so the controller actually participates on the bus */
   can_software_reset(CAN1, FALSE);
