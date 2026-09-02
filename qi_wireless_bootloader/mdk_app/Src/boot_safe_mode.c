@@ -1362,13 +1362,29 @@ static void safe_mode_finish_transfer_exit(void)
 
   uECC_set_progress_cb((void (*)(void))0);
   boot_verify_set_progress_cb((void (*)(void))0);
+
+  /* Flash programming stalls the CPU; CAN may be bus-off. Recover, refresh
+   * P2* with 0x78, then retry 0x77. Host timeout is otherwise intermittent. */
+  {
+    uint8_t n;
+    (void)sit1145_normal_mode_set();
+    (void)can_driver_wait_tx_idle(50U);
+    safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
+    (void)can_driver_wait_tx_idle(50U);
+    (void)sit1145_normal_mode_set();
+    resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
+    for (n = 0U; n < 5U; n++)
+    {
+      if (isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1) == 0)
+      {
+        (void)can_driver_wait_tx_idle(50U);
+        break;
+      }
+      (void)sit1145_normal_mode_set();
+    }
+  }
   g_xfer_exit_busy = 0U;
   g_xfer_exit_pending = 0U;
-  (void)sit1145_normal_mode_set();
-  (void)can_driver_wait_tx_idle(50U);
-  resp[0] = (uint8_t)(UDS_REQUEST_TRANSFER_EXIT + UDS_POSITIVE_RESPONSE_OFFSET);
-  isotp_tx_send(SAFE_MODE_CAN_ID_RESPONSE, resp, 1);
-  (void)can_driver_wait_tx_idle(50U);
   g_s3_last_ms = timer_get_tick();
 }
 

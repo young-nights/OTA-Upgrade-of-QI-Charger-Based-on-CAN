@@ -530,7 +530,19 @@ def run_ota(bus_id):
             if off == size or (off % (TRANSFER_BLOCK_DATA * 16) == 0):
                 _log("  %d/%d" % (off, size))
         _log("---- TransferExit ----")
-        uds_req(bus_id, SID_RTE, [])
+        last_err = None
+        for attempt in range(1, 6):
+            try:
+                uds_req(bus_id, SID_RTE, [])
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                _log("0x37 第 %d/5 次: %s" % (attempt, e))
+                if attempt < 5:
+                    time.sleep(0.8)
+        if last_err is not None:
+            raise last_err
         _log("---- Reset ----")
         uds_try(bus_id, SID_ER, [0x01])
         t0 = time.time()
