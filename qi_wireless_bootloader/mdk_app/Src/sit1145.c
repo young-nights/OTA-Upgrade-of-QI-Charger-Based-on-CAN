@@ -374,17 +374,23 @@ uint8_t sit1145_init(void)
     return 0;
   }
 
-  /* ---- Step 9: Enter Standby Mode (low-power listening) ----
-   *     CAN receiver remains active; SPI accessible for wake-up.
-   *     CCU sends a wake-up frame to transition to Normal Mode.
-   *     sit1145_wakeup_by_ccu() handles the mode switch. */
-  if (sit1145_standby_mode_set() == 0U)
+  /* ---- Step 9: Switch to Normal Mode ----
+   *     Required for CAN ACK during wake-up polling.
+   *     Standby mode disables TX, so CAN controller cannot receive
+   *     frames (no ACK sent → sender retransmits → frame lost). */
+  if (sit1145_normal_mode_set() == 0U)
   {
     sit1145_delay_ms(1U);
-    if (sit1145_standby_mode_set() == 0U)
+    if (sit1145_normal_mode_set() == 0U)
     {
       return 0;
     }
+  }
+
+  /* ---- Step 10: wait until CTS indicates the transmitter is active ---- */
+  if (sit1145_wait_cts(20U) == 0U)
+  {
+    return 0;
   }
 
   return 1;
