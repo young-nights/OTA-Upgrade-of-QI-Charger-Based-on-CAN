@@ -351,7 +351,8 @@ def uds_init():
     _log("UDS 就绪 0x18DA0D03 / 0x18DA030D 扩展帧")
 
 
-def uds_req(bus_id, sid, payload, suppress=0):
+def uds_req(bus_id, sid, payload, suppress=0, wait_pending_s=0):
+    """NRC 0x78 is not final. For 0x27 02 / 0x37 pass wait_pending_s>0 to refresh."""
     if stopTask:
         raise RuntimeError("用户停止脚本")
     req = {
@@ -361,23 +362,34 @@ def uds_req(bus_id, sid, payload, suppress=0):
         "sid": sid,
         "data": list(payload),
     }
-    _log("[Tx] %02X %s%s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else ""),
-                             " (suppress)" if suppress else ""))
-    resp = zcanpro.uds_request(bus_id, req)
-    if suppress:
-        return None
-    data = list((resp or {}).get("data") or [])
-    if data:
-        _log("[Rx] " + _hex(data[:24]))
-    if len(data) >= 3 and data[0] == SID_NRC:
-        if data[2] == NRC_RCRRP:
-            raise RuntimeError("SID=0x%02X 只收到 NRC 0x78，ZCANPRO 未等到最终响应" % sid)
-        raise UdsNrcError(data[1], data[2])
-    if not resp or not resp.get("result"):
-        raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
-    if len(data) < 1 or data[0] != (sid + SID_PR):
-        raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
-    return data
+    t_end = time.time() + float(wait_pending_s)
+    logged_tx = False
+    while True:
+        if stopTask:
+            raise RuntimeError("用户停止脚本")
+        if not logged_tx:
+            _log("[Tx] %02X %s%s" % (sid, _hex(payload[:16]) + (" ..." if len(payload) > 16 else ""),
+                                     " (suppress)" if suppress else ""))
+            logged_tx = True
+        resp = zcanpro.uds_request(bus_id, req)
+        if suppress:
+            return None
+        data = list((resp or {}).get("data") or [])
+        if data:
+            _log("[Rx] " + _hex(data[:24]))
+        if len(data) >= 3 and data[0] == SID_NRC:
+            if data[2] == NRC_RCRRP:
+                if wait_pending_s <= 0 or time.time() >= t_end:
+                    raise RuntimeError("SID=0x%02X 只收到 NRC 0x78，ZCANPRO 未等到最终响应" % sid)
+                _log("SID=0x%02X NRC 0x78，MCU 忙，继续等待" % sid)
+                time.sleep(1.0)
+                continue
+            raise UdsNrcError(data[1], data[2])
+        if not resp or not resp.get("result"):
+            raise RuntimeError("无应答 SID=0x%02X %s" % (sid, (resp or {}).get("result_msg", "")))
+        if len(data) < 1 or data[0] != (sid + SID_PR):
+            raise RuntimeError("非正响应 SID=0x%02X %s" % (sid, _hex(data)))
+        return data
 
 
 def uds_try(bus_id, sid, payload, suppress=0):
@@ -401,7 +413,10 @@ def read_did_u8(bus_id, did):
 
 
 def send_security_key(bus_id, sig):
-    """Send 64-byte P1363 signature as 16 single-frame 0x27 0x03 chunks, then 0x27 0x02."""
+    """Send 64-byte P1363 signature as 16 single-frame 0x27 0x03 chunks, then 0x27 0x02.
+
+    0x27 02 runs ECDSA P-256 on MCU (seconds). MCU first replies 7F 27 78.
+    """
     sig = _to_bytes(sig)
     if len(sig) != 64:
         raise RuntimeError("ECDSA 签名须 64 字节, 实际 %d" % len(sig))
@@ -413,7 +428,29 @@ def send_security_key(bus_id, sig):
         off += len(piece)
         seq += 1
     _log("27 03 已送 64 字节 / %d 帧" % (seq - 1))
-    uds_req(bus_id, SID_SA, [0x02])
+    time.sleep(0.15)
+    last = None
+    for i in range(5):
+        if stopTask:
+            raise RuntimeError("用户停止脚本")
+        try:
+            return uds_req(bus_id, SID_SA, [0x02], wait_pending_s=45)
+        except UdsNrcError as e:
+            if (e.nrc in (0x24, 0x13)) and (i > 0):
+                rx = uds_try(bus_id, SID_SA, [0x01])
+                if rx is not None and len(rx) >= 6 and list(rx[2:6]) == [0, 0, 0, 0]:
+                    _log("27 02 无应答后已解锁，继续")
+                    return rx
+            raise
+        except Exception as e:
+            last = e
+            _log("27 02 第 %d/5 次: %s" % (i + 1, e))
+            time.sleep(0.5)
+            rx = uds_try(bus_id, SID_SA, [0x01])
+            if rx is not None and len(rx) >= 6 and list(rx[2:6]) == [0, 0, 0, 0]:
+                _log("27 01 seed=0，已解锁")
+                return rx
+    raise last
 
 
 def confirm_app_after_reset(bus_id):
