@@ -27,6 +27,7 @@
 #include "can_driver.h"
 #include "timer_drv.h"
 #include "sit1145.h"
+#include <string.h>
 
 /* private define ------------------------------------------------------------*/
 
@@ -210,12 +211,16 @@ int8_t can_driver_send(uint32_t id, uint8_t *data, uint8_t len)
     return -1;
   }
 
-  /* prepare TX buffer */
-  tx_buf.id          = id;
-  tx_buf.id_type     = CAN_ID_EXTENDED;
-  tx_buf.frame_type  = CAN_FRAME_DATA;
-  tx_buf.handle      = 0;
-  tx_buf.tx_timestamp = FALSE;
+  /* CAST CAN-CTRL has SUPPORT_CAN_FD. Uninitialized fd_format/brs on the
+   * stack sets FDF=1 and the host traces MCU replies as CAN FD. */
+  memset(&tx_buf, 0, sizeof(tx_buf));
+  tx_buf.id             = id;
+  tx_buf.id_type        = CAN_ID_EXTENDED;
+  tx_buf.frame_type     = CAN_FRAME_DATA;
+  tx_buf.fd_format      = CAN_FORMAT_CLASSIC;
+  tx_buf.fd_rate_switch = CAN_BRS_OFF;
+  tx_buf.handle         = 0;
+  tx_buf.tx_timestamp   = FALSE;
 
   /* set data length code */
   switch (len)
