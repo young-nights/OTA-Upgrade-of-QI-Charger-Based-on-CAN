@@ -168,6 +168,34 @@ uint8_t sit1145_read_reg(uint8_t addr)
 }
 
 /**
+ * @brief  generic mode switch with verify
+ * @param  target_mode: one of SIT1145_MC_SLEEP_MODE / STANDBY / NORMAL
+ * @retval 1 on success, 0 on failure
+ */
+static uint8_t sit1145_set_mode(uint8_t target_mode)
+{
+  uint8_t mode_val;
+
+  sit1145_write_reg(SIT1145_REG_MODE_CONTROL, target_mode);
+  sit1145_delay_us();
+  sit1145_delay_us();
+
+  /* Sleep mode disables SPI — cannot verify, trust the write */
+  if (target_mode == SIT1145_MC_SLEEP_MODE)
+  {
+    return 1U;
+  }
+
+  mode_val = sit1145_read_reg(SIT1145_REG_MODE_CONTROL);
+  if ((mode_val & SIT1145_MC_MODE_MASK) != target_mode)
+  {
+    return 0;
+  }
+
+  return 1U;
+}
+
+/**
  * @brief  switch SIT1145 to Normal Mode and verify
  * @note   CAN Control and Data Rate registers must be configured before
  *         calling this function (some transceivers ignore register writes
@@ -176,21 +204,54 @@ uint8_t sit1145_read_reg(uint8_t addr)
  */
 uint8_t sit1145_normal_mode_set(void)
 {
-  uint8_t mode_val;
-
-  /* write Normal Mode to mode control register */
-  sit1145_write_reg(SIT1145_REG_MODE_CONTROL, SIT1145_MC_NORMAL_MODE);
-  sit1145_delay_us();
-  sit1145_delay_us();
-
-  /* verify mode was set correctly */
-  mode_val = sit1145_read_reg(SIT1145_REG_MODE_CONTROL);
-  if ((mode_val & SIT1145_MC_MODE_MASK) != SIT1145_MC_NORMAL_MODE)
+  if (sit1145_set_mode(SIT1145_MC_NORMAL_MODE) == 0U)
   {
-    return 0;
+    /* retry once */
+    sit1145_delay_ms(1U);
+    return sit1145_set_mode(SIT1145_MC_NORMAL_MODE);
   }
+  return 1U;
+}
 
-  return 1;
+/**
+ * @brief  switch SIT1145 to Standby Mode and verify
+ * @note   Standby Mode: low-power listening state.
+ *         SPI remains accessible; CAN bus is passive (no TX).
+ *         Transceiver can be woken by CAN bus activity.
+ * @retval 1 on success, 0 on failure
+ */
+uint8_t sit1145_standby_mode_set(void)
+{
+  return sit1145_set_mode(SIT1145_MC_STANDBY_MODE);
+}
+
+/**
+ * @brief  switch SIT1145 to Sleep Mode
+ * @note   Sleep Mode: lowest power consumption.
+ *         ⚠️ SPI interface is DISABLED in Sleep mode.
+ *         After calling this function, any SPI read/write will fail.
+ *         Wake-up requires: INH pin transition, or full power cycle.
+ *         Caller must ensure CAN controller is stopped before sleeping.
+ * @retval 1 always (cannot verify — SPI is off after sleep)
+ */
+uint8_t sit1145_sleep_mode_set(void)
+{
+  return sit1145_set_mode(SIT1145_MC_SLEEP_MODE);
+}
+
+/**
+ * @brief  get current SIT1145 operating mode
+ * @retval Mode control register value & 0x07:
+ *         SIT1145_MC_SLEEP_MODE   (0x01) — Sleep
+ *         SIT1145_MC_STANDBY_MODE (0x04) — Standby
+ *         SIT1145_MC_NORMAL_MODE  (0x07) — Normal
+ *         0xFF — SPI read error (possibly in Sleep mode)
+ */
+uint8_t sit1145_get_mode(void)
+{
+  uint8_t val = sit1145_read_reg(SIT1145_REG_MODE_CONTROL);
+  /* if SPI fails (chip in Sleep), read returns 0xFF from spi_xfer timeout */
+  return val & SIT1145_MC_MODE_MASK;
 }
 
 /**
@@ -218,13 +279,6 @@ uint8_t sit1145_init(void)
   /* ---- Step 1: Enable peripheral clocks ---- */
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
   crm_periph_clock_enable(CRM_GPIOB_PERIPH_CLOCK, TRUE);
-
-  /* SPI1 soft reset: toggle clock to clear any residual state left by
-   * bootloader (boot_jump_to_app disables CAN but not SPI).  Without
-   * this the first spi_xfer may read stale RXNE/TXE flags and the
-   * identification check (Step 6) can fail. */
-  crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, FALSE);
-  sit1145_delay_ms(1U);
   crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, TRUE);
 
   /* ---- Step 2: Configure SPI1 data pins (PA5=SCK, PA6=MISO, PA7=MOSI) ---- */
@@ -320,20 +374,17 @@ uint8_t sit1145_init(void)
     return 0;
   }
 
-  /* ---- Step 9: Switch to Normal Mode ---- */
-  if (sit1145_normal_mode_set() == 0)
+  /* ---- Step 9: Enter Standby Mode (low-power listening) ----
+   *     CAN receiver remains active; SPI accessible for wake-up.
+   *     CCU sends a wake-up frame to transition to Normal Mode.
+   *     sit1145_wakeup_by_ccu() handles the mode switch. */
+  if (sit1145_standby_mode_set() == 0U)
   {
     sit1145_delay_ms(1U);
-    if (sit1145_normal_mode_set() == 0)
+    if (sit1145_standby_mode_set() == 0U)
     {
       return 0;
     }
-  }
-
-  /* ---- Step 10: wait until CTS indicates the transmitter is active ---- */
-  if (sit1145_wait_cts(20U) == 0U)
-  {
-    return 0;
   }
 
   return 1;

@@ -153,9 +153,9 @@ static void safe_mode_long_op_pump(void);
 static void safe_mode_begin_long_op(uint8_t service_id);
 static void safe_mode_end_long_op(void);
 
-/** @brief  rewrite SIT1145 mode control to Normal so the transceiver does not
- *          drop to CTS/Standby while Safe Mode is idle with no CAN TX. */
-#define SAFE_MODE_SIT1145_KEEPALIVE_ENABLE     1U
+/** @brief  SIT1145 keepalive disabled — transceiver stays in Standby until
+ *          CCU sends wake-up frame (3E 00), then switches to Normal once. */
+#define SAFE_MODE_SIT1145_KEEPALIVE_ENABLE     0U
 #define SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS  500U
 
 static uint32_t g_s3_last_ms = 0;
@@ -1519,8 +1519,31 @@ void enter_safe_mode(void)
   g_safe_mode = 1;
   g_current_session = SESSION_DEFAULT;
 
-  /* initialize CAN for safe mode communication */
+  /* initialize CAN controller (SIT1145 is in Standby from sit1145_init) */
   can_driver_init();
+
+  /* ---- CCU wake-up: wait indefinitely for UDS frame ----
+   * SIT1145 Standby: CAN receiver active, SPI accessible.
+   * CCU sends UDS TesterPresent (3E 00) on 0x18DA0D03 to wake up.
+   * No timeout — stays in Standby until CCU sends frame. */
+  {
+    uint32_t rx_id;
+    uint8_t  rx_data[8];
+    uint8_t  rx_len;
+
+    while (1)
+    {
+      if (can_driver_recv(&rx_id, rx_data, &rx_len) == 0)
+      {
+        /* any UDS frame received — wake up */
+        break;
+      }
+    }
+
+    /* switch SIT1145 to Normal Mode */
+    (void)sit1145_normal_mode_set();
+  }
+
   can_driver_register_rx_callback(safe_mode_can_rx_handler);
 
   /* initialize ISO-TP receiver with UDS message callback */
