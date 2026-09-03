@@ -263,7 +263,15 @@ void sit1145_wake_enable(void)
 
 uint8_t sit1145_wakeup_pending(void)
 {
-  uint8_t ev = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_EVENT);
+  uint8_t ev;
+
+  /* Standby: RXD (PA11) is forced low for the whole wake event. */
+  if (gpio_input_data_bit_read(GPIOA, GPIO_PINS_11) == RESET)
+  {
+    return 1U;
+  }
+
+  ev = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_EVENT);
   if (ev == 0xFFU)
   {
     return 0U;

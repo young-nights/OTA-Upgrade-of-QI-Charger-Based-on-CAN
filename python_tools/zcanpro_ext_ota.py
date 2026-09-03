@@ -454,11 +454,13 @@ def send_security_key(bus_id, sig):
 
 
 def confirm_app_after_reset(bus_id):
-    """Wait for MCU after 0x11. Do not use DID 0xF195: APP/Boot pad 32 bytes (ISO-TP FF)."""
+    """Wait for MCU after 0x11. Boot re-verifies ECDSA before jump (several seconds).
+    Do not use DID 0xF195: APP/Boot pad 32 bytes (ISO-TP FF)."""
     last_err = None
     rx = None
     t0 = time.time()
-    while time.time() - t0 < 8.0:
+    _log("等待 APP 起来（Boot 跳转前还要验签，可能数秒）")
+    while time.time() - t0 < 25.0:
         if stopTask:
             raise RuntimeError("用户停止脚本")
         try:
@@ -468,7 +470,7 @@ def confirm_app_after_reset(bus_id):
         except Exception as e:
             last_err = e
             _log("复位后 22 2113 等待: " + str(e))
-            time.sleep(0.4)
+            time.sleep(0.5)
     if last_err is not None:
         raise RuntimeError("复位后无 UDS（跳转失败或 APP CAN 未起来）: " + str(last_err))
     _log("复位后 DID 0x2113 slot=" + _hex((rx or [])[3:4]))
@@ -591,7 +593,7 @@ def run_ota(bus_id):
         _log("---- Reset ----")
         uds_ecu_reset(bus_id)
         t0 = time.time()
-        while time.time() - t0 < 0.8:
+        while time.time() - t0 < 2.0:
             if stopTask:
                 raise RuntimeError("用户停止脚本")
             time.sleep(0.05)

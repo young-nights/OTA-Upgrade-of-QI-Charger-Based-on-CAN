@@ -156,8 +156,8 @@ static void safe_mode_long_op_pump(void);
 static void safe_mode_begin_long_op(uint8_t service_id);
 static void safe_mode_end_long_op(void);
 
-/** @brief  SIT1145 keepalive disabled — transceiver stays in Standby until
- *          CCU sends wake-up frame (3E 00), then switches to Normal once. */
+/** @brief  rewrite SIT1145 mode control to Normal so the transceiver does not
+ *          drop to CTS/Standby while Safe Mode is idle with no CAN TX. */
 #define SAFE_MODE_SIT1145_KEEPALIVE_ENABLE     1U
 #define SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS  500U
 

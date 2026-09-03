@@ -77,6 +77,7 @@ static uint8_t  g_sa_sig_block_seq        = 0;
 
 /** @brief  SIT1145 Normal + CAN online. Power-on default is Standby. */
 static uint8_t  g_can_awake = 0;
+static uint8_t  g_need_lifecycle_announce = 0;
 static uint32_t g_uds_last_ms = 0;
 
 /** 6 minutes with no UDS RX/TX → SIT1145 Standby */
@@ -101,8 +102,7 @@ static void can_lp_enter_normal(void)
   can_driver_online();
   g_can_awake = 1U;
   can_lp_mark_uds();
-  lifecycle_set_state(LIFECYCLE_BOOTUP);
-  lifecycle_set_state(LIFECYCLE_OPERATIONAL);
+  g_need_lifecycle_announce = 1U;
 }
 
 static void can_lp_enter_standby(void)
@@ -896,15 +896,29 @@ static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
  */
 void can_protocol_init(void)
 {
+  ota_metadata_t meta;
+
   current_session          = SESSION_DEFAULT;
   security_unlocked        = 0;
   last_tester_present_tick = timer_get_tick();
   g_can_awake              = 0U;
+  g_need_lifecycle_announce = 0U;
   g_uds_last_ms            = timer_get_tick();
 
   isotp_init(isotp_message_received);
   can_driver_register_rx_callback(can_protocol_rx_handler);
-  can_driver_offline();
+
+  /* After OTA the image is in trial: host 22 2113 must work immediately.
+   * Confirmed idle boots stay in SIT1145 Standby until a wake-up frame. */
+  if ((ota_metadata_read(&meta) == 0) &&
+      ((meta.trial_state == 1U) || (meta.trial_state == 2U)))
+  {
+    can_lp_enter_normal();
+  }
+  else
+  {
+    can_driver_offline();
+  }
 }
 
 void can_protocol_poll(void)
@@ -920,6 +934,17 @@ void can_protocol_poll(void)
     {
       can_lp_enter_normal();
     }
+  }
+
+  if ((g_can_awake != 0U) && (g_need_lifecycle_announce != 0U))
+  {
+    g_need_lifecycle_announce = 0U;
+    lifecycle_set_state(LIFECYCLE_BOOTUP);
+    lifecycle_set_state(LIFECYCLE_OPERATIONAL);
+  }
+
+  if (g_can_awake == 0U)
+  {
     return;
   }
 
