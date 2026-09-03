@@ -165,6 +165,11 @@ void can_protocol_init(void);
 void can_protocol_poll(void);
 
 /**
+ * @brief  1 if SIT1145 is in Normal and CAN1 is online (UDS/lifecycle allowed)
+ */
+uint8_t can_protocol_is_bus_awake(void);
+
+/**
  * @brief  get current diagnostic session
  * @retval SESSION_DEFAULT, SESSION_PROGRAMMING, or SESSION_EXTENDED
  */

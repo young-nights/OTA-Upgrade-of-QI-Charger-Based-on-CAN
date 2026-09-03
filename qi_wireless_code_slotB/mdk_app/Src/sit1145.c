@@ -206,11 +206,13 @@ uint8_t sit1145_normal_mode_set(void)
 {
   if (sit1145_set_mode(SIT1145_MC_NORMAL_MODE) == 0U)
   {
-    /* retry once */
     sit1145_delay_ms(1U);
-    return sit1145_set_mode(SIT1145_MC_NORMAL_MODE);
+    if (sit1145_set_mode(SIT1145_MC_NORMAL_MODE) == 0U)
+    {
+      return 0U;
+    }
   }
-  return 1U;
+  return sit1145_wait_cts(20U);
 }
 
 /**
@@ -254,6 +256,26 @@ uint8_t sit1145_get_mode(void)
   return val & SIT1145_MC_MODE_MASK;
 }
 
+void sit1145_wake_enable(void)
+{
+  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
+}
+
+uint8_t sit1145_wakeup_pending(void)
+{
+  uint8_t ev = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_EVENT);
+  if (ev == 0xFFU)
+  {
+    return 0U;
+  }
+  return ((ev & SIT1145_CW) != 0U) ? 1U : 0U;
+}
+
+void sit1145_wakeup_clear(void)
+{
+  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT, SIT1145_CW);
+}
+
 /**
  * @brief  initialize SIT1145 CAN transceiver
  * @note   performs the following steps:
@@ -265,8 +287,8 @@ uint8_t sit1145_get_mode(void)
  *         6. Read identification 0x7E (0x70 AQ / 0x74 AQ-FD)
  *         7. Configure CAN Control register (CMC=01, CFDC=1)
  *         8. Configure Data Rate register (250kbps)
- *         9. Switch to Normal Mode
- *        10. Poll CTS until the transmitter is ready
+ *         9. Enable standard CAN wake-up (CWE)
+ *        10. Switch to Standby (APP low-power default)
  * @retval 1 on success, 0 on failure
  */
 uint8_t sit1145_init(void)
@@ -374,23 +396,20 @@ uint8_t sit1145_init(void)
     return 0;
   }
 
-  /* ---- Step 9: Switch to Normal Mode ----
-   *     Required for CAN ACK during wake-up polling.
-   *     Standby mode disables TX, so CAN controller cannot receive
-   *     frames (no ACK sent → sender retransmits → frame lost). */
-  if (sit1145_normal_mode_set() == 0U)
+  /* ---- Step 9: standard CAN wake-up (ISO 11898-2 WUP), not selective WUF ----
+   *     CCU sending any 250 kbps frame (typically UDS 0x18DA0D03) wakes us.
+   *     Selective wake (CPNC=PNCOK=1) stays off. */
+  sit1145_wake_enable();
+  sit1145_wakeup_clear();
+
+  /* ---- Step 10: power-on default is Standby (SPI still alive) ---- */
+  if (sit1145_standby_mode_set() == 0U)
   {
     sit1145_delay_ms(1U);
-    if (sit1145_normal_mode_set() == 0U)
+    if (sit1145_standby_mode_set() == 0U)
     {
       return 0;
     }
-  }
-
-  /* ---- Step 10: wait until CTS indicates the transmitter is active ---- */
-  if (sit1145_wait_cts(20U) == 0U)
-  {
-    return 0;
   }
 
   return 1;

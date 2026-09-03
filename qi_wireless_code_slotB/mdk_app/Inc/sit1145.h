@@ -33,6 +33,8 @@ extern "C" {
 #define SIT1145_REG_MODE_CONTROL          0x01
 #define SIT1145_REG_CAN_CONTROL           0x20
 #define SIT1145_REG_TRANSCEIVER_STATUS    0x22
+#define SIT1145_REG_TRANSCEIVER_EVENT_EN  0x23
+#define SIT1145_REG_TRANSCEIVER_EVENT     0x24
 #define SIT1145_REG_DATA_RATE             0x26
 #define SIT1145_REG_IDENTIFICATION        0x7E
 
@@ -42,6 +44,10 @@ extern "C" {
 
 /* Transceiver status register bits (0x22) */
 #define SIT1145_TRAN_STA_CTS        (1U << 7)  /* 1 = in Normal, ready to transmit */
+
+/* Transceiver event enable (0x23) / event (0x24), TJA1145-compatible */
+#define SIT1145_CWE                 (1U << 0)  /* CAN wake-up enable */
+#define SIT1145_CW                  (1U << 0)  /* CAN wake-up event (W1C) */
 
 /* Mode control register values */
 #define SIT1145_MC_SLEEP_MODE       0x01
@@ -77,9 +83,9 @@ extern "C" {
 
 /**
  * @brief  initialize SIT1145 CAN transceiver
- * @note   SPI Mode 1 (CPOL=0, CPHA=1), then CAN Control, Data Rate,
- *         Normal Mode, CTS poll, identification check.
- *         Called from can_driver_init() before the CAN controller leaves reset.
+ * @note   SPI Mode 1, CAN Control, Data Rate 250 kbps, CWE=1, then Standby.
+ *         Standard ISO 11898-2 wake-up pattern (any 250 kbps CAN frame) is
+ *         enabled. APP stays in Standby until sit1145_wakeup_pending().
  * @retval 1 on success, 0 on failure
  */
 uint8_t sit1145_init(void);
@@ -135,6 +141,21 @@ uint8_t sit1145_sleep_mode_set(void);
  *         0xFF — read error
  */
 uint8_t sit1145_get_mode(void);
+
+/**
+ * @brief  enable standard CAN remote wake-up (CWE=1, selective WUF off)
+ */
+void sit1145_wake_enable(void);
+
+/**
+ * @brief  1 if a CAN wake-up event (CW) is pending
+ */
+uint8_t sit1145_wakeup_pending(void);
+
+/**
+ * @brief  clear CAN wake-up event flag (write-1-to-clear CW)
+ */
+void sit1145_wakeup_clear(void);
 
 #ifdef __cplusplus
 }

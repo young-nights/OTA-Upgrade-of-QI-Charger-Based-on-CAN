@@ -61,6 +61,8 @@ static const uint8_t g_app_ecdsa_pubkey[65] = {
 #define SECURITY_LOCKOUT_MS    30000U
 #define SECURITY_MAX_FAILURES  3U
 
+static void session_reset_to_default(void);
+
 static uint8_t  current_session           = SESSION_DEFAULT;
 static uint8_t  security_unlocked         = 0;
 static uint32_t last_tester_present_tick  = 0;
@@ -72,6 +74,51 @@ static uint32_t g_security_lockout_until_ms = 0;
 static uint8_t  g_sa_sig_buf[64];
 static uint8_t  g_sa_sig_bytes_received   = 0;
 static uint8_t  g_sa_sig_block_seq        = 0;
+
+/** @brief  SIT1145 Normal + CAN online. Power-on default is Standby. */
+static uint8_t  g_can_awake = 0;
+static uint32_t g_uds_last_ms = 0;
+
+/** 6 minutes with no UDS RX/TX → SIT1145 Standby */
+#define CAN_LP_IDLE_TIMEOUT_MS  (6UL * 60UL * 1000UL)
+
+static void can_lp_mark_uds(void)
+{
+  g_uds_last_ms = timer_get_tick();
+}
+
+static void can_lp_enter_normal(void)
+{
+  if (g_can_awake != 0U)
+  {
+    return;
+  }
+  if (sit1145_normal_mode_set() == 0U)
+  {
+    return;
+  }
+  sit1145_wakeup_clear();
+  can_driver_online();
+  g_can_awake = 1U;
+  can_lp_mark_uds();
+  lifecycle_set_state(LIFECYCLE_BOOTUP);
+  lifecycle_set_state(LIFECYCLE_OPERATIONAL);
+}
+
+static void can_lp_enter_standby(void)
+{
+  if (g_can_awake == 0U)
+  {
+    return;
+  }
+  (void)can_driver_wait_tx_idle(20U);
+  can_driver_offline();
+  sit1145_wake_enable();
+  sit1145_wakeup_clear();
+  (void)sit1145_standby_mode_set();
+  g_can_awake = 0U;
+  session_reset_to_default();
+}
 
 /* ========================================================================== */
 /*  Private helper functions                                                 */
@@ -85,6 +132,7 @@ static uint8_t  g_sa_sig_block_seq        = 0;
  */
 static void proto_send_response(uint8_t *data, uint16_t len)
 {
+  can_lp_mark_uds();
   (void)isotp_tx_send(CAN_PROTO_UDS_RESPONSE, data, len);
 }
 
@@ -730,8 +778,9 @@ static void uds_process_message(uint8_t *data, uint16_t len)
     return;
   }
 
-  /* any diagnostic request refreshes S3 (ISO 14229) */
+  /* any diagnostic request refreshes S3 (ISO 14229) and the 6 min bus idle */
   last_tester_present_tick = timer_get_tick();
+  can_lp_mark_uds();
 
   service_id = data[0];
 
@@ -832,7 +881,7 @@ static void can_protocol_rx_handler(uint32_t id, uint8_t *data, uint8_t len)
     return;
   }
 
-  /* pass to ISO-TP for reassembly */
+  can_lp_mark_uds();
   isotp_rx_process(data, len);
 }
 
@@ -850,9 +899,12 @@ void can_protocol_init(void)
   current_session          = SESSION_DEFAULT;
   security_unlocked        = 0;
   last_tester_present_tick = timer_get_tick();
+  g_can_awake              = 0U;
+  g_uds_last_ms            = timer_get_tick();
 
   isotp_init(isotp_message_received);
   can_driver_register_rx_callback(can_protocol_rx_handler);
+  can_driver_offline();
 }
 
 void can_protocol_poll(void)
@@ -860,12 +912,29 @@ void can_protocol_poll(void)
   uint32_t now;
   static uint32_t sit_last;
 
-  isotp_poll();
   now = timer_get_tick();
+
+  if (g_can_awake == 0U)
+  {
+    if (sit1145_wakeup_pending() != 0U)
+    {
+      can_lp_enter_normal();
+    }
+    return;
+  }
+
+  isotp_poll();
+
   if ((now - sit_last) >= 500U)
   {
     sit_last = now;
     (void)sit1145_normal_mode_set();
+  }
+
+  if ((now - g_uds_last_ms) >= CAN_LP_IDLE_TIMEOUT_MS)
+  {
+    can_lp_enter_standby();
+    return;
   }
 
   if (current_session != SESSION_DEFAULT)
@@ -875,6 +944,11 @@ void can_protocol_poll(void)
       session_reset_to_default();
     }
   }
+}
+
+uint8_t can_protocol_is_bus_awake(void)
+{
+  return g_can_awake;
 }
 
 /**

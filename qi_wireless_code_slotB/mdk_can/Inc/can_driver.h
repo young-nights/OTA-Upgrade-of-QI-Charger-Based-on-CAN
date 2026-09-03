@@ -154,6 +154,18 @@ void can_driver_err_irq_handler(void);
  */
 void can_driver_register_busoff_recovery_callback(can_busoff_recovery_callback_t cb);
 
+/**
+ * @brief  take CAN1 offline (software reset, IRQs off)
+ * @note   call after SIT1145 Standby so RXD-low wake does not bus-off the MCU.
+ */
+void can_driver_offline(void);
+
+/**
+ * @brief  bring CAN1 online (re-apply timing/filters, leave reset, IRQs on)
+ * @note   call after SIT1145 has entered Normal and CTS is set.
+ */
+void can_driver_online(void);
+
 #ifdef __cplusplus
 }
 #endif

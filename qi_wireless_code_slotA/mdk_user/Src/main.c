@@ -58,11 +58,8 @@ int main(void)
   qi_uart_init();
   __enable_irq();
 
-  /* initialize lifecycle broadcast (sends BOOTUP) */
+  /* SIT1145 is in Standby. BOOTUP/OPERATIONAL after first CAN wake. */
   lifecycle_init();
-
-  /* report OPERATIONAL after core init is complete */
-  lifecycle_set_state(LIFECYCLE_OPERATIONAL);
 
   /* start 10s trial window; confirm is deferred until ota_trial_poll */
   ota_trial_init();

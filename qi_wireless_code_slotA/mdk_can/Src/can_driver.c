@@ -61,6 +61,8 @@ static volatile can_busoff_recovery_callback_t busoff_recovery_cb = (can_busoff_
 /** @brief  flag set by error ISR when bus-off recovery is needed */
 static volatile uint8_t busoff_recovery_pending = 0;
 
+static void can_hw_config_in_reset(void);
+
 /* private functions ---------------------------------------------------------*/
 
 /**
@@ -81,21 +83,54 @@ static uint8_t rx_fifo_is_full(void)
  * @param  none
  * @retval none
  */
-void can_driver_init(void)
+static void can_hw_config_in_reset(void)
 {
-  gpio_init_type gpio_init_struct;
   can_bittime_type can_bittime_struct;
   can_filter_config_type can_filter_struct;
 
-  /* enable peripheral clocks */
+  can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
+
+  can_bittime_default_para_init(&can_bittime_struct);
+  can_bittime_struct.bittime_div  = CAN_BITTIME_DIV;
+  can_bittime_struct.ac_rsaw_size = CAN_BITTIME_SJW;
+  can_bittime_struct.ac_bts1_size = CAN_BITTIME_BTS1;
+  can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
+  can_bittime_set(CAN1, &can_bittime_struct);
+
+  can_filter_default_para_init(&can_filter_struct);
+  can_filter_struct.code_para.id         = CAN_ID_UDS_REQUEST;
+  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
+  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
+  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0x0FU;
+  can_filter_struct.mask_para.recv_frame = TRUE;
+  can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
+  can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
+
+  can_filter_default_para_init(&can_filter_struct);
+  can_filter_struct.code_para.id         = 0x18DB3300U;
+  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
+  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
+  can_filter_struct.mask_para.id         = 0x1FFFFF00U;
+  can_filter_struct.mask_para.id_type    = TRUE;
+  can_filter_struct.mask_para.frame_type = TRUE;
+  can_filter_struct.mask_para.data_length = 0x0FU;
+  can_filter_struct.mask_para.recv_frame = TRUE;
+  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
+  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
+}
+
+void can_driver_init(void)
+{
+  gpio_init_type gpio_init_struct;
+
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
   crm_periph_clock_enable(CRM_CAN1_PERIPH_CLOCK, TRUE);
 
-  /* CAN kernel clock defaults to HEXT (8 MHz). Bit timing below assumes 180 MHz.
-   * 8e6 / 10 / 72 ≈ 11.1 kbps if this select is omitted. */
   crm_can_clock_select(CRM_CAN1, CRM_CAN_CLOCK_SOURCE_PLL);
 
-  /* configure PA11 (CAN_RX) as input with pull-up */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = GPIO_PINS_11;
   gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
@@ -105,7 +140,6 @@ void can_driver_init(void)
   gpio_init(GPIOA, &gpio_init_struct);
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE11, GPIO_MUX_4);
 
-  /* configure PA12 (CAN_TX) as alternate function push-pull */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = GPIO_PINS_12;
   gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
@@ -120,68 +154,37 @@ void can_driver_init(void)
     (void)sit1145_init();
   }
 
-  /* CRM reset leaves CTRLSTAT.RESET=1; config bits are only writable then */
   can_reset(CAN1);
   can_software_reset(CAN1, TRUE);
+  can_hw_config_in_reset();
+  /* Stay in software reset until SIT1145 leaves Standby (can_driver_online). */
 
-  /* set CAN to normal communication mode */
-  can_mode_set(CAN1, CAN_MODE_COMMUNICATE);
-
-  /* classic CAN only: 250 kbps, 87.5% SP. FD fields stay at BSP defaults */
-  can_bittime_default_para_init(&can_bittime_struct);
-  can_bittime_struct.bittime_div  = CAN_BITTIME_DIV;
-  can_bittime_struct.ac_rsaw_size = CAN_BITTIME_SJW;
-  can_bittime_struct.ac_bts1_size = CAN_BITTIME_BTS1;
-  can_bittime_struct.ac_bts2_size = CAN_BITTIME_BTS2;
-  can_bittime_set(CAN1, &can_bittime_struct);
-
-  /* Filter 0: physical UDS request 0x18DA0D03 (exact 29-bit ID) */
-  can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = CAN_ID_UDS_REQUEST;
-  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
-  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFFFFFFU;
-  can_filter_struct.mask_para.id_type    = TRUE;
-  can_filter_struct.mask_para.frame_type = TRUE;
-  /* CAST ACF: mask 1=don't care. data_length 0 only accepts DLC=0 and drops UDS SF. */
-  can_filter_struct.mask_para.data_length = 0x0FU;
-  can_filter_struct.mask_para.recv_frame = TRUE;
-  can_filter_set(CAN1, CAN_FILTER_NUM_0, &can_filter_struct);
-  can_filter_enable(CAN1, CAN_FILTER_NUM_0, TRUE);
-
-  /* Filter 1: functional UDS 0x18DB33xx (SA ignored) */
-  can_filter_default_para_init(&can_filter_struct);
-  can_filter_struct.code_para.id         = 0x18DB3300U;
-  can_filter_struct.code_para.id_type    = CAN_ID_EXTENDED;
-  can_filter_struct.code_para.frame_type = CAN_FRAME_DATA;
-  can_filter_struct.mask_para.id         = 0x1FFFFF00U;
-  can_filter_struct.mask_para.id_type    = TRUE;
-  can_filter_struct.mask_para.frame_type = TRUE;
-  can_filter_struct.mask_para.data_length = 0x0FU;
-  can_filter_struct.mask_para.recv_frame = TRUE;
-  can_filter_set(CAN1, CAN_FILTER_NUM_1, &can_filter_struct);
-  can_filter_enable(CAN1, CAN_FILTER_NUM_1, TRUE);
-
-  /* leave software reset so the controller actually participates on the bus */
-  can_software_reset(CAN1, FALSE);
-
-  /* enable RX interrupt and error interrupt after leaving reset */
-  can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);
-  can_interrupt_enable(CAN1, CAN_EIE_INT, TRUE);
-
-  /* configure NVIC for CAN1 RX */
-  nvic_irq_enable(CAN1_RX_IRQn, 1, 0);
-
-  /* configure NVIC for CAN1 Error */
-  nvic_irq_enable(CAN1_ERR_IRQn, 2, 0);
-
-  /* reset software FIFO */
   rx_fifo_head  = 0;
   rx_fifo_tail  = 0;
   rx_fifo_count = 0;
   rx_callback   = (can_rx_callback_t)0;
   busoff_recovery_cb     = (can_busoff_recovery_callback_t)0;
   busoff_recovery_pending = 0;
+}
+
+void can_driver_offline(void)
+{
+  nvic_irq_disable(CAN1_RX_IRQn);
+  nvic_irq_disable(CAN1_ERR_IRQn);
+  can_interrupt_enable(CAN1, CAN_RIE_INT, FALSE);
+  can_interrupt_enable(CAN1, CAN_EIE_INT, FALSE);
+  can_software_reset(CAN1, TRUE);
+}
+
+void can_driver_online(void)
+{
+  can_software_reset(CAN1, TRUE);
+  can_hw_config_in_reset();
+  can_software_reset(CAN1, FALSE);
+  can_interrupt_enable(CAN1, CAN_RIE_INT, TRUE);
+  can_interrupt_enable(CAN1, CAN_EIE_INT, TRUE);
+  nvic_irq_enable(CAN1_RX_IRQn, 1, 0);
+  nvic_irq_enable(CAN1_ERR_IRQn, 2, 0);
 }
 
 /**

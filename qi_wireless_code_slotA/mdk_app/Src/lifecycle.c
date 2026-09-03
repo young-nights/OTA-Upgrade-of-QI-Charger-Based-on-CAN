@@ -28,7 +28,6 @@
 #include "can_protocol.h"
 #include "can_driver.h"
 #include "timer_drv.h"
-#include "sit1145.h"
 #include <string.h>
 
 /* ========================================================================== */
@@ -60,6 +59,11 @@ static uint32_t g_last_broadcast_tick = 0;
 static void lifecycle_send(uint8_t state)
 {
   uint8_t data[8];
+
+  if (can_protocol_is_bus_awake() == 0U)
+  {
+    return;
+  }
 
   memset(data, 0, sizeof(data));
   data[0] = state;
@@ -110,11 +114,8 @@ void lifecycle_init(void)
   g_lifecycle_state = LIFECYCLE_BOOTUP;
   g_last_broadcast_tick = timer_get_tick();
 
-  /* register bus-off recovery callback with CAN driver */
   can_driver_register_busoff_recovery_callback(lifecycle_on_busoff_recovery);
-
-  /* send BOOTUP immediately */
-  lifecycle_send(LIFECYCLE_BOOTUP);
+  /* BOOTUP is sent on first SIT1145 wake (can_protocol_poll), not at power-on. */
 }
 
 /**
@@ -147,7 +148,11 @@ void lifecycle_poll(void)
 {
   uint32_t now;
 
-  /* only send periodic broadcast in OPERATIONAL or DEGRADED */
+  if (can_protocol_is_bus_awake() == 0U)
+  {
+    return;
+  }
+
   if (!lifecycle_is_periodic(g_lifecycle_state))
   {
     return;
@@ -158,10 +163,6 @@ void lifecycle_poll(void)
   {
     g_last_broadcast_tick = now;
     lifecycle_send(g_lifecycle_state);
-
-    /* SIT1145 keepalive: prevent transceiver from entering Standby.
-     * Bootloader does the same in safe_mode_long_op_pump() every 2s. */
-    (void)sit1145_normal_mode_set();
   }
 }
 
