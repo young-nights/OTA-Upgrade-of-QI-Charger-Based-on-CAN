@@ -26,7 +26,7 @@ except ImportError:
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(_TOOLS_DIR)
-FIRMWARE_PATH = os.path.join(_TOOLS_DIR, "app bin", "app_slot_a.bin")
+FIRMWARE_PATH = os.path.join(REPO_ROOT, "qi_wireless_code_slotA", "mdk_project", "Objects", "qi_wireless.bin")
 PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
 DOWNLOAD_ADDR = 0x08007000

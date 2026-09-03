@@ -26,6 +26,7 @@ except ImportError:
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(_TOOLS_DIR)
 FIRMWARE_DIR = os.path.join(_TOOLS_DIR, "app bin")
+# 自动识别模式下只认已打包的 bin（app_slot_a.bin / app_slot_b.bin）
 PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
 
