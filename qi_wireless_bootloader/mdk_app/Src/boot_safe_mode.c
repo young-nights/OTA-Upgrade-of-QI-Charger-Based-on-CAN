@@ -108,9 +108,12 @@ static uint8_t  g_dl_erased        = 0;
 static uint32_t g_dl_expected_size = 0;
 static uint8_t  g_xfer_exit_pending = 0;
 static uint8_t  g_xfer_exit_busy    = 0;
+static uint8_t  g_sa_verify_pending = 0;
+static uint8_t  g_sa_verify_busy    = 0;
 static uint8_t  g_pump_reentry      = 0;
 
 static void safe_mode_finish_transfer_exit(void);
+static void safe_mode_finish_security_verify(void);
 
 /** @brief  maxNumberOfBlockLength advertised in 0x34 (SID+BSC+data) */
 #define UDS_MAX_BLOCK_LEN     256U
@@ -507,9 +510,8 @@ static void safe_mode_long_op_pump(void)
     (void)can_driver_wait_tx_idle(10U);
   }
 
-  /* Nested poll only while 0x37 verify owns the loop. Erase/0x27 already
-   * run inside can_driver_poll; re-entering UDS from there is unsafe. */
-  if (g_xfer_exit_busy != 0U)
+  /* Nested poll while 0x37 / 0x27 02 run from the main loop (not ISO-TP). */
+  if ((g_xfer_exit_busy != 0U) || (g_sa_verify_busy != 0U))
   {
     can_driver_poll();
     isotp_poll();
@@ -555,13 +557,12 @@ static void uds_process_message(uint8_t *data, uint16_t len)
   g_s3_last_ms = timer_get_tick();
   service_id = data[0];
 
-  /* Verify blocks the main loop. Only TesterPresent is handled normally;
-   * a retried 0x37 (and any other SID) just refreshes NRC 0x78. */
-  if (g_xfer_exit_busy != 0U)
+  /* Long ECDSA/verify owns the loop. TesterPresent is handled; others get 0x78. */
+  if ((g_xfer_exit_busy != 0U) || (g_sa_verify_busy != 0U))
   {
     if (service_id != UDS_TESTER_PRESENT)
     {
-      safe_mode_send_pending(UDS_REQUEST_TRANSFER_EXIT);
+      safe_mode_send_pending(g_long_op_sid);
       return;
     }
   }
@@ -815,10 +816,17 @@ static void uds_process_message(uint8_t *data, uint16_t len)
       }
       else if (sub_func == 0x02U)
       {
-        /* Sub-function 0x02: SendKey / Verify Signature.
-         * Use 0x03 buffer if already full. Do not copy from this message
-         * when len>=66 is just ZCANPRO fill_byte padding (would overwrite
-         * a good signature with 0xCC and return NRC 0x35). */
+        /* SendKey: do not ECDSA inside ISO-TP. Seed verify is the same
+         * uECC_verify as 0x37 and can block several seconds; host then
+         * only sees [Tx] 27 02 with no [Rx]. */
+        if (g_security_unlocked != 0U)
+        {
+          resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
+          resp[1] = sub_func;
+          safe_mode_send_response(resp, 2);
+          break;
+        }
+
         if (!g_seed_generated || g_seed_sub != 0x01U)
         {
           safe_mode_send_nrc(service_id, UDS_NRC_REQUEST_SEQUENCE_ERROR);
@@ -843,50 +851,13 @@ static void uds_process_message(uint8_t *data, uint16_t len)
           break;
         }
 
-        safe_mode_begin_long_op(service_id);
-
-        /* ECDSA verify takes 100-500ms; pump must keep SIT1145 alive and
-         * send periodic 0x78. Without this callback, uECC_verify blocks
-         * the main loop and the transceiver drops to Standby. */
-        uECC_set_progress_cb(safe_mode_long_op_pump);
-
-        if (verify_security_ecdsa_signature())
-        {
-          uECC_set_progress_cb((void (*)(void))0);
-          g_security_unlocked = 1;
-          g_security_fail_count = 0;
-          g_seed_generated = 0;
-          g_sa_sig_bytes_received = 0;
-
-          (void)safe_mode_can_busoff_recover();
-          safe_mode_end_long_op();
-          resp[0] = service_id + UDS_POSITIVE_RESPONSE_OFFSET;
-          resp[1] = sub_func;
-          safe_mode_send_response(resp, 2);
-          (void)can_driver_wait_tx_idle(50U);
-        }
-        else
-        {
-          uECC_set_progress_cb((void (*)(void))0);
-          g_security_unlocked = 0;
-          g_security_fail_count++;
-          g_seed_generated = 0;
-          g_sa_sig_bytes_received = 0;
-
-          (void)safe_mode_can_busoff_recover();
-          if (g_security_fail_count >= SECURITY_MAX_FAILURES)
-          {
-            g_security_lockout_until_ms = timer_get_tick() + SECURITY_LOCKOUT_MS;
-            safe_mode_end_long_op();
-            safe_mode_send_nrc(service_id, UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS);
-          }
-          else
-          {
-            safe_mode_end_long_op();
-            safe_mode_send_nrc(service_id, UDS_NRC_INVALID_KEY);
-          }
-          (void)can_driver_wait_tx_idle(50U);
-        }
+        g_long_op_sid = service_id;
+        g_long_op_last_78_ms = timer_get_tick();
+        (void)sit1145_normal_mode_set();
+        safe_mode_send_pending(service_id);
+        (void)can_driver_wait_tx_idle(50U);
+        g_sa_verify_busy = 1U;
+        g_sa_verify_pending = 1U;
       }
       else
       {
@@ -1324,6 +1295,60 @@ static void isotp_message_received(uint8_t *data, uint16_t len)
   uds_process_message(data, len);
 }
 
+static void safe_mode_finish_security_verify(void)
+{
+  uint8_t resp[2];
+
+  g_sa_verify_busy = 1U;
+  g_long_op_sid = UDS_SECURITY_ACCESS;
+  g_long_op_last_78_ms = timer_get_tick();
+  uECC_set_progress_cb(safe_mode_long_op_pump);
+  g_s3_last_ms = timer_get_tick();
+  (void)sit1145_normal_mode_set();
+  safe_mode_long_op_pump();
+
+  if (verify_security_ecdsa_signature() != 0U)
+  {
+    uECC_set_progress_cb((void (*)(void))0);
+    g_security_unlocked = 1;
+    g_security_fail_count = 0;
+    g_seed_generated = 0;
+    g_sa_sig_bytes_received = 0;
+    g_sa_verify_busy = 0U;
+    g_sa_verify_pending = 0U;
+    (void)safe_mode_can_busoff_recover();
+    (void)sit1145_normal_mode_set();
+    (void)can_driver_wait_tx_idle(50U);
+    resp[0] = (uint8_t)(UDS_SECURITY_ACCESS + UDS_POSITIVE_RESPONSE_OFFSET);
+    resp[1] = 0x02U;
+    safe_mode_send_response(resp, 2);
+    (void)can_driver_wait_tx_idle(50U);
+    g_s3_last_ms = timer_get_tick();
+    return;
+  }
+
+  uECC_set_progress_cb((void (*)(void))0);
+  g_security_unlocked = 0;
+  g_security_fail_count++;
+  g_seed_generated = 0;
+  g_sa_sig_bytes_received = 0;
+  g_sa_verify_busy = 0U;
+  g_sa_verify_pending = 0U;
+  (void)safe_mode_can_busoff_recover();
+  (void)sit1145_normal_mode_set();
+  if (g_security_fail_count >= SECURITY_MAX_FAILURES)
+  {
+    g_security_lockout_until_ms = timer_get_tick() + SECURITY_LOCKOUT_MS;
+    safe_mode_send_nrc(UDS_SECURITY_ACCESS, UDS_NRC_EXCEEDED_NUMBER_OF_ATTEMPTS);
+  }
+  else
+  {
+    safe_mode_send_nrc(UDS_SECURITY_ACCESS, UDS_NRC_INVALID_KEY);
+  }
+  (void)can_driver_wait_tx_idle(50U);
+  g_s3_last_ms = timer_get_tick();
+}
+
 static void safe_mode_xfer_exit_abort(uint8_t nrc)
 {
   uECC_set_progress_cb((void (*)(void))0);
@@ -1546,6 +1571,12 @@ void enter_safe_mode(void)
     safe_mode_sit1145_keepalive_poll();
 #endif
 
+    if (g_sa_verify_pending != 0U)
+    {
+      g_sa_verify_pending = 0U;
+      safe_mode_finish_security_verify();
+    }
+
     if (g_xfer_exit_pending != 0U)
     {
       g_xfer_exit_pending = 0U;
@@ -1553,6 +1584,7 @@ void enter_safe_mode(void)
     }
 
     if ((g_xfer_exit_busy == 0U) &&
+        (g_sa_verify_busy == 0U) &&
         (g_current_session != SESSION_DEFAULT) &&
         ((timer_get_tick() - g_s3_last_ms) >= UDS_S3_TIMEOUT_MS))
     {
