@@ -49,10 +49,10 @@ extern "C" {
 #define IMAGE_HEADER_SIZE       256U          /*!< image header size in bytes */
 #define META_PRIMARY_ADDR       0x0801C000U   /*!< primary metadata (2KB sector) */
 #define META_BACKUP_ADDR        0x0801C800U   /*!< backup metadata (next 2KB sector) */
-#define META_PAGE_SIZE          0x800U        /*!< metadata erase size: 1 sector */
+#define META_PAGE_SIZE          0x400U        /*!< metadata erase size: 1 sector */
 #define APP_A_ENTRY_ADDR        (APP_A_BASE_ADDR + IMAGE_HEADER_SIZE)
 #define APP_B_ENTRY_ADDR        (APP_B_BASE_ADDR + IMAGE_HEADER_SIZE)
-#define FLASH_SECTOR_SIZE       0x800U        /*!< AT32F426 sector size: 2KB */
+#define FLASH_SECTOR_SIZE       0x400U        /*!< AT32F426 sector size: 1KB */
 #define SRAM_BASE_ADDR          0x20000000U
 #define SRAM_SIZE               0x5000U       /*!< 20KB SRAM */
 
