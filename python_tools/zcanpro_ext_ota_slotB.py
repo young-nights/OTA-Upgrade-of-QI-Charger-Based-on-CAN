@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-ZCANPRO 扩展脚本 — Qi 无线充 CAN-UDS OTA
+ZCANPRO 扩展脚本 — Qi 无线充 CAN-UDS OTA (Slot B)
 
 导入: 高级功能 -> 扩展脚本 -> 打开本文件
 运行前: 先打开 CAN 通道 (250 kbps, Classical CAN, 扩展帧)
 需要: Python 3.8 32 位（ZCANPRO 扩展脚本要求）
+固件: app bin/app_slot_b.bin（由 pack_image.py 生成）
 """
 
 import os
@@ -25,7 +26,7 @@ except ImportError:
 # MCU 写入非活跃槽；脚本擦除后读 DID 0x2114，链接地址不符则中止。
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(_TOOLS_DIR)
-FIRMWARE_PATH = os.path.join(REPO_ROOT, "qi_wireless_code_slotB", "mdk_project", "Objects", "qi_wireless.bin")
+FIRMWARE_PATH = os.path.join(_TOOLS_DIR, "app bin", "app_slot_b.bin")
 PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
 DOWNLOAD_ADDR = 0x08007000
