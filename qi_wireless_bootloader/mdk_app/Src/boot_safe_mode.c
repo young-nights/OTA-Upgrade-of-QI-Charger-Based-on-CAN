@@ -155,7 +155,7 @@ static void safe_mode_end_long_op(void);
 
 /** @brief  SIT1145 keepalive disabled — transceiver stays in Standby until
  *          CCU sends wake-up frame (3E 00), then switches to Normal once. */
-#define SAFE_MODE_SIT1145_KEEPALIVE_ENABLE     0U
+#define SAFE_MODE_SIT1145_KEEPALIVE_ENABLE     1U
 #define SAFE_MODE_SIT1145_KEEPALIVE_PERIOD_MS  500U
 
 static uint32_t g_s3_last_ms = 0;

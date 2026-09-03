@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\bootloader.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\bootloader.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Wed Sep  2 21:24:41 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Thu Sep  3 21:22:50 2026
 <BR><P>
 <H3>Maximum Stack Usage =       2448 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -606,7 +606,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[60]"></a>can_driver_init</STRONG> (Thumb, 424 bytes, Stack size 120 bytes, can_driver.o(.text.can_driver_init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 232<LI>Call Chain = can_driver_init &rArr; sit1145_init &rArr; sit1145_read_reg
+<BR><BR>[Stack]<UL><LI>Max Depth = 248<LI>Call Chain = can_driver_init &rArr; sit1145_init &rArr; sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nvic_irq_enable
 <LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_interrupt_enable
@@ -1034,11 +1034,12 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;boot_verify_image
 </UL>
 
-<P><STRONG><a name="[65]"></a>sit1145_init</STRONG> (Thumb, 568 bytes, Stack size 80 bytes, sit1145.o(.text.sit1145_init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = sit1145_init &rArr; sit1145_read_reg
+<P><STRONG><a name="[65]"></a>sit1145_init</STRONG> (Thumb, 468 bytes, Stack size 80 bytes, sit1145.o(.text.sit1145_init))
+<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = sit1145_init &rArr; sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
 <LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_write_reg
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
 <LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_enable
 <LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_init
 <LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;spi_default_para_init
@@ -1052,7 +1053,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_driver_init
 </UL>
 
-<P><STRONG><a name="[82]"></a>sit1145_normal_mode_set</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, sit1145.o(.text.sit1145_normal_mode_set))
+<P><STRONG><a name="[82]"></a>sit1145_normal_mode_set</STRONG> (Thumb, 160 bytes, Stack size 16 bytes, sit1145.o(.text.sit1145_normal_mode_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_read_reg
@@ -1061,6 +1062,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[2f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;safe_mode_long_op_pump
 <LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_message_received
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_safe_mode
+<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_init
 </UL>
 
 <P><STRONG><a name="[a6]"></a>sit1145_read_reg</STRONG> (Thumb, 216 bytes, Stack size 32 bytes, sit1145.o(.text.sit1145_read_reg))
@@ -1274,7 +1276,7 @@ Local Symbols
 <BR>[Address Reference Count : 1]<UL><LI> boot_safe_mode.o(.text.enter_safe_mode)
 </UL>
 <P><STRONG><a name="[2f]"></a>safe_mode_long_op_pump</STRONG> (Thumb, 176 bytes, Stack size 24 bytes, boot_safe_mode.o(.text.safe_mode_long_op_pump))
-<BR><BR>[Stack]<UL><LI>Max Depth = 272<LI>Call Chain = safe_mode_long_op_pump &rArr; safe_mode_can_busoff_recover &rArr; can_driver_init &rArr; sit1145_init &rArr; sit1145_read_reg
+<BR><BR>[Stack]<UL><LI>Max Depth = 288<LI>Call Chain = safe_mode_long_op_pump &rArr; safe_mode_can_busoff_recover &rArr; can_driver_init &rArr; sit1145_init &rArr; sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sit1145_normal_mode_set
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isotp_poll
@@ -1291,7 +1293,7 @@ Local Symbols
 <LI> boot_safe_mode.o(.text.isotp_message_received)
 </UL>
 <P><STRONG><a name="[8a]"></a>safe_mode_can_busoff_recover</STRONG> (Thumb, 84 bytes, Stack size 16 bytes, boot_safe_mode.o(.text.safe_mode_can_busoff_recover))
-<BR><BR>[Stack]<UL><LI>Max Depth = 248<LI>Call Chain = safe_mode_can_busoff_recover &rArr; can_driver_init &rArr; sit1145_init &rArr; sit1145_read_reg
+<BR><BR>[Stack]<UL><LI>Max Depth = 264<LI>Call Chain = safe_mode_can_busoff_recover &rArr; can_driver_init &rArr; sit1145_init &rArr; sit1145_normal_mode_set &rArr; sit1145_read_reg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_reset
 <LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;can_busoff_get
