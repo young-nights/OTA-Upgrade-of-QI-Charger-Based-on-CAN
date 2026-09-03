@@ -58,3 +58,15 @@ dkms.conf
 .venv/
 **/__pycache__/
 *.pyc
+
+# Keil build artifacts
+*.axf
+*.htm
+*.build_log.htm
+*.lnp
+*.sct
+*.dep
+*_Target *.dep
+
+# OTA auto-generated packed images
+python_tools/app bin/*.bin
