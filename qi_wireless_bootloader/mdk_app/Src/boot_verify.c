@@ -79,17 +79,33 @@ static void verify_pump(void)
 
 /* exported functions --------------------------------------------------------*/
 
+/** @brief  Device Info pubkey offset (must match device_info_t layout) */
+#define DI_PUBKEY_OFFSET        56U   /* offsetof ecdsa_pubkey */
+#define DI_PUBKEY_VALID_OFFSET  121U  /* offsetof pubkey_valid */
+#define DI_PUBKEY_VALID_VALUE   0x01U
+
 /**
  * @brief  get pointer to the ECDSA public key
- * @note   uses symbol address (not hard-coded), safe against linker movement
- * @retval pointer to 65-byte uncompressed SEC1 public key
+ * @note   ä¼åä» Device Info åºè¯»åï¼æ¯æåææ´æ¢ï¼ï¼
+ *          è¥ Device Info æªéç½®ååéå° Bootloader åç½®å¬é¥ã
+ * @retval pointer to 65-byte uncompressed SEC1 public key, or NULL
  */
 const uint8_t *boot_verify_get_public_key(void)
 {
-  /* verify magic marker to detect Flash corruption (e.g. code overwrite) */
+  const uint8_t *di_base = (const uint8_t *)DEVICE_INFO_ADDR;
+
+  /* try Device Info first (supports key rotation) */
+  if (di_base[DI_PUBKEY_VALID_OFFSET] == DI_PUBKEY_VALID_VALUE)
+  {
+    if (di_base[DI_PUBKEY_OFFSET] == 0x04U)
+    {
+      return &di_base[DI_PUBKEY_OFFSET];
+    }
+  }
+
+  /* fallback: hardcoded public key in bootloader flash */
   if (g_pubkey_magic != ECDSA_PUBKEY_MAGIC)
   {
-    /* public key area corrupted — return NULL to force verification failure */
     return (const uint8_t *)0;
   }
   return g_ecdsa_public_key;

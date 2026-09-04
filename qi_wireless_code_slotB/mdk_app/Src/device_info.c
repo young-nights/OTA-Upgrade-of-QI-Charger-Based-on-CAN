@@ -98,10 +98,65 @@ int8_t device_info_write_sn(const uint8_t *sn32)
     info.version          = DEVICE_INFO_VERSION;
     info.production_date  = 0U;
     memset((void *)info.hw_version, 0, sizeof(info.hw_version));
+    info.pubkey_valid     = 0xFFU;
     memset((void *)info.reserved, 0xFF, sizeof(info.reserved));
   }
 
   memcpy((void *)info.sn, (const void *)sn32, 32U);
+  info.crc32 = di_crc_struct(&info);
+
+  flash_unlock();
+  st = flash_sector_erase(DEVICE_INFO_ADDR);
+  if (st != FLASH_OPERATE_DONE)
+  {
+    flash_lock();
+    return -1;
+  }
+
+  src   = (const uint32_t *)&info;
+  words = sizeof(device_info_t) / 4U;
+  for (i = 0U; i < words; i++)
+  {
+    st = flash_word_program(DEVICE_INFO_ADDR + (i * 4U), src[i]);
+    if (st != FLASH_OPERATE_DONE)
+    {
+      flash_lock();
+      return -1;
+    }
+  }
+  flash_lock();
+  return 0;
+}
+
+int8_t device_info_write_pubkey(const uint8_t *pubkey65)
+{
+  device_info_t info;
+  const uint32_t *src;
+  uint32_t words;
+  uint32_t i;
+  flash_status_type st;
+
+  if (pubkey65 == (const uint8_t *)0)
+  {
+    return -1;
+  }
+  if (pubkey65[0] != 0x04U)
+  {
+    return -1;  /* SEC1 uncompressed tag */
+  }
+
+  if (device_info_read(&info) != 0)
+  {
+    memset((void *)&info, 0xFF, sizeof(info));
+    info.magic            = DEVICE_INFO_MAGIC;
+    info.version          = DEVICE_INFO_VERSION;
+    info.production_date  = 0U;
+    memset((void *)info.hw_version, 0, sizeof(info.hw_version));
+    memset((void *)info.reserved, 0xFF, sizeof(info.reserved));
+  }
+
+  memcpy((void *)info.ecdsa_pubkey, (const void *)pubkey65, DEVICE_INFO_PUBKEY_LEN);
+  info.pubkey_valid = 0x01U;
   info.crc32 = di_crc_struct(&info);
 
   flash_unlock();

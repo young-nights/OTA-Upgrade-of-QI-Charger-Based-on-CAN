@@ -116,6 +116,7 @@ extern "C" {
 #define DID_LAST_BOOT_REASON        0x2115U   /*!< last boot reason */
 #define DID_ROLLBACK_COUNT          0x2116U   /*!< rollback counter */
 #define DID_CLAMP_STATE             0x2118U   /*!< PA0 hall: 0=closed, 1=open */
+#define DID_ECDSA_PUBKEY            0x2120U   /*!< ECDSA P-256 public key, 65-byte SEC1 */
 
 /* ========================================================================== */
 /*  Session management constants                                             */

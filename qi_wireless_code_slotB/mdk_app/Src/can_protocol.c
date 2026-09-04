@@ -293,6 +293,21 @@ static int8_t fill_did_payload(uint16_t did, uint8_t *out, uint8_t *olen)
       out[0] = board_hall_open();
       *olen = 1U;
       return 0;
+    case DID_ECDSA_PUBKEY:
+    {
+      device_info_t di;
+      if (device_info_read(&di) != 0)
+      {
+        return -1;
+      }
+      if (di.pubkey_valid != 0x01U)
+      {
+        return -1;
+      }
+      memcpy(out, di.ecdsa_pubkey, 65U);
+      *olen = 65U;
+      return 0;
+    }
     default:
       return -1;
   }
@@ -519,6 +534,33 @@ static void handle_write_data_by_id(uint8_t *data, uint16_t len)
           sn32[i] = data[3U + i];
         }
         if (device_info_write_sn(sn32) != 0)
+        {
+          proto_send_nrc(UDS_SID_WRITE_DATA_BY_ID, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
+          return;
+        }
+        resp[0] = UDS_SID_WRITE_DATA_BY_ID + UDS_POSITIVE_RESPONSE_OFFSET;
+        resp[1] = data[1];
+        resp[2] = data[2];
+        proto_send_response(resp, 3);
+        break;
+      }
+
+      case DID_ECDSA_PUBKEY:
+      {
+        uint16_t n;
+
+        n = (uint16_t)(len - 3U);
+        if (n != 65U)
+        {
+          proto_send_nrc(UDS_SID_WRITE_DATA_BY_ID, UDS_NRC_INCORRECT_MESSAGE_LENGTH);
+          return;
+        }
+        if (data[3] != 0x04U)
+        {
+          proto_send_nrc(UDS_SID_WRITE_DATA_BY_ID, UDS_NRC_REQUEST_OUT_OF_RANGE);
+          return;
+        }
+        if (device_info_write_pubkey(&data[3]) != 0)
         {
           proto_send_nrc(UDS_SID_WRITE_DATA_BY_ID, UDS_NRC_GENERAL_PROGRAMMING_FAILURE);
           return;
