@@ -323,6 +323,10 @@ static int8_t fill_did_payload(uint16_t did, uint8_t *out, uint8_t *olen)
       *olen = 65U;
       return 0;
     }
+    case 0x21FFU:
+      out[0] = sit1145_get_mode();  /* 0x04=Standby, 0x07=Normal, 0x01=Sleep */
+      *olen = 1U;
+      return 0;
     default:
       return -1;
   }
