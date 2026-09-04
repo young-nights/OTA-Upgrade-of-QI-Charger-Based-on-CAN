@@ -81,7 +81,7 @@ static uint8_t  g_need_lifecycle_announce = 0;
 static uint32_t g_uds_last_ms = 0;
 
 /** 6 minutes with no UDS RX/TX → SIT1145 Standby */
-#define CAN_LP_IDLE_TIMEOUT_MS  (60UL * 1000UL)
+#define CAN_LP_IDLE_TIMEOUT_MS  (0UL)
 
 static void can_lp_mark_uds(void)
 {
