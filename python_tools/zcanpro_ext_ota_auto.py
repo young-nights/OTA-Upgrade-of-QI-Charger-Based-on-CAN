@@ -30,8 +30,9 @@ FIRMWARE_DIR = os.path.join(_TOOLS_DIR, "app bin")
 PRIVATE_KEY_PATH = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 RESET_APP_TO_BOOT = True
 
-def _auto_select_firmware():
-    """扫描 app bin/ 目录，找到 Reset Handler 在 Slot A 或 Slot B 范围内的 bin。"""
+def _scan_firmware():
+    """扫描 app bin/ 目录，返回 {SLOT_A: path, SLOT_B: path} 字典。"""
+    result = {}
     if not os.path.isdir(FIRMWARE_DIR):
         raise RuntimeError("找不到固件目录: " + FIRMWARE_DIR)
     for name in sorted(os.listdir(FIRMWARE_DIR)):
@@ -41,23 +42,35 @@ def _auto_select_firmware():
         data = open(path, "rb").read()
         if len(data) < IMAGE_HEADER_SIZE + 8:
             continue
-        # 已打包的带 XATO 头
         if struct.unpack_from("<I", data, 0)[0] == IMAGE_MAGIC:
             reset = struct.unpack_from("<I", data, IMAGE_HEADER_SIZE + 4)[0] & 0xFFFFFFFE
         else:
-            # 裸 bin，向量表在 offset 4
             reset = struct.unpack_from("<I", data, 4)[0] & 0xFFFFFFFE
         a0 = SLOT_A_BASE + IMAGE_HEADER_SIZE
         a1 = SLOT_A_BASE + SLOT_SIZE
         b0 = SLOT_B_BASE + IMAGE_HEADER_SIZE
         b1 = SLOT_B_BASE + SLOT_SIZE
         if a0 <= reset < a1:
-            _log("自动识别: %s → Slot A (Reset=0x%08X)" % (name, reset))
-            return path
-        if b0 <= reset < b1:
-            _log("自动识别: %s → Slot B (Reset=0x%08X)" % (name, reset))
-            return path
-    raise RuntimeError("app bin/ 中没有匹配 Slot A/B 的固件")
+            _log("扫描: %s → Slot A (Reset=0x%08X)" % (name, reset))
+            result[SLOT_A] = path
+        elif b0 <= reset < b1:
+            _log("扫描: %s → Slot B (Reset=0x%08X)" % (name, reset))
+            result[SLOT_B] = path
+    return result
+
+
+def _auto_select_firmware(bus_id):
+    """读 MCU 当前活跃槽(DID 0x2113)，选对面槽的 bin。"""
+    slots = _scan_firmware()
+    if not slots:
+        raise RuntimeError("app bin/ 中没有匹配 Slot A/B 的固件")
+    active = read_did_u8(bus_id, 0x2113)
+    _log("MCU 当前活跃槽: Slot %s" % slot_name(active))
+    target = SLOT_B if active == SLOT_A else SLOT_A
+    if target not in slots:
+        raise RuntimeError("app bin/ 中缺少 Slot %s 的固件" % slot_name(target))
+    _log("自动选择: %s → 升级 Slot %s" % (os.path.basename(slots[target]), slot_name(target)))
+    return slots[target]
 
 FIRMWARE_PATH = ""
 DOWNLOAD_ADDR = 0x08007000
@@ -525,7 +538,7 @@ def run_ota(bus_id):
     global FIRMWARE_PATH
     if not (1 <= TRANSFER_BLOCK_DATA <= MAX_TD_DATA):
         raise RuntimeError("TRANSFER_BLOCK_DATA 须为 1..%d" % MAX_TD_DATA)
-    FIRMWARE_PATH = _auto_select_firmware()
+    FIRMWARE_PATH = _auto_select_firmware(bus_id)
     if not os.path.isfile(FIRMWARE_PATH):
         raise RuntimeError("找不到固件: " + FIRMWARE_PATH)
     if not os.path.isfile(PRIVATE_KEY_PATH):
