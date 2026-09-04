@@ -81,7 +81,7 @@ static uint8_t  g_need_lifecycle_announce = 0;
 static uint32_t g_uds_last_ms = 0;
 
 /** 6 minutes with no UDS RX/TX → SIT1145 Standby */
-#define CAN_LP_IDLE_TIMEOUT_MS  (0UL)
+#define CAN_LP_IDLE_TIMEOUT_MS  (6UL * 60UL * 1000UL)
 
 static void can_lp_mark_uds(void)
 {
@@ -113,6 +113,21 @@ static void can_lp_enter_standby(void)
   }
   (void)can_driver_wait_tx_idle(20U);
   can_driver_offline();
+
+  /* PA12 (CAN_TX) 从 AF4 切到 GPIO 输出低，防止上拉电阻将 SIT1145 TXD 拉高，
+   * 确保总线处于 recessive 状态，SIT1145 可正常检测 ISO 11898-2 WUP 唤醒模式。
+   * can_driver_online() 会恢复 PA12 为 CAN AF4。 */
+  {
+    gpio_init_type gpio_init_struct;
+    gpio_default_para_init(&gpio_init_struct);
+    gpio_init_struct.gpio_pins           = GPIO_PINS_12;
+    gpio_init_struct.gpio_mode           = GPIO_MODE_OUTPUT;
+    gpio_init_struct.gpio_out_type       = GPIO_OUTPUT_PUSH_PULL;
+    gpio_init_struct.gpio_pull           = GPIO_PULL_NONE;
+    gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_MODERATE;
+    gpio_init(GPIOA, &gpio_init_struct);
+    gpio_bits_reset(GPIOA, GPIO_PINS_12);
+  }
 
   sit1145_wake_enable();
   sit1145_wakeup_clear();
