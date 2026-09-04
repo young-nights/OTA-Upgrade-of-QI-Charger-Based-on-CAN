@@ -114,10 +114,6 @@ static void can_lp_enter_standby(void)
   (void)can_driver_wait_tx_idle(20U);
   can_driver_offline();
 
-  /* PA12 (CAN_TX) 输出低电平，防止上拉电阻将 SIT1145 TXD 拉高导致总线显性，
-   * 否则 Standby 模式下无法检测唤醒帧。 */
-  gpio_bits_reset(GPIOA, GPIO_PINS_12);
-
   sit1145_wake_enable();
   sit1145_wakeup_clear();
   (void)sit1145_standby_mode_set();
