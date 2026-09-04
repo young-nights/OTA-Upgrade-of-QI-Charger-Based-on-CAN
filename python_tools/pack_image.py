@@ -35,44 +35,71 @@ DEFAULT_BIN_B = os.path.join(REPO_ROOT, "qi_wireless_code_slotB", "mdk_project",
 DEFAULT_KEY = os.path.join(REPO_ROOT, "docs", "keys", "private.pem")
 
 
+def pack_one(bin_path, priv, version):
+    """打包单个槽的固件，返回 0=成功，1=失败。"""
+    if not os.path.isfile(bin_path):
+        print("跳过（找不到）: %s" % bin_path)
+        return 1
+    image = pack_image_if_needed(bin_path, priv, version=version)
+    linked = validate_image(image)
+
+    if not os.path.isdir(APP_BIN_DIR):
+        os.makedirs(APP_BIN_DIR)
+    out_path = os.path.join(APP_BIN_DIR, "app_slot_%s.bin" % slot_name(linked).lower())
+
+    with open(out_path, "wb") as f:
+        f.write(image)
+
+    burn_addr = "0x%08X" % (SLOT_A_BASE if linked == SLOT_A else SLOT_B_BASE)
+    print("输出: %s" % os.path.abspath(out_path))
+    print("总长: %d  (头 %d + 固件 %d)" % (len(image), IMAGE_HEADER_SIZE, len(image) - IMAGE_HEADER_SIZE))
+    print("链接: Slot %s  → 产线烧录地址 %s" % (slot_name(linked), burn_addr))
+    print("")
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Pack Keil APP .bin with XATO header (CRC32 + ECDSA P-256)"
     )
-    parser.add_argument("--bin", default=DEFAULT_BIN_A, help="Keil fromelf 产出的裸 APP .bin")
+    parser.add_argument("--bin", default=None, help="指定单个 Keil bin 路径（不指定则自动打包 Slot A + Slot B）")
     parser.add_argument("--key", default=DEFAULT_KEY, help="ECDSA P-256 私钥 PEM（须与 Bootloader 公钥成对）")
-    parser.add_argument("--out", default=None, help="输出镜像路径，默认自动写入 app bin/app_slot_x.bin")
+    parser.add_argument("--out", default=None, help="输出镜像路径（仅 --bin 模式有效）")
     parser.add_argument("--version", default="1.0.0", help="写入头的版本字符串，默认 1.0.0")
     args = parser.parse_args(argv)
 
-    if not os.path.isfile(args.bin):
-        sys.stderr.write("找不到固件: %s\n" % args.bin)
-        return 1
     if not os.path.isfile(args.key):
         sys.stderr.write("找不到私钥: %s\n" % args.key)
         return 1
 
     priv = load_ec_private_key(args.key)
-    image = pack_image_if_needed(args.bin, priv, version=args.version)
-    linked = validate_image(image)
 
-    if args.out is None:
-        if not os.path.isdir(APP_BIN_DIR):
-            os.makedirs(APP_BIN_DIR)
-        args.out = os.path.join(APP_BIN_DIR, "app_slot_%s.bin" % slot_name(linked).lower())
-
-    out_dir = os.path.dirname(os.path.abspath(args.out))
-    if out_dir and not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-
-    with open(args.out, "wb") as f:
-        f.write(image)
-
-    burn_addr = "0x%08X" % (SLOT_A_BASE if linked == SLOT_A else SLOT_B_BASE)
-    print("输出: %s" % os.path.abspath(args.out))
-    print("总长: %d  (头 %d + 固件 %d)" % (len(image), IMAGE_HEADER_SIZE, len(image) - IMAGE_HEADER_SIZE))
-    print("链接: Slot %s  → 产线烧录地址 %s" % (slot_name(linked), burn_addr))
-    return 0
+    if args.bin is not None:
+        # 单槽模式
+        if args.out is not None:
+            # 指定了 --out，走原有逻辑
+            image = pack_image_if_needed(args.bin, priv, version=args.version)
+            linked = validate_image(image)
+            out_dir = os.path.dirname(os.path.abspath(args.out))
+            if out_dir and not os.path.isdir(out_dir):
+                os.makedirs(out_dir)
+            with open(args.out, "wb") as f:
+                f.write(image)
+            burn_addr = "0x%08X" % (SLOT_A_BASE if linked == SLOT_A else SLOT_B_BASE)
+            print("输出: %s" % os.path.abspath(args.out))
+            print("总长: %d  (头 %d + 固件 %d)" % (len(image), IMAGE_HEADER_SIZE, len(image) - IMAGE_HEADER_SIZE))
+            print("链接: Slot %s  → 产线烧录地址 %s" % (slot_name(linked), burn_addr))
+            return 0
+        else:
+            return pack_one(args.bin, priv, args.version)
+    else:
+        # 自动打包 Slot A + Slot B
+        print("自动打包 Slot A + Slot B ...")
+        print("")
+        ret = 0
+        ret |= pack_one(DEFAULT_BIN_A, priv, args.version)
+        ret |= pack_one(DEFAULT_BIN_B, priv, args.version)
+        return ret
 
 
 if __name__ == "__main__":
