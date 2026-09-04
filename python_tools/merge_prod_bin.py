@@ -19,18 +19,15 @@ import struct
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP_BIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app bin")
+BURN_BIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "burn bin")
 
 DEFAULT_BOOT = os.path.join(
     REPO_ROOT,
     "qi_wireless_bootloader", "mdk_project", "Objects", "bootloader.bin",
 )
-DEFAULT_APP = os.path.join(
-    REPO_ROOT,
-    "qi_wireless_code", "mdk_project", "Objects", "app_slot_a.ota.bin",
-)
-DEFAULT_OUT = os.path.join(
-    REPO_ROOT, "python_tools", "prod_image.bin",
-)
+DEFAULT_APP = os.path.join(APP_BIN_DIR, "app_slot_a.bin")
+DEFAULT_OUT = os.path.join(BURN_BIN_DIR, "prod_image.bin")
 
 BOOT_BASE = 0x08000000
 BOOT_SIZE = 0x7000  # 28 KB reserved for bootloader
