@@ -295,7 +295,6 @@ static int8_t fill_did_payload(uint16_t did, uint8_t *out, uint8_t *olen)
       return 0;
     case DID_ECDSA_PUBKEY:
     {
-      device_info_t di;
       if (device_info_read(&di) != 0)
       {
         return -1;
