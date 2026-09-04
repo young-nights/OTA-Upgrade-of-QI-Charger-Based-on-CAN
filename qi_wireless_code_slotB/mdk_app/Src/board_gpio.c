@@ -80,3 +80,17 @@ uint8_t board_hall_open(void)
   /* PA0 low = magnetic field = DID 0x2118 open */
   return (gpio_input_data_bit_read(GPIOA, GPIO_PINS_0) == RESET) ? 1U : 0U;
 }
+
+void board_charge_poll(void)
+{
+  /* PA0 high = no magnet = phone placed → enable 5V
+   * PA0 low  = magnet   = no phone  → disable 5V */
+  if (board_hall_open() == 0U)
+  {
+    board_5v_set(1U);
+  }
+  else
+  {
+    board_5v_set(0U);
+  }
+}

@@ -72,6 +72,7 @@ int main(void)
     can_protocol_poll();
     qi_uart_poll();
     lifecycle_poll();
+    board_charge_poll();
     ota_trial_poll();
   }
 }
