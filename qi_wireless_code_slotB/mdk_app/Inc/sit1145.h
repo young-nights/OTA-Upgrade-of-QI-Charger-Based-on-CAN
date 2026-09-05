@@ -57,6 +57,7 @@ extern "C" {
  * ========================================================================== */
 
 #define SIT1145_REG_MODE_CONTROL          0x01  /**< 模式控制（读写）：选择 Sleep/Standby/Normal */
+#define SIT1145_REG_MAIN_STATUS           0x03  /**< 主状态（只读）：FSMS/OTWS/NMS */
 #define SIT1145_REG_CAN_CONTROL           0x20  /**< CAN 控制（读写）：CMC/CFDC/PNCOK/CPNC 配置 */
 #define SIT1145_REG_TRANSCEIVER_STATUS    0x22  /**< 收发器状态（只读）：CTS 等状态位 */
 #define SIT1145_REG_TRANSCEIVER_EVENT_EN  0x23  /**< 事件使能（读写）：CWE/WUE 等唤醒使能位 */
@@ -82,6 +83,37 @@ extern "C" {
  *        0 = 尚未就绪（模式切换中或不在 Normal 模式）
  */
 #define SIT1145_TRAN_STA_CTS        (1U << 7)
+
+/* ==========================================================================
+ *  主状态寄存器位定义（0x03，只读）— 数据手册表3
+ *  上电后默认 0x00
+ * ========================================================================== */
+
+/**
+ * @brief FSMS 位（bit7）：Fail-Safe Mode Status
+ * @note  指示进入 Sleep 模式的原因：
+ *        0 = 由 SPI 指令（写 MODE_CONTROL=0x01）触发
+ *        1 = 由 VCC 欠压（undervoltage）自动触发
+ */
+#define SIT1145_MAIN_STA_FSMS       (1U << 7)
+
+/**
+ * @brief OTWS 位（bit6）：Over-Temperature Warning Status
+ * @note  过温警告状态：
+ *        0 = 温度正常
+ *        1 = 芯片温度超过过温警告阈值（典型 150°C）
+ *        在 Normal 模式下持续监测，过温时收发器可能自动保护
+ */
+#define SIT1145_MAIN_STA_OTWS       (1U << 6)
+
+/**
+ * @brief NMS 位（bit5）：Normal Mode Status
+ * @note  指示上电后是否已进入过 Normal 模式：
+ *        0 = 上电后从未进入 Normal 模式
+ *        1 = 自上电以来至少进入过一次 Normal 模式
+ *        该标志上电后清零，首次进入 Normal 后置位，之后不会清零
+ */
+#define SIT1145_MAIN_STA_NMS        (1U << 5)
 
 /* ==========================================================================
  *  收发器事件使能（0x23）与事件标志（0x24）
@@ -229,6 +261,16 @@ uint8_t sit1145_sleep_mode_set(void);
  *         0xFF — SPI 读取失败（可能处于 Sleep 模式）
  */
 uint8_t sit1145_get_mode(void);
+
+/**
+ * @brief  读取 SIT1145 主状态寄存器（0x03，只读）
+ * @note   反映芯片全局状态：
+ *         - FSMS（bit7）：Sleep 触发原因（0=SPI 指令，1=VCC 欠压）
+ *         - OTWS（bit6）：过温警告（0=正常，1=温度过高）
+ *         - NMS（bit5）：是否进入过 Normal（0=从未，1=至少一次）
+ * @retval 主状态寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_main_status(void);
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）

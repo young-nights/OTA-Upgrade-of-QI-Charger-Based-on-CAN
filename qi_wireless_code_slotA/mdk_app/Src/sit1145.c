@@ -338,6 +338,19 @@ uint8_t sit1145_get_mode(void)
  *         置位 TRANSCEIVER_EVENT 的 CW 标志
  *         同时关闭选择性唤醒（WUF），只用标准唤醒
  */
+/**
+ * @brief  读取 SIT1145 主状态寄存器（0x03，只读）
+ * @note   主状态寄存器反映芯片的全局状态：
+ *         - FSMS（bit7）：Sleep 触发原因（0=SPI 指令，1=VCC 欠压）
+ *         - OTWS（bit6）：过温警告（0=正常，1=温度过高）
+ *         - NMS（bit5）：是否进入过 Normal（0=从未，1=至少一次）
+ * @retval 主状态寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_main_status(void)
+{
+  return sit1145_read_reg(SIT1145_REG_MAIN_STATUS);
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
