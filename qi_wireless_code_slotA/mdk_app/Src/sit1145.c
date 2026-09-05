@@ -1,43 +1,43 @@
 /**
   **************************************************************************
   * @file     sit1145.c
-  * @brief    SIT1145 CAN FD transceiver driver for AT32F426
+  * @brief    SIT1145 CAN FD 收发器驱动（AT32F426）
   *
-  * @note     Hardware wiring:
-  *           PA4  - SPI1_CS  (GPIO software-controlled, active low)
-  *           PA5  - SPI1_SCK (AF MUX0)
-  *           PA6  - SPI1_MISO (AF MUX0)
-  *           PA7  - SPI1_MOSI (AF MUX0)
-  *           PA11 - CAN_RX  (handled by can_driver)
-  *           PA12 - CAN_TX  (handled by can_driver)
-  *           PB3  - Floating pin (set to output low)
+  * @note     硬件接线：
+  *           PA4  - SPI1_CS  （GPIO 软件控制，低电平有效）
+  *           PA5  - SPI1_SCK （AF MUX0）
+  *           PA6  - SPI1_MISO（AF MUX0）
+  *           PA7  - SPI1_MOSI（AF MUX0）
+  *           PA11 - CAN_RX  （由 can_driver 管理）
+  *           PA12 - CAN_TX  （由 can_driver 管理）
+  *           PB3  - 悬空引脚（输出低）
   *
-  *           SIT1145 SPI protocol:
-  *           Write: CS low -> send (addr << 1) -> send data -> CS high
-  *           Read:  CS low -> send (addr << 1) | 0x01 -> read data -> CS high
+  *           SIT1145 SPI 协议：
+  *           写：CS 拉低 → 发 (addr << 1) → 发 data → CS 拉高
+  *           读：CS 拉低 → 发 (addr << 1) | 0x01 → 读 data → CS 拉高
   **************************************************************************
   */
 
-/* includes ------------------------------------------------------------------*/
+/* 头文件 ------------------------------------------------------------------*/
 #include "sit1145.h"
 
-/* private define ------------------------------------------------------------*/
+/* 私有宏定义 --------------------------------------------------------------*/
 
 /**
- * @brief  SPI1 clock configuration
- * @note   APB2 clock assumed 180 MHz (system clock)
- *         Using DIV_128 gives SPI clock ~1.4 MHz, safe for SIT1145
+ * @brief  SPI1 时钟分频配置
+ * @note   APB2 时钟假设为 180 MHz（系统时钟）
+ *         DIV_128 分频后 SPI 时钟约 1.4 MHz，SIT1145 可靠工作
  */
 #define SIT1145_SPI_DIV             SPI_MCLK_DIV_128
 
-/* approximate delay for CS setup/hold (~1us at 180MHz) */
+/* CS 建立/保持延迟（180MHz 下约 1us） */
 #define SIT1145_CS_DELAY_CYCLES     180U
 
-/* private functions ---------------------------------------------------------*/
+/* 私有函数 ---------------------------------------------------------------*/
 
 /**
- * @brief  brief software delay (~1 microsecond)
- * @note   simple busy-wait, calibrated for ~180 MHz system clock
+ * @brief  软件延时约 1 微秒
+ * @note   简单忙等，针对 ~180 MHz 系统时钟校准
  */
 static void sit1145_delay_us(void)
 {
@@ -49,7 +49,7 @@ static void sit1145_delay_us(void)
 }
 
 /**
- * @brief  busy-wait milliseconds (init path only)
+ * @brief  毫秒级忙等延时（仅初始化路径使用）
  */
 static void sit1145_delay_ms(uint32_t ms)
 {
@@ -64,8 +64,8 @@ static void sit1145_delay_ms(uint32_t ms)
 }
 
 /**
- * @brief  wait until transceiver CTS=1 (Normal Mode, ready to drive the bus)
- * @retval 1 if CTS set, 0 on timeout
+ * @brief  等待收发器 CTS=1（Normal 模式，可驱动总线）
+ * @retval 1=CTS 已置位，0=超时
  */
 static uint8_t sit1145_wait_cts(uint32_t timeout_ms)
 {
@@ -85,7 +85,7 @@ static uint8_t sit1145_wait_cts(uint32_t timeout_ms)
 }
 
 /**
- * @brief  assert CS (pull low)
+ * @brief  拉低 CS（选中 SIT1145）
  */
 static void sit1145_cs_low(void)
 {
@@ -94,7 +94,7 @@ static void sit1145_cs_low(void)
 }
 
 /**
- * @brief  deassert CS (pull high)
+ * @brief  拉高 CS（释放 SIT1145）
  */
 static void sit1145_cs_high(void)
 {
@@ -103,9 +103,9 @@ static void sit1145_cs_high(void)
 }
 
 /**
- * @brief  SPI1 send and receive one byte (blocking)
- * @param  tx_data: byte to transmit
- * @retval received byte
+ * @brief  SPI1 收发一个字节（阻塞）
+ * @param  tx_data: 要发送的字节
+ * @retval 接收到的字节
  */
 static uint8_t sit1145_spi_xfer(uint8_t tx_data)
 {
@@ -135,12 +135,12 @@ static uint8_t sit1145_spi_xfer(uint8_t tx_data)
   return (uint8_t)spi_i2s_data_receive(SPI1);
 }
 
-/* exported functions --------------------------------------------------------*/
+/* 导出函数 ---------------------------------------------------------------*/
 
 /**
- * @brief  write SIT1145 register via SPI
- * @param  addr: register address
- * @param  data: value to write
+ * @brief  通过 SPI 写 SIT1145 寄存器
+ * @param  addr: 寄存器地址
+ * @param  data: 写入值
  */
 void sit1145_write_reg(uint8_t addr, uint8_t data)
 {
@@ -151,9 +151,9 @@ void sit1145_write_reg(uint8_t addr, uint8_t data)
 }
 
 /**
- * @brief  read SIT1145 register via SPI
- * @param  addr: register address
- * @retval register value
+ * @brief  通过 SPI 读 SIT1145 寄存器
+ * @param  addr: 寄存器地址
+ * @retval 寄存器值
  */
 uint8_t sit1145_read_reg(uint8_t addr)
 {
@@ -168,9 +168,9 @@ uint8_t sit1145_read_reg(uint8_t addr)
 }
 
 /**
- * @brief  generic mode switch with verify
- * @param  target_mode: one of SIT1145_MC_SLEEP_MODE / STANDBY / NORMAL
- * @retval 1 on success, 0 on failure
+ * @brief  通用模式切换（带验证）
+ * @param  target_mode: SIT1145_MC_SLEEP_MODE / STANDBY / NORMAL
+ * @retval 1 成功，0 失败
  */
 static uint8_t sit1145_set_mode(uint8_t target_mode)
 {
@@ -180,7 +180,7 @@ static uint8_t sit1145_set_mode(uint8_t target_mode)
   sit1145_delay_us();
   sit1145_delay_us();
 
-  /* Sleep mode disables SPI — cannot verify, trust the write */
+  /* Sleep 模式会关闭 SPI，无法回读验证，直接信任写入 */
   if (target_mode == SIT1145_MC_SLEEP_MODE)
   {
     return 1U;
@@ -196,11 +196,10 @@ static uint8_t sit1145_set_mode(uint8_t target_mode)
 }
 
 /**
- * @brief  switch SIT1145 to Normal Mode and verify
- * @note   CAN Control and Data Rate registers must be configured before
- *         calling this function (some transceivers ignore register writes
- *         once in Normal Mode).
- * @retval 1 on success, 0 on failure
+ * @brief  切换 SIT1145 到 Normal 模式
+ * @note   切换前须确保 CAN Control 和 Data Rate 寄存器已配置
+ *         （部分收发器进入 Normal 后会忽略寄存器写入）。
+ * @retval 1 成功，0 失败
  */
 uint8_t sit1145_normal_mode_set(void)
 {
@@ -216,11 +215,10 @@ uint8_t sit1145_normal_mode_set(void)
 }
 
 /**
- * @brief  switch SIT1145 to Standby Mode and verify
- * @note   Standby Mode: low-power listening state.
- *         SPI remains accessible; CAN bus is passive (no TX).
- *         Transceiver can be woken by CAN bus activity.
- * @retval 1 on success, 0 on failure
+ * @brief  切换 SIT1145 到 Standby 模式
+ * @note   Standby 模式：低功耗监听状态，CAN 总线被动（不发送）。
+ *         SPI 仍可访问，收发器可被 CAN 总线活动唤醒。
+ * @retval 1 成功，0 失败
  */
 uint8_t sit1145_standby_mode_set(void)
 {
@@ -228,13 +226,12 @@ uint8_t sit1145_standby_mode_set(void)
 }
 
 /**
- * @brief  switch SIT1145 to Sleep Mode
- * @note   Sleep Mode: lowest power consumption.
- *         ⚠️ SPI interface is DISABLED in Sleep mode.
- *         After calling this function, any SPI read/write will fail.
- *         Wake-up requires: INH pin transition, or full power cycle.
- *         Caller must ensure CAN controller is stopped before sleeping.
- * @retval 1 always (cannot verify — SPI is off after sleep)
+ * @brief  切换 SIT1145 到 Sleep 模式
+ * @note   Sleep 模式：最低功耗。
+ *         ⚠️ SPI 接口在 Sleep 模式下不可用，调用后任何 SPI 读写都会失败。
+ *         唤醒方式：INH 引脚电平变化，或重新上电。
+ *         调用前须确保 CAN 控制器已停止。
+ * @retval 1 始终返回1（无法验证，SPI 已断开）
  */
 uint8_t sit1145_sleep_mode_set(void)
 {
@@ -242,30 +239,40 @@ uint8_t sit1145_sleep_mode_set(void)
 }
 
 /**
- * @brief  get current SIT1145 operating mode
- * @retval Mode control register value & 0x07:
+ * @brief  获取 SIT1145 当前工作模式
+ * @retval 模式控制寄存器值 & 0x07：
  *         SIT1145_MC_SLEEP_MODE   (0x01) — Sleep
  *         SIT1145_MC_STANDBY_MODE (0x04) — Standby
  *         SIT1145_MC_NORMAL_MODE  (0x07) — Normal
- *         0xFF — SPI read error (possibly in Sleep mode)
+ *         0xFF — SPI 读取失败（可能处于 Sleep 模式）
  */
 uint8_t sit1145_get_mode(void)
 {
   uint8_t val = sit1145_read_reg(SIT1145_REG_MODE_CONTROL);
-  /* if SPI fails (chip in Sleep), read returns 0xFF from spi_xfer timeout */
+  /* SPI 失败时（芯片处于 Sleep），spi_xfer 超时返回 0xFF */
   return val & SIT1145_MC_MODE_MASK;
 }
 
+/**
+ * @brief  使能标准 CAN 远程唤醒（CWE=1，关闭选择性唤醒 WUF）
+ */
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
 }
 
+/**
+ * @brief  检测是否有 CAN 唤醒事件挂起
+ * @note   双重检测：
+ *         1. PA11 引脚电平（Standby 时 SIT1145 强制 RXD 拉低）
+ *         2. SPI 读取 TRANSCEIVER_EVENT 寄存器 CW 位
+ * @retval 1=有唤醒事件，0=无
+ */
 uint8_t sit1145_wakeup_pending(void)
 {
   uint8_t ev;
 
-  /* Standby: RXD (PA11) is forced low for the whole wake event. */
+  /* Standby 模式下 SIT1145 在整个唤醒事件期间强制 RXD(PA11) 拉低 */
   if (gpio_input_data_bit_read(GPIOA, GPIO_PINS_11) == RESET)
   {
     return 1U;
@@ -279,25 +286,28 @@ uint8_t sit1145_wakeup_pending(void)
   return ((ev & SIT1145_CW) != 0U) ? 1U : 0U;
 }
 
+/**
+ * @brief  清除 CAN 唤醒事件标志（写1清零 CW 位）
+ */
 void sit1145_wakeup_clear(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT, SIT1145_CW);
 }
 
 /**
- * @brief  initialize SIT1145 CAN transceiver
- * @note   performs the following steps:
- *         1. Enable GPIOA and SPI1 peripheral clocks
- *         2. Configure PA5/PA6/PA7 as SPI1 AF pins (MUX0)
- *         3. Configure PA4 as GPIO output (CS, default high)
- *         4. Configure PB3 as GPIO output low (floating pin)
- *         5. Initialize SPI1 Mode 1 (CPOL=0, CPHA=1) — datasheet falling-edge sample
- *         6. Read identification 0x7E (0x70 AQ / 0x74 AQ-FD)
- *         7. Configure CAN Control register (CMC=01, CFDC=1)
- *         8. Configure Data Rate register (250kbps)
- *         9. Enable standard CAN wake-up (CWE)
- *        10. Switch to Standby (APP low-power default)
- * @retval 1 on success, 0 on failure
+ * @brief  初始化 SIT1145 CAN 收发器
+ * @note   执行以下步骤：
+ *         1. 使能 GPIOA、GPIOB、SPI1 外设时钟
+ *         2. 配置 PA5/PA6/PA7 为 SPI1 AF 引脚（MUX0）
+ *         3. 配置 PA4 为 GPIO 输出（CS，默认高电平）
+ *         4. 配置 PB3 为 GPIO 输出低（悬空引脚）
+ *         5. 初始化 SPI1 Mode 1（CPOL=0, CPHA=1）— 数据手册下降沿采样
+ *         6. 读识别码 0x7E（0x70=AQ / 0x74=AQ-FD）
+ *         7. 配置 CAN Control 寄存器（CMC=01, CFDC=1）
+ *         8. 配置 Data Rate 寄存器（250kbps）
+ *         9. 使能标准 CAN 唤醒（CWE）
+ *        10. 切换到 Standby（APP 低功耗默认状态）
+ * @retval 1 成功，0 失败
  */
 uint8_t sit1145_init(void)
 {
@@ -306,13 +316,13 @@ uint8_t sit1145_init(void)
   uint8_t can_ctrl_val;
   uint8_t chip_id;
 
-  /* ---- Step 1: Enable peripheral clocks ---- */
+  /* ---- 步骤1：使能外设时钟 ---- */
   crm_periph_clock_enable(CRM_GPIOA_PERIPH_CLOCK, TRUE);
   crm_periph_clock_enable(CRM_GPIOB_PERIPH_CLOCK, TRUE);
   crm_periph_clock_enable(CRM_SPI1_PERIPH_CLOCK, TRUE);
 
-  /* ---- Step 2: Configure SPI1 data pins (PA5=SCK, PA6=MISO, PA7=MOSI) ---- */
-  /* SCK and MOSI: no pull */
+  /* ---- 步骤2：配置 SPI1 数据引脚（PA5=SCK, PA6=MISO, PA7=MOSI）---- */
+  /* SCK 和 MOSI：无上下拉 */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = GPIO_PINS_5 | GPIO_PINS_7;
   gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
@@ -321,7 +331,7 @@ uint8_t sit1145_init(void)
   gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
   gpio_init(GPIOA, &gpio_init_struct);
 
-  /* MISO (PA6): pull-up to avoid floating when SIT1145 is not driving */
+  /* MISO（PA6）：上拉，防止 SIT1145 未驱动时引脚悬空 */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = GPIO_PINS_6;
   gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
@@ -330,14 +340,14 @@ uint8_t sit1145_init(void)
   gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
   gpio_init(GPIOA, &gpio_init_struct);
 
-  /* PA5 -> SPI1_SCK (AF MUX0) */
+  /* PA5 -> SPI1_SCK（AF MUX0） */
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE5, GPIO_MUX_0);
-  /* PA6 -> SPI1_MISO (AF MUX0) */
+  /* PA6 -> SPI1_MISO（AF MUX0） */
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE6, GPIO_MUX_0);
-  /* PA7 -> SPI1_MOSI (AF MUX0) */
+  /* PA7 -> SPI1_MOSI（AF MUX0） */
   gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE7, GPIO_MUX_0);
 
-  /* ---- Step 3: Configure PA4 as CS (GPIO output, default high) ---- */
+  /* ---- 步骤3：配置 PA4 为 CS（GPIO 输出，默认高电平）---- */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = SIT1145_CS_GPIO_PIN;
   gpio_init_struct.gpio_mode           = GPIO_MODE_OUTPUT;
@@ -345,10 +355,10 @@ uint8_t sit1145_init(void)
   gpio_init_struct.gpio_pull           = GPIO_PULL_NONE;
   gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
   gpio_init(SIT1145_CS_GPIO_PORT, &gpio_init_struct);
-  /* set CS high (deselected) */
+  /* CS 拉高（未选中） */
   gpio_bits_set(SIT1145_CS_GPIO_PORT, SIT1145_CS_GPIO_PIN);
 
-  /* ---- Step 4: Configure PB3 as output low (floating pin) ---- */
+  /* ---- 步骤4：配置 PB3 为输出低（悬空引脚）---- */
   gpio_default_para_init(&gpio_init_struct);
   gpio_init_struct.gpio_pins           = SIT1145_FLOAT_GPIO_PIN;
   gpio_init_struct.gpio_mode           = GPIO_MODE_OUTPUT;
@@ -358,7 +368,7 @@ uint8_t sit1145_init(void)
   gpio_init(SIT1145_FLOAT_GPIO_PORT, &gpio_init_struct);
   gpio_bits_reset(SIT1145_FLOAT_GPIO_PORT, SIT1145_FLOAT_GPIO_PIN);
 
-  /* ---- Step 5: Initialize SPI1 ---- */
+  /* ---- 步骤5：初始化 SPI1 ---- */
   spi_default_para_init(&spi_init_struct);
   spi_init_struct.transmission_mode     = SPI_TRANSMIT_FULL_DUPLEX;
   spi_init_struct.master_slave_mode     = SPI_MODE_MASTER;
@@ -370,23 +380,23 @@ uint8_t sit1145_init(void)
   spi_init_struct.cs_mode_selection     = SPI_CS_SOFTWARE_MODE;
   spi_init(SPI1, &spi_init_struct);
 
-  /* enable SPI1 */
+  /* 使能 SPI1 */
   spi_enable(SPI1, TRUE);
   sit1145_delay_ms(1U);
 
-  /* ---- Step 6: SPI smoke check via identification register 0x7E ---- */
+  /* ---- 步骤6：通过识别码 0x7E 做 SPI 通信检查 ---- */
   chip_id = sit1145_read_reg(SIT1145_REG_IDENTIFICATION);
   if ((chip_id != SIT1145_ID_AQ) && (chip_id != SIT1145_ID_AQ_FD))
   {
     return 0;
   }
 
-  /* ---- Step 7: Configure CAN Control register ----
-   *   CFDC=1 (CAN FD tolerance enabled)
-   *   PNCOK=0 (partial networking config invalid)
-   *   CPNC=0 (selective wakeup disabled)
-   *   CMC=01 (active with VCC undervoltage recovery)
-   * Must be done before switching to Normal Mode. */
+  /* ---- 步骤7：配置 CAN Control 寄存器 ----
+   *   CFDC=1（CAN FD 容忍使能）
+   *   PNCOK=0（局部网络配置无效）
+   *   CPNC=0（选择性唤醒关闭）
+   *   CMC=01（正常模式，VCC 欠压自动恢复）
+   *   必须在切换到 Normal 模式之前完成配置 */
   can_ctrl_val = SIT1145_CAN_FD_TOLERANCE_EN
                | SIT1145_CAN_NETW_INVALID
                | SIT1145_SEL_WAKEUP_DIS
@@ -397,20 +407,20 @@ uint8_t sit1145_init(void)
     return 0;
   }
 
-  /* ---- Step 8: Configure Data Rate (250kbps, partial-network CDR) ---- */
+  /* ---- 步骤8：配置 Data Rate（250kbps）---- */
   sit1145_write_reg(SIT1145_REG_DATA_RATE, SIT1145_DEFAULT_DRATE);
   if (sit1145_read_reg(SIT1145_REG_DATA_RATE) != SIT1145_DEFAULT_DRATE)
   {
     return 0;
   }
 
-  /* ---- Step 9: standard CAN wake-up (ISO 11898-2 WUP), not selective WUF ----
-   *     CCU sending any 250 kbps frame (typically UDS 0x18DA0D03) wakes us.
-   *     Selective wake (CPNC=PNCOK=1) stays off. */
+  /* ---- 步骤9：使能标准 CAN 唤醒（ISO 11898-2 WUP），关闭选择性唤醒 ----
+   *     CCU 发送任意 250kbps 帧即可唤醒（通常是 UDS 0x18DA0D03）。
+   *     选择性唤醒（CPNC=PNCOK=1）保持关闭。 */
   sit1145_wake_enable();
   sit1145_wakeup_clear();
 
-  /* ---- Step 10: power-on default is Standby (SPI still alive) ---- */
+  /* ---- 步骤10：上电默认进入 Standby（SPI 仍可访问）---- */
   if (sit1145_standby_mode_set() == 0U)
   {
     sit1145_delay_ms(1U);
