@@ -351,6 +351,54 @@ uint8_t sit1145_get_main_status(void)
   return sit1145_read_reg(SIT1145_REG_MAIN_STATUS);
 }
 
+/**
+ * @brief  判断 Sleep 模式是否由 VCC 欠压触发
+ * @note   读取主状态寄存器 FSMS 位（bit7）
+ * @retval 1=由欠压触发，0=由 SPI 指令触发，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_sleep_by_undervoltage(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_MAIN_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;  /* SPI 读取失败 */
+  }
+  return (sta & SIT1145_MAIN_STA_FSMS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询过温警告状态
+ * @note   读取主状态寄存器 OTWS 位（bit6）
+ *         芯片温度超过阈值时置位（典型 150°C）
+ * @retval 1=过温警告，0=温度正常，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_overtemp_warning(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_MAIN_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_MAIN_STA_OTWS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询是否已进入过 Normal 模式
+ * @note   读取主状态寄存器 NMS 位（bit5）
+ *         上电后首次进入 Normal 时硬件自动置位，之后不会清零
+ *         可用于验证 SIT1145 是否成功进入过 Normal
+ * @retval 1=已进入过 Normal，0=从未进入，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_has_entered_normal(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_MAIN_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_MAIN_STA_NMS) ? 1U : 0U;
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);

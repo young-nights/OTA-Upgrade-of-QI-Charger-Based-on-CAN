@@ -273,6 +273,28 @@ uint8_t sit1145_get_mode(void);
 uint8_t sit1145_get_main_status(void);
 
 /**
+ * @brief  判断 Sleep 模式是否由 VCC 欠压触发
+ * @note   读取主状态寄存器 FSMS 位（bit7）
+ * @retval 1=由欠压触发，0=由 SPI 指令触发，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_sleep_by_undervoltage(void);
+
+/**
+ * @brief  查询过温警告状态
+ * @note   读取主状态寄存器 OTWS 位（bit6），温度超阈值时置位
+ * @retval 1=过温警告，0=温度正常，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_overtemp_warning(void);
+
+/**
+ * @brief  查询是否已进入过 Normal 模式
+ * @note   读取主状态寄存器 NMS 位（bit5）
+ *         上电后首次进 Normal 时硬件置位，之后不清零
+ * @retval 1=已进入过 Normal，0=从未进入，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_has_entered_normal(void);
+
+/**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）
  * @note   使能后 SIT1145 在 Standby 模式下监听 CAN 总线，
  *         检测到 ISO 11898-2 WUP 模式后置位 CW 标志。
