@@ -165,7 +165,15 @@ extern "C" {
 #define SIT1145_CAN_FD_TOLERANCE_EN (1U << SIT1145_CAN_CTRL_CFDC_POS)   /**< bit6=1：容忍 CAN FD 帧 */
 #define SIT1145_CAN_NETW_INVALID    (0U << SIT1145_CAN_CTRL_PNCOK_POS)  /**< bit5=0：局部网络配置无效 */
 #define SIT1145_SEL_WAKEUP_DIS      (0U << SIT1145_CAN_CTRL_CPNC_POS)   /**< bit4=0：关闭选择性唤醒 */
-#define SIT1145_CAN_MODE_NORMAL     0x01  /**< CMC=01：正常模式，VCC 欠压自动恢复 */
+
+/* CMC 模式值（bit[1:0]）— 数据手册表4 */
+#define SIT1145_CMC_OFFLINE         0x00  /**< 离线模式：CAN 收发器完全关闭，不上总线 */
+#define SIT1145_CMC_ACTIVE_UVLO     0x01  /**< 主动模式（带欠压检测）：正常收发，VCC 欠压自动恢复 */
+#define SIT1145_CMC_ACTIVE_NO_UVLO  0x02  /**< 主动模式（不带欠压检测）：正常收发，VCC 欠压不自动恢复 */
+#define SIT1145_CMC_LISTEN_ONLY     0x03  /**< 只听模式：仅接收不发送，用于总线监听/诊断 */
+
+/** @brief 本项目使用的 CMC 模式：主动模式（带欠压检测） */
+#define SIT1145_CAN_MODE_NORMAL     SIT1145_CMC_ACTIVE_UVLO
 
 /* ==========================================================================
  *  数据速率寄存器值（0x26）
@@ -293,6 +301,24 @@ uint8_t sit1145_is_overtemp_warning(void);
  * @retval 1=已进入过 Normal，0=从未进入，0xFF=SPI 读取失败
  */
 uint8_t sit1145_has_entered_normal(void);
+
+/**
+ * @brief  读取 CAN 控制寄存器（0x20，读写）
+ * @note   返回 CAN 控制寄存器原始值，包含 CFDC/PNCOK/CPNC/CMC 等配置位
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_can_control(void);
+
+/**
+ * @brief  获取当前 CMC 模式值（bit[1:0]）
+ * @note   读取 CAN 控制寄存器并提取 CMC 位：
+ *         - SIT1145_CMC_OFFLINE    (0x00) 离线模式
+ *         - SIT1145_CMC_ACTIVE_UVLO(0x01) 主动模式（带欠压检测）
+ *         - SIT1145_CMC_ACTIVE_NO_UVLO(0x02) 主动模式（不带欠压检测）
+ *         - SIT1145_CMC_LISTEN_ONLY(0x03) 只听模式
+ * @retval CMC 模式值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_cmc_mode(void);
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）

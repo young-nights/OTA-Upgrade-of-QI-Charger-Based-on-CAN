@@ -399,6 +399,35 @@ uint8_t sit1145_has_entered_normal(void)
   return (sta & SIT1145_MAIN_STA_NMS) ? 1U : 0U;
 }
 
+/**
+ * @brief  读取 CAN 控制寄存器（0x20，读写）
+ * @note   返回寄存器原始值，包含 CFDC/PNCOK/CPNC/CMC 等配置位
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_can_control(void)
+{
+  return sit1145_read_reg(SIT1145_REG_CAN_CONTROL);
+}
+
+/**
+ * @brief  获取当前 CMC 模式值（bit[1:0]）
+ * @note   读取 CAN 控制寄存器并提取 CMC 位：
+ *         - SIT1145_CMC_OFFLINE    (0x00) 离线模式：CAN 收发器完全关闭
+ *         - SIT1145_CMC_ACTIVE_UVLO(0x01) 主动模式（带欠压检测）
+ *         - SIT1145_CMC_ACTIVE_NO_UVLO(0x02) 主动模式（不带欠压检测）
+ *         - SIT1145_CMC_LISTEN_ONLY(0x03) 只听模式：仅接收不发送
+ * @retval CMC 模式值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_cmc_mode(void)
+{
+  uint8_t val = sit1145_read_reg(SIT1145_REG_CAN_CONTROL);
+  if (val == 0xFFU)
+  {
+    return 0xFFU;  /* SPI 读取失败 */
+  }
+  return val & SIT1145_CAN_CTRL_CMC_MASK;
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
