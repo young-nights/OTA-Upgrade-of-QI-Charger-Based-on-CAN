@@ -471,6 +471,85 @@ uint8_t sit1145_is_cpn_error(void)
   return (sta & SIT1145_TRAN_STA_CPNERR) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询局部网络同步状态
+ * @note   读取收发器状态寄存器 CPNS 位（bit5）
+ *         本项目未使用局部网络功能，该位通常为 0
+ * @retval 1=已同步，0=未同步，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cpns_synced(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_CPNS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询 CAN 振荡器状态
+ * @note   读取收发器状态寄存器 COSCS 位（bit4）
+ * @retval 1=振荡器就绪，0=未就绪，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_osc_ready(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_COSCS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询 CAN 总线静默状态
+ * @note   读取收发器状态寄存器 CBSS 位（bit3）
+ *         总线静默表示无显性位活动
+ * @retval 1=总线静默，0=总线有活动，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_bus_silent(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_CBSS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询 VCC 电源电压状态
+ * @note   读取收发器状态寄存器 VCS 位（bit1）
+ *         0 = VCC 电压低于欠压阈值
+ *         1 = VCC 电压正常
+ * @retval 1=电压正常，0=欠压，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_vcc_ok(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_VCS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询 CAN 故障状态
+ * @note   读取收发器状态寄存器 CFS 位（bit0）
+ * @retval 1=有故障，0=无故障，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_can_fault(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_CFS) ? 1U : 0U;
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);

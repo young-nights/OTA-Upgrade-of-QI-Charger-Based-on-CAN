@@ -93,6 +93,47 @@ extern "C" {
  */
 #define SIT1145_TRAN_STA_CPNERR     (1U << 6)
 
+/**
+ * @brief CPNS 位（bit5）：CAN Partial Networking Status
+ * @note  局部网络状态（只读）：
+ *        0 = 局部网络未同步
+ *        1 = 局部网络已同步
+ *        本项目未使用局部网络功能，该位通常为 0
+ */
+#define SIT1145_TRAN_STA_CPNS       (1U << 5)
+
+/**
+ * @brief COSCS 位（bit4）：CAN Oscillator Status
+ * @note  CAN 振荡器状态（只读）：
+ *        0 = CAN 振荡器未就绪
+ *        1 = CAN 振荡器已就绪
+ */
+#define SIT1145_TRAN_STA_COSCS      (1U << 4)
+
+/**
+ * @brief CBSS 位（bit3）：CAN Bus Silent Status
+ * @note  CAN 总线静默状态（只读）：
+ *        0 = 总线未处于静默
+ *        1 = 总线处于静默状态（无显性位）
+ */
+#define SIT1145_TRAN_STA_CBSS       (1U << 3)
+
+/**
+ * @brief VCS 位（bit1）：VCC Power Voltage Status
+ * @note  VCC 电源电压状态（只读）：
+ *        0 = VCC 电压低于欠压阈值（欠压）
+ *        1 = VCC 电压正常
+ */
+#define SIT1145_TRAN_STA_VCS        (1U << 1)
+
+/**
+ * @brief CFS 位（bit0）：CAN Fault Status
+ * @note  CAN 故障状态（只读）：
+ *        0 = 无 CAN 故障
+ *        1 = 检测到 CAN 故障
+ */
+#define SIT1145_TRAN_STA_CFS        (1U << 0)
+
 /* ==========================================================================
  *  主状态寄存器位定义（0x03，只读）— 数据手册表3
  *  上电后默认 0x00
@@ -351,6 +392,45 @@ uint8_t sit1145_is_cts_ready(void);
  * @retval 1=有错误，0=无错误，0xFF=SPI 读取失败
  */
 uint8_t sit1145_is_cpn_error(void);
+
+/**
+ * @brief  查询局部网络同步状态
+ * @note   读取收发器状态寄存器 CPNS 位（bit5）
+ *         本项目未使用局部网络功能，该位通常为 0
+ * @retval 1=已同步，0=未同步，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cpns_synced(void);
+
+/**
+ * @brief  查询 CAN 振荡器状态
+ * @note   读取收发器状态寄存器 COSCS 位（bit4）
+ * @retval 1=振荡器就绪，0=未就绪，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_osc_ready(void);
+
+/**
+ * @brief  查询 CAN 总线静默状态
+ * @note   读取收发器状态寄存器 CBSS 位（bit3）
+ *         总线静默表示无显性位活动
+ * @retval 1=总线静默，0=总线有活动，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_bus_silent(void);
+
+/**
+ * @brief  查询 VCC 电源电压状态
+ * @note   读取收发器状态寄存器 VCS 位（bit1）
+ *         0 = VCC 电压低于欠压阈值
+ *         1 = VCC 电压正常
+ * @retval 1=电压正常，0=欠压，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_vcc_ok(void);
+
+/**
+ * @brief  查询 CAN 故障状态
+ * @note   读取收发器状态寄存器 CFS 位（bit0）
+ * @retval 1=有故障，0=无故障，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_can_fault(void);
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）
