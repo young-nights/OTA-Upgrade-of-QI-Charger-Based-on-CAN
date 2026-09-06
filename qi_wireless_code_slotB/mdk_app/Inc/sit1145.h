@@ -74,15 +74,24 @@ extern "C" {
 #define SIT1145_ID_AQ_FD            0x74  /**< SIT1145AQ/FD 识别码（支持 CAN FD） */
 
 /* ==========================================================================
- *  收发器状态寄存器位定义（0x22，只读）
+ *  收发器状态寄存器位定义（0x22，只读）— 数据手册表5
  * ========================================================================== */
 
 /**
  * @brief CTS 位（bit7）：Clear To Send
- * @note  1 = 收发器已进入 Normal 模式，可以驱动 CAN 总线发送帧
- *        0 = 尚未就绪（模式切换中或不在 Normal 模式）
+ * @note  1 = 收发器已进入激活模式（Normal），可驱动 CAN 总线发送帧
+ *        0 = 收发器未处于激活模式（Standby/Sleep/离线）
  */
 #define SIT1145_TRAN_STA_CTS        (1U << 7)
+
+/**
+ * @brief CPNERR 位（bit6）：CAN Partial Networking Error
+ * @note  局部网络错误标志（只读）：
+ *        0 = 未检测到 CAN 局部网络错误（PNFDE=0 且 PNCOK=1 时）
+ *        1 = 检测到局部网络错误
+ *        本项目未使用局部网络功能，该位通常为 0
+ */
+#define SIT1145_TRAN_STA_CPNERR     (1U << 6)
 
 /* ==========================================================================
  *  主状态寄存器位定义（0x03，只读）— 数据手册表3
@@ -319,6 +328,29 @@ uint8_t sit1145_get_can_control(void);
  * @retval CMC 模式值，SPI 失败返回 0xFF
  */
 uint8_t sit1145_get_cmc_mode(void);
+
+/**
+ * @brief  读取收发器状态寄存器（0x22，只读）
+ * @note   返回收发器状态原始值，包含 CTS/CPNERR 等状态位
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_transceiver_status(void);
+
+/**
+ * @brief  查询 CTS 状态（收发器是否就绪）
+ * @note   读取收发器状态寄存器 CTS 位（bit7）
+ *         CTS=1 表示收发器已进入激活模式，可驱动 CAN 总线
+ * @retval 1=就绪可发送，0=未就绪，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cts_ready(void);
+
+/**
+ * @brief  查询局部网络错误状态
+ * @note   读取收发器状态寄存器 CPNERR 位（bit6）
+ *         本项目未使用局部网络功能，该位通常为 0
+ * @retval 1=有错误，0=无错误，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cpn_error(void);
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）

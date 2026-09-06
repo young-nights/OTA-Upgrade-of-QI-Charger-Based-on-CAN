@@ -428,6 +428,49 @@ uint8_t sit1145_get_cmc_mode(void)
   return val & SIT1145_CAN_CTRL_CMC_MASK;
 }
 
+/**
+ * @brief  读取收发器状态寄存器（0x22，只读）
+ * @note   返回收发器状态原始值，包含 CTS/CPNERR 等状态位
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_transceiver_status(void)
+{
+  return sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+}
+
+/**
+ * @brief  查询 CTS 状态（收发器是否就绪可发送）
+ * @note   读取收发器状态寄存器 CTS 位（bit7）
+ *         CTS=1 表示收发器已进入激活模式，可驱动 CAN 总线
+ *         CTS=0 表示收发器未处于激活模式（Standby/Sleep/离线）
+ * @retval 1=就绪可发送，0=未就绪，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cts_ready(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_CTS) ? 1U : 0U;
+}
+
+/**
+ * @brief  查询局部网络错误状态
+ * @note   读取收发器状态寄存器 CPNERR 位（bit6）
+ *         本项目未使用局部网络功能，该位通常为 0
+ * @retval 1=有错误，0=无错误，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cpn_error(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_TRAN_STA_CPNERR) ? 1U : 0U;
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
