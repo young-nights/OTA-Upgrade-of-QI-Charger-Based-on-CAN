@@ -692,6 +692,61 @@ void sit1145_wuf_disable(void)
   sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl);
 }
 
+uint8_t sit1145_get_global_event_status(void)
+{
+  return sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
+}
+
+uint8_t sit1145_is_wake_pin_event(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_GLOBAL_STA_WPE) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_trx_event_pending(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_GLOBAL_STA_TRXE) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_sys_event_pending(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_GLOBAL_STA_SYSE) ? 1U : 0U;
+}
+
+uint8_t sit1145_get_system_event_status(void)
+{
+  return sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
+}
+
+uint8_t sit1145_is_power_on(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_SYS_STA_PO) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_sys_overtemp(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_SYS_STA_OTW) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_spi_fault(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
+  if (sta == 0xFFU)
+  {
+    return 0xFFU;
+  }
+  return (sta & SIT1145_SYS_STA_SPIF) ? 1U : 0U;
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);

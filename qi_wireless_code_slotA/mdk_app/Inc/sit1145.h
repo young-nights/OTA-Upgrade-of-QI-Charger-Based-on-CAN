@@ -81,14 +81,58 @@ extern "C" {
 #define SIT1145_REG_DATA_MASK6            0x36  /**< WUF 数据掩码寄存器6（读写） */
 #define SIT1145_REG_DATA_MASK7            0x37  /**< WUF 数据掩码寄存器7（读写） */
 #define SIT1145_REG_IDENTIFICATION        0x7E  /**< 芯片识别码（只读）：0x70=AQ，0x74=AQ-FD */
+#define SIT1145_REG_GLOBAL_EVENT_STATUS   0x60  /**< 全局事件状态（只读）：WPE/TRXE/SYSE */
+#define SIT1145_REG_SYSTEM_EVENT_STATUS   0x61  /**< 系统事件状态（只读）：PO/OTW/SPIF */
 
 /* ==========================================================================
- *  芯片识别码（数据手册表28）
- *  上电后读 0x7E 寄存器验证 SPI 通信是否正常
+ *  全局事件状态寄存器位定义（0x60，只读）— 数据手册表14
+ *  任一事件位为 1 表示对应类别有事件挂起
  * ========================================================================== */
 
-#define SIT1145_ID_AQ               0x70  /**< SIT1145AQ 识别码 */
-#define SIT1145_ID_AQ_FD            0x74  /**< SIT1145AQ/FD 识别码（支持 CAN FD） */
+/**
+ * @brief WPE 位（bit3）：WAKE 引脚事件挂起
+ * @note  1 = WAKE 引脚有事件挂起，0 = 无
+ */
+#define SIT1145_GLOBAL_STA_WPE      (1U << 3)
+
+/**
+ * @brief TRXE 位（bit2）：收发器事件挂起
+ * @note  1 = 收发器有事件挂起（CW/WUF 等），0 = 无
+ */
+#define SIT1145_GLOBAL_STA_TRXE     (1U << 2)
+
+/**
+ * @brief SYSE 位（bit0）：系统事件挂起
+ * @note  1 = 系统有事件挂起（PO/OTW/SPIF 等），0 = 无
+ */
+#define SIT1145_GLOBAL_STA_SYSE     (1U << 0)
+
+/* ==========================================================================
+ *  系统事件状态寄存器位定义（0x61，只读）— 数据手册表15
+ *  系统级事件状态，需通过读取全局事件状态寄存器确认
+ * ========================================================================== */
+
+/**
+ * @brief PO 位（bit4）：Power-On 上电状态
+ * @note  1 = 电池上电后已退出关闭模式（首次上电）
+ *        0 = 非首次上电（热复位等）
+ *        读取后自动清零
+ */
+#define SIT1145_SYS_STA_PO          (1U << 4)
+
+/**
+ * @brief OTW 位（bit2）：Over-Temperature Warning 过温警告
+ * @note  1 = 芯片温度超过过温警告阈值
+ *        0 = 温度正常
+ */
+#define SIT1145_SYS_STA_OTW         (1U << 2)
+
+/**
+ * @brief SPIF 位（bit1）：SPI Fault SPI 故障
+ * @note  1 = 检测到 SPI 通信故障
+ *        0 = SPI 正常
+ */
+#define SIT1145_SYS_STA_SPIF        (1U << 1)
 
 /* ==========================================================================
  *  收发器状态寄存器位定义（0x22，只读）— 数据手册表5
@@ -516,6 +560,66 @@ void sit1145_wuf_enable(void);
  * @note   CWE 保持不变，仍可被标准 WUP 模式唤醒
  */
 void sit1145_wuf_disable(void);
+
+/**
+ * @brief  读取全局事件状态寄存器（0x60，只读）
+ * @note   返回全局事件状态原始值，包含 WPE/TRXE/SYSE 等挂起标志
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_global_event_status(void);
+
+/**
+ * @brief  查询 WAKE 引脚事件是否挂起
+ * @note   读取全局事件状态寄存器 WPE 位（bit3）
+ * @retval 1=有事件挂起，0=无，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_wake_pin_event(void);
+
+/**
+ * @brief  查询收发器事件是否挂起
+ * @note   读取全局事件状态寄存器 TRXE 位（bit2）
+ *         收发器事件包括 CW/WUF 等唤醒事件
+ * @retval 1=有事件挂起，0=无，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_trx_event_pending(void);
+
+/**
+ * @brief  查询系统事件是否挂起
+ * @note   读取全局事件状态寄存器 SYSE 位（bit0）
+ *         系统事件包括 PO/OTW/SPIF 等
+ * @retval 1=有事件挂起，0=无，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_sys_event_pending(void);
+
+/**
+ * @brief  读取系统事件状态寄存器（0x61，只读）
+ * @note   返回系统事件状态原始值，包含 PO/OTW/SPIF 等状态位
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_system_event_status(void);
+
+/**
+ * @brief  查询上电状态
+ * @note   读取系统事件状态寄存器 PO 位（bit4）
+ *         1 = 电池上电后首次退出关闭模式
+ *         读取后硬件自动清零
+ * @retval 1=首次上电，0=非首次，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_power_on(void);
+
+/**
+ * @brief  查询系统级过温警告
+ * @note   读取系统事件状态寄存器 OTW 位（bit2）
+ * @retval 1=过温，0=正常，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_sys_overtemp(void);
+
+/**
+ * @brief  查询 SPI 故障状态
+ * @note   读取系统事件状态寄存器 SPIF 位（bit1）
+ * @retval 1=有 SPI 故障，0=正常，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_spi_fault(void);
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）
