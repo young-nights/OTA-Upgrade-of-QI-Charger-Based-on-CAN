@@ -692,6 +692,59 @@ void sit1145_wuf_disable(void)
   sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl);
 }
 
+
+uint8_t sit1145_get_trx_event_status(void)
+{
+  return sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
+}
+
+uint8_t sit1145_is_pnf_error(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_TRX_EVT_STA_PNFDE) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_bus_silence(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_TRX_EVT_STA_CBS) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_cf_event(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_TRX_EVT_STA_CF) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_cw_event(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_TRX_EVT_STA_CW) ? 1U : 0U;
+}
+
+uint8_t sit1145_get_wake_pin_event_status(void)
+{
+  return sit1145_read_reg(SIT1145_REG_WAKE_PIN_EVENT_STATUS);
+}
+
+uint8_t sit1145_is_wake_rising(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_WAKE_PIN_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_WAKE_EVT_WPR) ? 1U : 0U;
+}
+
+uint8_t sit1145_is_wake_falling(void)
+{
+  uint8_t sta = sit1145_read_reg(SIT1145_REG_WAKE_PIN_EVENT_STATUS);
+  if (sta == 0xFFU) { return 0xFFU; }
+  return (sta & SIT1145_WAKE_EVT_WPF) ? 1U : 0U;
+}
+
 uint8_t sit1145_get_global_event_status(void)
 {
   return sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);

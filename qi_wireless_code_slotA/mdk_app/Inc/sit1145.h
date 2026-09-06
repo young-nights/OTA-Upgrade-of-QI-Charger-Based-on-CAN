@@ -83,6 +83,8 @@ extern "C" {
 #define SIT1145_REG_IDENTIFICATION        0x7E  /**< 芯片识别码（只读）：0x70=AQ，0x74=AQ-FD */
 #define SIT1145_REG_GLOBAL_EVENT_STATUS   0x60  /**< 全局事件状态（只读）：WPE/TRXE/SYSE */
 #define SIT1145_REG_SYSTEM_EVENT_STATUS   0x61  /**< 系统事件状态（只读）：PO/OTW/SPIF */
+#define SIT1145_REG_TRX_EVENT_STATUS      0x63  /**< 收发器事件状态（只读）：PNFDE/CBS/CF/CW */
+#define SIT1145_REG_WAKE_PIN_EVENT_STATUS 0x64  /**< 唤醒引脚事件状态（只读）：WPS */
 
 /* ==========================================================================
  *  全局事件状态寄存器位定义（0x60，只读）— 数据手册表14
@@ -249,6 +251,65 @@ extern "C" {
  */
 #define SIT1145_WUF                 (1U << 1)
 
+
+/* ==========================================================================
+ *  收发器事件状态寄存器位定义（0x63，读/写，W1C）— 数据手册表16
+ *  与 0x24(TRANSCEIVER_EVENT) 功能类似但地址不同
+ * ========================================================================== */
+
+/**
+ * @brief PNFDE 位（bit5）：Partial Network Frame Detection Error
+ * @note  局部网络帧检测错误（读/写，W1C）：
+ *        0 = 未检测到帧检测错误
+ *        1 = 检测到帧检测错误（错误计数器溢出时自动置位）
+ */
+#define SIT1145_TRX_EVT_STA_PNFDE   (1U << 5)
+
+/**
+ * @brief CBS 位（bit4）：CAN Bus Silence
+ * @note  CAN 总线静默状态（读/写，W1C）：
+ *        0 = CAN 总线有活动
+ *        1 = CAN 总线在 tB(silence) 时间内无活动
+ */
+#define SIT1145_TRX_EVT_STA_CBS     (1U << 4)
+
+/**
+ * @brief CF 位（bit1）：CAN Fault
+ * @note  CAN 故障事件（读/写，W1C）：
+ *        0 = 未检测到 CAN 故障
+ *        1 = 检测到 CAN 故障事件
+ *        仅在 Normal 模式下 CMC=01 时使能，
+ *        TXD 引脚显性或 VCC 欠压时触发
+ */
+#define SIT1145_TRX_EVT_STA_CF      (1U << 1)
+
+/**
+ * @brief CW 位（bit0）：CAN Wake-up
+ * @note  CAN 唤醒事件（读/写，W1C）：
+ *        0 = 未检测到 CAN 唤醒事件
+ *        1 = 检测到 CAN 唤醒事件（标准 WUP 模式）
+ */
+#define SIT1145_TRX_EVT_STA_CW      (1U << 0)
+
+/* ==========================================================================
+ *  唤醒引脚事件状态寄存器位定义（0x64，读/写，W1C）— 数据手册表17
+ * ========================================================================== */
+
+/**
+ * @brief WPR 位（bit1）：WAKE Pin Rising edge
+ * @note  WAKE 引脚上升沿事件（读/写，W1C）：
+ *        0 = 未检测到上升沿
+ *        1 = 检测到 WAKE 引脚上升沿
+ */
+#define SIT1145_WAKE_EVT_WPR        (1U << 1)
+
+/**
+ * @brief WPF 位（bit0）：WAKE Pin Falling edge
+ * @note  WAKE 引脚下降沿事件（读/写，W1C）：
+ *        0 = 未检测到下降沿
+ *        1 = 检测到 WAKE 引脚下降沿
+ */
+#define SIT1145_WAKE_EVT_WPF        (1U << 0)
 /* ==========================================================================
  *  WUF 帧控制寄存器位定义（0x21，读写）
  *  配置唤醒帧的格式和过滤行为
@@ -620,6 +681,66 @@ uint8_t sit1145_is_sys_overtemp(void);
  * @retval 1=有 SPI 故障，0=正常，0xFF=SPI 读取失败
  */
 uint8_t sit1145_is_spi_fault(void);
+
+/**
+ * @brief  读取收发器事件状态寄存器（0x63，读/写，W1C）
+ * @note   返回收发器事件状态原始值，包含 PNFDE/CBS/CF/CW
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_trx_event_status(void);
+
+/**
+ * @brief  查询局部网络帧检测错误
+ * @note   读取收发器事件状态寄存器 PNFDE 位（bit5）
+ *         W1C 标志，写1清零
+ * @retval 1=有错误，0=无错误，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_pnf_error(void);
+
+/**
+ * @brief  查询 CAN 总线静默状态
+ * @note   读取收发器事件状态寄存器 CBS 位（bit4）
+ *         总线在 tB(silence) 时间内无活动时置位
+ * @retval 1=总线静默，0=总线有活动，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_bus_silence(void);
+
+/**
+ * @brief  查询 CAN 故障事件
+ * @note   读取收发器事件状态寄存器 CF 位（bit1）
+ *         仅在 Normal 模式 CMC=01 时使能，TXD 显性或 VCC 欠压时触发
+ * @retval 1=有故障事件，0=无故障，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cf_event(void);
+
+/**
+ * @brief  查询 CAN 唤醒事件
+ * @note   读取收发器事件状态寄存器 CW 位（bit0），W1C 标志
+ * @retval 1=有唤醒事件，0=无唤醒，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_cw_event(void);
+
+/**
+ * @brief  读取唤醒引脚事件状态寄存器（0x64，读/写，W1C）
+ * @note   返回唤醒引脚事件状态原始值，包含 WPR/WPF
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
+uint8_t sit1145_get_wake_pin_event_status(void);
+
+/**
+ * @brief  查询 WAKE 引脚上升沿事件
+ * @note   读取唤醒引脚事件状态寄存器 WPR 位（bit1），W1C 标志
+ * @retval 1=检测到上升沿，0=无，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_wake_rising(void);
+
+/**
+ * @brief  查询 WAKE 引脚下降沿事件
+ * @note   读取唤醒引脚事件状态寄存器 WPF 位（bit0），W1C 标志
+ * @retval 1=检测到下降沿，0=无，0xFF=SPI 读取失败
+ */
+uint8_t sit1145_is_wake_falling(void);
+
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）
