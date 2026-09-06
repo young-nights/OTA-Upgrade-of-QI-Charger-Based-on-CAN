@@ -331,14 +331,6 @@ uint8_t sit1145_get_mode(void)
  * ========================================================================== */
 
 /**
- * @brief  使能标准 CAN 唤醒（CWE=1）
- * @note   向 TRANSCEIVER_EVENT_EN 寄存器写入 CWE 位
- *         使能后 SIT1145 在 Standby 模式下监听 CAN 总线
- *         检测到 ISO 11898-2 WUP 模式（显性→隐性→显性序列）后
- *         置位 TRANSCEIVER_EVENT 的 CW 标志
- *         同时关闭选择性唤醒（WUF），只用标准唤醒
- */
-/**
  * @brief  读取 SIT1145 主状态寄存器（0x03，只读）
  * @note   主状态寄存器反映芯片的全局状态：
  *         - FSMS（bit7）：Sleep 触发原因（0=SPI 指令，1=VCC 欠压）
@@ -693,11 +685,21 @@ void sit1145_wuf_disable(void)
 }
 
 
+/**
+ * @brief  读取收发器事件状态寄存器（0x63，读/写，W1C）
+ * @note   返回收发器事件状态原始值，包含 PNFDE/CBS/CF/CW
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
 uint8_t sit1145_get_trx_event_status(void)
 {
   return sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
 }
 
+/**
+ * @brief  查询局部网络帧检测错误
+ * @note   读取收发器事件状态寄存器 PNFDE 位（bit5），W1C 标志
+ * @retval 1=有错误，0=无错误，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_pnf_error(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
@@ -705,6 +707,12 @@ uint8_t sit1145_is_pnf_error(void)
   return (sta & SIT1145_TRX_EVT_STA_PNFDE) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询 CAN 总线静默状态（事件）
+ * @note   读取收发器事件状态寄存器 CBS 位（bit4），W1C 标志
+ *         总线在 tB(silence) 时间内无活动时置位
+ * @retval 1=总线静默，0=总线有活动，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_bus_silence(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
@@ -712,6 +720,12 @@ uint8_t sit1145_is_bus_silence(void)
   return (sta & SIT1145_TRX_EVT_STA_CBS) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询 CAN 故障事件
+ * @note   读取收发器事件状态寄存器 CF 位（bit1），W1C 标志
+ *         仅在 Normal 模式 CMC=01 时使能
+ * @retval 1=有故障事件，0=无故障，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_cf_event(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
@@ -719,6 +733,11 @@ uint8_t sit1145_is_cf_event(void)
   return (sta & SIT1145_TRX_EVT_STA_CF) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询 CAN 唤醒事件
+ * @note   读取收发器事件状态寄存器 CW 位（bit0），W1C 标志
+ * @retval 1=有唤醒事件，0=无唤醒，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_cw_event(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_TRX_EVENT_STATUS);
@@ -726,11 +745,21 @@ uint8_t sit1145_is_cw_event(void)
   return (sta & SIT1145_TRX_EVT_STA_CW) ? 1U : 0U;
 }
 
+/**
+ * @brief  读取唤醒引脚事件状态寄存器（0x64，读/写，W1C）
+ * @note   返回唤醒引脚事件状态原始值，包含 WPR/WPF
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
 uint8_t sit1145_get_wake_pin_event_status(void)
 {
   return sit1145_read_reg(SIT1145_REG_WAKE_PIN_EVENT_STATUS);
 }
 
+/**
+ * @brief  查询 WAKE 引脚上升沿事件
+ * @note   读取唤醒引脚事件状态寄存器 WPR 位（bit1），W1C 标志
+ * @retval 1=检测到上升沿，0=无，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_wake_rising(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_WAKE_PIN_EVENT_STATUS);
@@ -738,6 +767,11 @@ uint8_t sit1145_is_wake_rising(void)
   return (sta & SIT1145_WAKE_EVT_WPR) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询 WAKE 引脚下降沿事件
+ * @note   读取唤醒引脚事件状态寄存器 WPF 位（bit0），W1C 标志
+ * @retval 1=检测到下降沿，0=无，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_wake_falling(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_WAKE_PIN_EVENT_STATUS);
@@ -745,11 +779,21 @@ uint8_t sit1145_is_wake_falling(void)
   return (sta & SIT1145_WAKE_EVT_WPF) ? 1U : 0U;
 }
 
+/**
+ * @brief  读取全局事件状态寄存器（0x60，只读）
+ * @note   返回全局事件状态原始值，包含 WPE/TRXE/SYSE 等挂起标志
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
 uint8_t sit1145_get_global_event_status(void)
 {
   return sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
 }
 
+/**
+ * @brief  查询 WAKE 引脚事件是否挂起
+ * @note   读取全局事件状态寄存器 WPE 位（bit3）
+ * @retval 1=有事件挂起，0=无，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_wake_pin_event(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
@@ -757,6 +801,11 @@ uint8_t sit1145_is_wake_pin_event(void)
   return (sta & SIT1145_GLOBAL_STA_WPE) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询收发器事件是否挂起
+ * @note   读取全局事件状态寄存器 TRXE 位（bit2）
+ * @retval 1=有事件挂起，0=无，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_trx_event_pending(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
@@ -764,6 +813,11 @@ uint8_t sit1145_is_trx_event_pending(void)
   return (sta & SIT1145_GLOBAL_STA_TRXE) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询系统事件是否挂起
+ * @note   读取全局事件状态寄存器 SYSE 位（bit0）
+ * @retval 1=有事件挂起，0=无，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_sys_event_pending(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_GLOBAL_EVENT_STATUS);
@@ -771,11 +825,22 @@ uint8_t sit1145_is_sys_event_pending(void)
   return (sta & SIT1145_GLOBAL_STA_SYSE) ? 1U : 0U;
 }
 
+/**
+ * @brief  读取系统事件状态寄存器（0x61，只读）
+ * @note   返回系统事件状态原始值，包含 PO/OTW/SPIF 等状态位
+ * @retval 寄存器原始值，SPI 失败返回 0xFF
+ */
 uint8_t sit1145_get_system_event_status(void)
 {
   return sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
 }
 
+/**
+ * @brief  查询上电状态
+ * @note   读取系统事件状态寄存器 PO 位（bit4）
+ *         读取后硬件自动清零
+ * @retval 1=首次上电，0=非首次，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_power_on(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
@@ -783,6 +848,11 @@ uint8_t sit1145_is_power_on(void)
   return (sta & SIT1145_SYS_STA_PO) ? 1U : 0U;
 }
 
+/**
+ * @brief  查询系统级过温警告
+ * @note   读取系统事件状态寄存器 OTW 位（bit2）
+ * @retval 1=过温，0=正常，0xFF=SPI 读取失败
+ */
 uint8_t sit1145_is_sys_overtemp(void)
 {
   uint8_t sta = sit1145_read_reg(SIT1145_REG_SYSTEM_EVENT_STATUS);
@@ -800,6 +870,14 @@ uint8_t sit1145_is_spi_fault(void)
   return (sta & SIT1145_SYS_STA_SPIF) ? 1U : 0U;
 }
 
+/**
+ * @brief  使能标准 CAN 唤醒（CWE=1）
+ * @note   向 TRANSCEIVER_EVENT_EN 寄存器写入 CWE 位
+ *         使能后 SIT1145 在 Standby 模式下监听 CAN 总线
+ *         检测到 ISO 11898-2 WUP 模式（显性→隐性→显性序列）后
+ *         置位 TRANSCEIVER_EVENT 的 CW 标志
+ *         注意：此函数不改变选择性唤醒（CPNC）的状态
+ */
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
@@ -807,11 +885,12 @@ void sit1145_wake_enable(void)
 
 /**
  * @brief  检测是否有 CAN 唤醒事件挂起
- * @note   双重检测机制：
+ * @note   三重检测机制：
  *         1. 先查 PA11 引脚电平（快速路径，无 SPI 开销）
  *            - Standby 模式下 SIT1145 在整个唤醒事件期间强制 RXD(PA11) 拉低
  *            - 需要 PA11 配置为 GPIO 输入模式才能正确读取
- *         2. 再查 SPI 寄存器 CW 位（可靠路径）
+ *         2. 再查 SPI 寄存器 CW 位（标准 WUP 唤醒）
+ *         3. 再查 SPI 寄存器 WUF 位（选择性唤醒帧）
  *            - 读 TRANSCEIVER_EVENT 寄存器的 CW 位（bit0）
  *            - CW=1 表示检测到 WUP 模式
  *            - 注意：CW 是 W1C 标志，读取后需要手动清除
@@ -843,9 +922,25 @@ uint8_t sit1145_wakeup_pending(void)
  *         硬件自动清零该标志
  *         进入 Standby 前和唤醒后都应调用此函数
  */
+/**
+ * @brief  清除 CAN 唤醒事件标志（CW + WUF，写1清零）
+ * @note   向 TRANSCEIVER_EVENT 寄存器的 CW 和 WUF 位写1，
+ *         硬件自动清零（W1C 机制）。
+ *         进入 Standby 前和唤醒后都应调用此函数。
+ */
 void sit1145_wakeup_clear(void)
 {
-  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT, SIT1145_CW);
+  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT, SIT1145_CW | SIT1145_WUF);
+}
+
+/**
+ * @brief  清除 WUF 唤醒帧事件标志（写1清零）
+ * @note   仅清除 WUF 位，不影响 CW 位
+ *         用于选择性唤醒场景下单独清零
+ */
+void sit1145_wuf_clear(void)
+{
+  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT, SIT1145_WUF);
 }
 
 /* ==========================================================================

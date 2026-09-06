@@ -763,12 +763,19 @@ void sit1145_wake_enable(void);
 uint8_t sit1145_wakeup_pending(void);
 
 /**
- * @brief  清除 CAN 唤醒事件标志（写1清零 CW 位）
- * @note   向 TRANSCEIVER_EVENT 寄存器的 CW 位写1，
- *         硬件自动清零该标志（W1C 机制）。
+ * @brief  清除 CAN 唤醒事件标志（CW + WUF，写1清零）
+ * @note   向 TRANSCEIVER_EVENT 寄存器的 CW 和 WUF 位写1，
+ *         硬件自动清零（W1C 机制）。
  *         进入 Standby 前和唤醒后都应调用此函数。
  */
 void sit1145_wakeup_clear(void);
+
+/**
+ * @brief  清除 WUF 唤醒帧事件标志（写1清零）
+ * @note   仅清除 WUF 位，不影响 CW 位
+ *         用于选择性唤醒场景下单独清零
+ */
+void sit1145_wuf_clear(void);
 
 #ifdef __cplusplus
 }
