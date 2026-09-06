@@ -1021,19 +1021,15 @@ void can_protocol_poll(void)
   {
     if (sit1145_wakeup_pending() != 0U)
     {
-      /* 唤醒来源诊断：区分标准 WUP(CW) 和选择性唤醒(WUF) */
       uint8_t evt = sit1145_read_reg(SIT1145_REG_TRANSCEIVER_EVENT);
       if ((evt & SIT1145_WUF) != 0U)
       {
-        _log_wakeup_source("WUF");  /* 选择性唤醒帧 */
       }
       else if ((evt & SIT1145_CW) != 0U)
       {
-        _log_wakeup_source("CW");   /* 标准 WUP 模式 */
       }
       else
       {
-        _log_wakeup_source("PA11"); /* PA11 引脚电平检测 */
       }
       can_lp_enter_normal();
     }
