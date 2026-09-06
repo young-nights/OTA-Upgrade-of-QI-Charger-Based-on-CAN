@@ -81,7 +81,7 @@ static uint8_t  g_need_lifecycle_announce = 0;
 static uint32_t g_uds_last_ms = 0;
 
 /** 6 minutes with no UDS RX/TX → SIT1145 Standby */
-#define CAN_LP_IDLE_TIMEOUT_MS  (60UL * 1000UL)
+#define CAN_LP_IDLE_TIMEOUT_MS  (0UL)  /* Standby 已禁用，SIT1145 保持 Normal */
 
 static void can_lp_mark_uds(void)
 {
@@ -98,25 +98,8 @@ static void can_lp_enter_normal(void)
   {
     return;
   }
-
-  /* 清除所有唤醒事件标志（CW + WUF），防止残留标志干扰后续通信 */
   sit1145_wakeup_clear();
-
   can_driver_online();
-
-  /* 恢复 PA11 为 CAN RX AF4（Standby 时切到了 GPIO 输入） */
-  {
-    gpio_init_type gpio_init_struct;
-    gpio_default_para_init(&gpio_init_struct);
-    gpio_init_struct.gpio_pins           = GPIO_PINS_11;
-    gpio_init_struct.gpio_mode           = GPIO_MODE_MUX;
-    gpio_init_struct.gpio_out_type       = GPIO_OUTPUT_PUSH_PULL;
-    gpio_init_struct.gpio_pull           = GPIO_PULL_UP;
-    gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
-    gpio_init(GPIOA, &gpio_init_struct);
-    gpio_pin_mux_config(GPIOA, GPIO_PINS_SOURCE11, GPIO_MUX_4);
-  }
-
   g_can_awake = 1U;
   can_lp_mark_uds();
   g_need_lifecycle_announce = 1U;
