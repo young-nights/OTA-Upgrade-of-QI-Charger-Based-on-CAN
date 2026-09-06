@@ -63,6 +63,23 @@ extern "C" {
 #define SIT1145_REG_TRANSCEIVER_EVENT_EN  0x23  /**< 事件使能（读写）：CWE/WUE 等唤醒使能位 */
 #define SIT1145_REG_TRANSCEIVER_EVENT     0x24  /**< 事件标志（读写，W1C）：CW/WUF 等唤醒标志 */
 #define SIT1145_REG_DATA_RATE             0x26  /**< 数据速率（读写）：CAN 波特率配置 */
+#define SIT1145_REG_ID_REG0               0x27  /**< WUF ID 寄存器0（读写）：扩展ID[28:21] */
+#define SIT1145_REG_ID_REG1               0x28  /**< WUF ID 寄存器1（读写）：扩展ID[20:13] */
+#define SIT1145_REG_ID_REG2               0x29  /**< WUF ID 寄存器2（读写）：标准ID[10:3] 或 扩展ID[12:5] */
+#define SIT1145_REG_ID_REG3               0x2A  /**< WUF ID 寄存器3（读写）：标准ID[2:0]+RTR+IDE 或 扩展ID[4:0] */
+#define SIT1145_REG_MASK_REG0             0x2B  /**< WUF ID 掩码寄存器0（读写） */
+#define SIT1145_REG_MASK_REG1             0x2C  /**< WUF ID 掩码寄存器1（读写） */
+#define SIT1145_REG_MASK_REG2             0x2D  /**< WUF ID 掩码寄存器2（读写） */
+#define SIT1145_REG_MASK_REG3             0x2E  /**< WUF ID 掩码寄存器3（读写） */
+#define SIT1145_REG_FRAME_CTRL            0x21  /**< WUF 帧控制（读写）：IDE/DLC/PNDM */
+#define SIT1145_REG_DATA_MASK0            0x30  /**< WUF 数据掩码寄存器0（读写） */
+#define SIT1145_REG_DATA_MASK1            0x31  /**< WUF 数据掩码寄存器1（读写） */
+#define SIT1145_REG_DATA_MASK2            0x32  /**< WUF 数据掩码寄存器2（读写） */
+#define SIT1145_REG_DATA_MASK3            0x33  /**< WUF 数据掩码寄存器3（读写） */
+#define SIT1145_REG_DATA_MASK4            0x34  /**< WUF 数据掩码寄存器4（读写） */
+#define SIT1145_REG_DATA_MASK5            0x35  /**< WUF 数据掩码寄存器5（读写） */
+#define SIT1145_REG_DATA_MASK6            0x36  /**< WUF 数据掩码寄存器6（读写） */
+#define SIT1145_REG_DATA_MASK7            0x37  /**< WUF 数据掩码寄存器7（读写） */
 #define SIT1145_REG_IDENTIFICATION        0x7E  /**< 芯片识别码（只读）：0x70=AQ，0x74=AQ-FD */
 
 /* ==========================================================================
@@ -180,13 +197,58 @@ extern "C" {
 #define SIT1145_CWE                 (1U << 0)
 
 /**
- * @brief CW 位（bit0）：CAN Wake-up event
+ * @brief WUF 位（bit1）：Wake-Up Frame event
  * @note  读 TRANSCEIVER_EVENT 寄存器
- *        1 = 检测到 CAN 总线唤醒模式（WUP）
- *        0 = 无唤醒事件
+ *        1 = 检测到有效唤醒帧（WUF）
+ *        0 = 无 WUF 事件
  *        写1清零（W1C）
  */
-#define SIT1145_CW                  (1U << 0)
+#define SIT1145_WUF                 (1U << 1)
+
+/* ==========================================================================
+ *  WUF 帧控制寄存器位定义（0x21，读写）
+ *  配置唤醒帧的格式和过滤行为
+ * ==========================================================================
+ */
+
+/**
+ * @brief IDE 位（bit6）：Identifier Extension
+ * @note  0 = 标准帧（11 位 ID），1 = 扩展帧（29 位 ID）
+ */
+#define SIT1145_WUF_IDE             (1U << 6)
+
+/**
+ * @brief DLC 位（bit[3:0]）：Data Length Code
+ * @note  期望的数据长度（0~8）
+ *        DLC=0 时不检查数据掩码，ID 匹配即唤醒
+ *        DLC≠0 时需数据字段也匹配
+ */
+#define SIT1145_WUF_DLC_MASK        0x0FU
+
+/**
+ * @brief PNDM 位（bit7）：Partial Networking Data Mask
+ * @note  0 = 仅评估 ID + CRC（忽略数据字段）
+ *        1 = 评估 ID + CRC + DLC + 数据字段（默认）
+ */
+#define SIT1145_WUF_PNDM            (1U << 7)
+
+/* ==========================================================================
+ *  WUF 配置结构体
+ * ==========================================================================
+ */
+
+/**
+ * @brief  WUF 选择性唤醒配置结构体
+ * @note   用于 sit1145_wuf_config() 函数
+ */
+typedef struct {
+  uint8_t  ide;           /**< 0=标准帧(11位ID)，1=扩展帧(29位ID) */
+  uint8_t  dlc;           /**< 期望数据长度 0~8，0=不检查数据 */
+  uint8_t  pndm;          /**< 0=忽略数据字段，1=评估数据字段 */
+  uint32_t can_id;        /**< CAN ID 值 */
+  uint32_t can_id_mask;   /**< ID 掩码（1=无关位，0=必须匹配） */
+  uint8_t  data_mask[8];  /**< 数据掩码（1=检查该位，0=忽略） */
+} sit1145_wuf_cfg_t;
 
 /* ==========================================================================
  *  模式控制寄存器值（0x01）
@@ -431,6 +493,29 @@ uint8_t sit1145_is_vcc_ok(void);
  * @retval 1=有故障，0=无故障，0xFF=SPI 读取失败
  */
 uint8_t sit1145_is_can_fault(void);
+
+/**
+ * @brief  配置选择性唤醒帧（WUF）
+ * @note   配置 SIT1145 的 WUF 寄存器，使能 CPNC=1 + PNCOK=1
+ *         配置前须确保 CAN Control 和 Data Rate 已设置
+ *         配置完成后自动使能 CWE=1
+ * @param  cfg: WUF 配置结构体指针
+ * @retval 1=配置成功，0=配置失败（回读不匹配）
+ */
+uint8_t sit1145_wuf_config(const sit1145_wuf_cfg_t *cfg);
+
+/**
+ * @brief  使能选择性唤醒（CPNC=1 + PNCOK=1 + CWE=1）
+ * @note   必须先调用 sit1145_wuf_config() 配置好 ID/掩码/数据
+ *         否则 PNCOK=1 后未配置的寄存器可能导致误唤醒
+ */
+void sit1145_wuf_enable(void);
+
+/**
+ * @brief  关闭选择性唤醒（CPNC=0），恢复标准唤醒模式
+ * @note   CWE 保持不变，仍可被标准 WUP 模式唤醒
+ */
+void sit1145_wuf_disable(void);
 
 /**
  * @brief  使能标准 CAN 唤醒（写 CWE=1 到 EVENT_EN 寄存器）

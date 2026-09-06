@@ -550,6 +550,148 @@ uint8_t sit1145_is_can_fault(void)
   return (sta & SIT1145_TRAN_STA_CFS) ? 1U : 0U;
 }
 
+/**
+ * @brief  配置选择性唤醒帧（WUF）
+ * @note   写入 WUF 的 ID 寄存器、掩码寄存器、数据掩码寄存器和帧控制寄存器
+ *         标准帧(11位)：ID 存入 REG2/REG3，REG0/REG1 = 0
+ *         扩展帧(29位)：ID 存入 REG0~REG3
+ *         掩码中 1=无关位（任意值匹配），0=必须精确匹配
+ * @param  cfg: WUF 配置结构体指针
+ * @retval 1=配置成功（回读匹配），0=配置失败
+ */
+uint8_t sit1145_wuf_config(const sit1145_wuf_cfg_t *cfg)
+{
+  uint8_t frame_ctrl;
+  uint8_t id0, id1, id2, id3;
+  uint8_t m0, m1, m2, m3;
+
+  if (cfg == (const sit1145_wuf_cfg_t *)0)
+  {
+    return 0;
+  }
+
+  /* 计算帧控制寄存器值：IDE + DLC + PNDM */
+  frame_ctrl = (uint8_t)(cfg->dlc & SIT1145_WUF_DLC_MASK);
+  if (cfg->ide != 0U)
+  {
+    frame_ctrl |= SIT1145_WUF_IDE;  /* 扩展帧 */
+  }
+  if (cfg->pndm != 0U)
+  {
+    frame_ctrl |= SIT1145_WUF_PNDM;  /* 评估数据字段 */
+  }
+
+  /* 计算 ID 寄存器值 */
+  if (cfg->ide != 0U)
+  {
+    /* 扩展帧 29 位：ID[28:21]/ID[20:13]/ID[12:5]/ID[4:0] */
+    id0 = (uint8_t)((cfg->can_id >> 21) & 0xFFU);
+    id1 = (uint8_t)((cfg->can_id >> 13) & 0xFFU);
+    id2 = (uint8_t)((cfg->can_id >> 5) & 0xFFU);
+    id3 = (uint8_t)((cfg->can_id & 0x1FU) << 3);
+    m0 = (uint8_t)((cfg->can_id_mask >> 21) & 0xFFU);
+    m1 = (uint8_t)((cfg->can_id_mask >> 13) & 0xFFU);
+    m2 = (uint8_t)((cfg->can_id_mask >> 5) & 0xFFU);
+    m3 = (uint8_t)((cfg->can_id_mask & 0x1FU) << 3);
+  }
+  else
+  {
+    /* 标准帧 11 位：ID[10:3]/ID[2:0] 存入 REG2/REG3 */
+    id0 = 0U;
+    id1 = 0U;
+    id2 = (uint8_t)((cfg->can_id >> 3) & 0xFFU);
+    id3 = (uint8_t)((cfg->can_id & 0x07U) << 5);
+    m0 = 0U;
+    m1 = 0U;
+    m2 = (uint8_t)((cfg->can_id_mask >> 3) & 0xFFU);
+    m3 = (uint8_t)((cfg->can_id_mask & 0x07U) << 5);
+  }
+
+  /* 写入帧控制寄存器 */
+  sit1145_write_reg(SIT1145_REG_FRAME_CTRL, frame_ctrl);
+
+  /* 写入 ID 寄存器 */
+  sit1145_write_reg(SIT1145_REG_ID_REG0, id0);
+  sit1145_write_reg(SIT1145_REG_ID_REG1, id1);
+  sit1145_write_reg(SIT1145_REG_ID_REG2, id2);
+  sit1145_write_reg(SIT1145_REG_ID_REG3, id3);
+
+  /* 写入 ID 掩码寄存器 */
+  sit1145_write_reg(SIT1145_REG_MASK_REG0, m0);
+  sit1145_write_reg(SIT1145_REG_MASK_REG1, m1);
+  sit1145_write_reg(SIT1145_REG_MASK_REG2, m2);
+  sit1145_write_reg(SIT1145_REG_MASK_REG3, m3);
+
+  /* 写入数据掩码寄存器 */
+  sit1145_write_reg(SIT1145_REG_DATA_MASK0, cfg->data_mask[0]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK1, cfg->data_mask[1]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK2, cfg->data_mask[2]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK3, cfg->data_mask[3]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK4, cfg->data_mask[4]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK5, cfg->data_mask[5]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK6, cfg->data_mask[6]);
+  sit1145_write_reg(SIT1145_REG_DATA_MASK7, cfg->data_mask[7]);
+
+  /* 回读帧控制寄存器验证 */
+  if (sit1145_read_reg(SIT1145_REG_FRAME_CTRL) != frame_ctrl)
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+/**
+ * @brief  使能选择性唤醒（CPNC=1 + PNCOK=1 + CWE=1）
+ * @note   在 sit1145_wuf_config() 之后调用
+ *         先设 CPNC=1，再设 PNCOK=1（PNCOK 置1后配置寄存器锁定）
+ *         最后使能 CWE
+ */
+void sit1145_wuf_enable(void)
+{
+  uint8_t can_ctrl;
+
+  /* 读取当前 CAN 控制寄存器 */
+  can_ctrl = sit1145_read_reg(SIT1145_REG_CAN_CONTROL);
+  if (can_ctrl == 0xFFU)
+  {
+    return;  /* SPI 失败 */
+  }
+
+  /* 设置 CPNC=1（选择性唤醒使能） */
+  can_ctrl |= (1U << SIT1145_CAN_CTRL_CPNC_POS);
+  sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl);
+
+  /* 设置 PNCOK=1（配置有效，锁定配置寄存器） */
+  can_ctrl |= (1U << SIT1145_CAN_CTRL_PNCOK_POS);
+  sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl);
+
+  /* 使能 CWE */
+  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
+
+  /* 清除残留的 WUF/CW 标志 */
+  sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT, SIT1145_CW | SIT1145_WUF);
+}
+
+/**
+ * @brief  关闭选择性唤醒（CPNC=0），恢复标准唤醒模式
+ * @note   CWE 保持不变，仍可被标准 WUP 模式唤醒
+ */
+void sit1145_wuf_disable(void)
+{
+  uint8_t can_ctrl;
+
+  can_ctrl = sit1145_read_reg(SIT1145_REG_CAN_CONTROL);
+  if (can_ctrl == 0xFFU)
+  {
+    return;
+  }
+
+  /* 清除 CPNC 位 */
+  can_ctrl &= ~(1U << SIT1145_CAN_CTRL_CPNC_POS);
+  sit1145_write_reg(SIT1145_REG_CAN_CONTROL, can_ctrl);
+}
+
 void sit1145_wake_enable(void)
 {
   sit1145_write_reg(SIT1145_REG_TRANSCEIVER_EVENT_EN, SIT1145_CWE);
@@ -584,7 +726,7 @@ uint8_t sit1145_wakeup_pending(void)
   {
     return 0U;  /* SPI 读取失败（可能 Sleep 模式） */
   }
-  return ((ev & SIT1145_CW) != 0U) ? 1U : 0U;
+  return ((ev & (SIT1145_CW | SIT1145_WUF)) != 0U) ? 1U : 0U;
 }
 
 /**
